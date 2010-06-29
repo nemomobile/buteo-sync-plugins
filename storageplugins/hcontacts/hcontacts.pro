@@ -9,7 +9,8 @@ INCLUDEPATH += .  \
     /usr/include/qt4/QtMobility/ \
 	../../syncmlcommon
 	
-CONFIG += debug plugin silent
+CONFIG += debug plugin silent link_pkgconfig
+PKGCONFIG += QtContacts QtVersit
 
 #the contacts library is using QPixmap, so has to comment below line
 #QT -= gui 

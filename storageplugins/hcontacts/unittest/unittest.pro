@@ -27,7 +27,8 @@ SOURCES += main.cpp \
 LIBS += -L ../
 LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile -lQtContacts -lQtVersit
 
-CONFIG += silent qtestlib
+CONFIG += silent qtestlib link_pkgconfig
+PKGCONFIG += QtContacts QtVersit
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
