@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile name="syncml" type="client" > 
+	<field name="use_wbxml" type="boolean" />
+	<field name="Sync Transport" />
+	<field name="Sync Direction" />
+	<field name="Sync Protocol" />
+</profile>

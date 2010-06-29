@@ -1,0 +1,63 @@
+#
+# This file is part of buteo-sync-app package
+#
+# Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+#
+# Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# version 2.1 as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+#
+
+echo "Building Unit Tests for Notes Storage"
+
+#clean sbox cache
+export SBOX_USE_CCACHE=no
+ccache -c
+
+qmake
+make clean
+make -j2
+if [ -f unit_test_results.txt ];
+then 
+rm unit_test_results.txt
+fi
+echo "Running unit tests ...results will be stored in $PWD/unit_test_results.txt"
+
+# pre-conditions to run the tests ....
+#sb-conf killall
+#dui-run 
+#source /tmp/session_bus_address.user;export DISPLAY=:1
+#/usr/lib/tracker/tracker-store & > /dev/null 
+
+#clear the tracker data base before running tests 
+#tracker-control -r > /dev/null
+
+./hnotes-tests >> unit_test_results.txt 2>&1 
+if [ -f gcov_results.txt ];
+then 
+rm gcov_results.txt
+fi
+
+# it is easy and convenient to add required files here becuase 
+# the plugins are small and are not really that large when 
+# compared to stack 
+echo "Running gcov ... results will be stored in $PWD/gcov_results.txt"
+
+gcov NotesStorage.gcno >> gcov_results.txt 2>&1
+gcov NotesBackend.gcno >> gcov_results.txt 2>&1
+
+make distclean > /dev/null 
+rm *.gcov

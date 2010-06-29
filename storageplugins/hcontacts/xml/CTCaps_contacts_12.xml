@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CTCap>
+    <CTType>text/x-vcard</CTType>
+    <VerCT>2.1</VerCT>
+    <Property>
+      <PropName>BEGIN</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <ValEnum>VCARD</ValEnum>
+    </Property>
+    <Property>
+      <PropName>END</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <ValEnum>VCARD</ValEnum>
+    </Property>
+    <Property>
+      <PropName>VERSION</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <ValEnum>2.1</ValEnum>
+    </Property>
+    <Property>
+      <PropName>REV</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>N</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>ADR</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <PropParam>
+        <ParamName>TYPE</ParamName> 
+        <DataType />
+        <ValEnum>HOME</ValEnum>
+        <ValEnum>WORK</ValEnum>
+      </PropParam>
+    </Property>
+    <Property>
+      <PropName>TEL</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <PropParam>
+        <ParamName>TYPE</ParamName>
+        <DataType />
+        <ValEnum>HOME</ValEnum>
+        <ValEnum>WORK</ValEnum>
+        <ValEnum>CELL</ValEnum>
+        <ValEnum>PAGER</ValEnum>
+        <ValEnum>FAX</ValEnum>
+        <ValEnum>VIDEO</ValEnum>
+        <ValEnum>PREF</ValEnum>
+        <ValEnum>CAR</ValEnum>
+      </PropParam>
+    </Property>
+    <Property>
+      <PropName>FN</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>EMAIL</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <PropParam>
+        <ParamName>TYPE</ParamName>
+        <DataType />
+        <ValEnum>HOME</ValEnum>
+        <ValEnum>WORK</ValEnum>
+      </PropParam>
+    </Property>
+    <Property>
+      <PropName>URL</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <PropParam>
+        <ParamName>TYPE</ParamName>
+        <DataType />
+        <ValEnum>HOME</ValEnum>
+        <ValEnum>WORK</ValEnum>
+      </PropParam>
+    </Property>
+    <Property>
+      <PropName>NOTE</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>TITLE</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>ORG</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>PHOTO</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>BDAY</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>SOUND</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+</CTCap>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile name="hnotes" type="storage" >
+	<key name="backend" value="hnotes" />
+	<key name="Type" value="text/plain" />
+	<key name="Version" value="1.0" />
+	<key name="Notebook Name" value="Personal" />
+</profile>

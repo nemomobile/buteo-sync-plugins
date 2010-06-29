@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<CTCap> 
+	<CTType>text/x-vcard</CTType> 
+	<PropName>BEGIN</PropName> 
+	<ValEnum>VCARD</ValEnum> 
+	<PropName>END</PropName> 
+	<ValEnum>VCARD</ValEnum> 
+	<PropName>VERSION</PropName> 
+	<ValEnum>2.1</ValEnum> 
+	<PropName>REV</PropName> 
+	<PropName>N</PropName> 
+	<PropName>ADR</PropName> 
+	<ParamName>HOME</ParamName> 
+	<ParamName>WORK</ParamName> 
+	<ParamName>PREF</ParamName> 
+	<PropName>TEL</PropName> 
+	<ParamName>HOME</ParamName> 
+	<ParamName>WORK</ParamName> 
+	<ParamName>CELL</ParamName> 
+	<ParamName>PAGER</ParamName> 
+	<ParamName>FAX</ParamName> 
+	<ParamName>VOICE</ParamName> 
+	<ParamName>CAR</ParamName> 
+	<ParamName>VIDEO</ParamName> 
+	<PropName>FN</PropName> 
+	<PropName>EMAIL</PropName> 
+	<PropName>URL</PropName> 
+	<ParamName>HOME</ParamName> 
+	<ParamName>WORK</ParamName> 
+	<PropName>NOTE</PropName> 
+	<PropName>TITLE</PropName> 
+	<PropName>ORG</PropName> 
+	<PropName>PHOTO</PropName> 
+	<PropName>BDAY</PropName> 
+	<PropName>LABEL</PropName> 
+</CTCap>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile name="bt_template" type="sync">
+
+    <key name="enabled" value="false"/>
+    <key name="hidden" value="true"/>
+    <key name="remote_id" value="/"/>
+
+    <profile type="service" name="bt">
+    </profile>
+
+    <profile name="hcontacts" type="storage">
+	<key name="enabled" value="true"/>
+    </profile>
+    
+    <profile name="hcalendar" type="storage">
+        <key name="enabled" value="true"/>
+	<key name="Notebook Name" value="Personal"/>
+    </profile>
+
+     <profile name="hsms" type="storage">
+         <key name="enabled" value="false"/>
+    </profile>	    
+    
+    <profile name="hnotes" type="storage">
+	 <key name="enabled" value="true"/>
+     </profile>
+     
+     <profile name="hbookmarks" type="storage">
+	<key name="enabled" value="false"/>
+    </profile>
+</profile>

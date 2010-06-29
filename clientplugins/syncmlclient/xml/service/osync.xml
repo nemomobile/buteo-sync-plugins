@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile  name="osync" type="service">
+
+    <key name="Remote database" value="http://sync.o-sync.com" />
+       
+    <key name="Username" value="your_username" />
+    <key name="Password" value="your_password" />
+    
+    <key name="http_proxy_host" value="" />
+    <key name="http_proxy_port" value="" />
+    
+    <key name="destinationtype" value="online"/>
+    
+    <profile name="syncml" type="client" >
+		<key name="use_wbxml" value="false" />
+		<key name="Sync Transport" value="HTTP" />
+		<key name="Sync Direction" value="two-way" />
+		<key name="Sync Protocol" value="SyncML12" />
+    </profile>
+
+    <profile name="hcalendar" type="storage" >
+    	<key name="Local URI" value="./calendar" />
+		<key name="Target URI" value="./calendar" />
+		<key name="Calendar Format" value="vcalendar" />
+    </profile>
+    
+    <profile name="hnotes" type="storage" >    
+    	<key name="Local URI" value="./notes" />
+		<key name="Target URI" value="./note" />
+    </profile>
+
+    <profile name="hcontacts" type="storage" >
+    	<key name="Local URI" value="./contacts" />
+		<key name="Target URI" value="./contacts" />
+    </profile>
+    
+    <profile name="hbookmarks" type="storage" >
+    	<key name="Local URI" value="./bookmarks" />
+		<key name="Target URI" value="./bookmarks" />
+    </profile>
+
+</profile>
+
