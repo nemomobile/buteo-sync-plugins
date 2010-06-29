@@ -3,7 +3,8 @@ Version: 0.5.6
 Release: 1
 Summary: Synchronization plugins
 Group: System/Libraries
-License: Other
+URL: http://meego.gitorious.com/meego-middleware/buteo-sync-plugins
+License: LGPLv2.1
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: pkgconfig(glib-2.0)
@@ -21,7 +22,6 @@ BuildRequires: libmeegotouch-devel
 %files
 %defattr(-,root,root,-)
 %config %{_sysconfdir}/sync
-#%{_bindir}/gen-obex-capability.sh
 %{_libdir}/sync/*.so
 
 %package doc
@@ -56,7 +56,7 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-qmake INCLUDEPATH="/usr/include/qt4/QtMobility/QtVersit /usr/include/qt4/QtMobility/QtContacts/" %{name}.pro
+qmake
 make %{?_smp_mflags}
 
 
