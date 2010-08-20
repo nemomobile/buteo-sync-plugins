@@ -44,3 +44,11 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 target.path = /usr/lib/
 
 INSTALLS += target
+
+# for compiling on meego
+linux-g++-maemo {
+  message("Compiling with sysinfo support")
+  DEFINES += __SYSINFO__
+} else {
+  message("Compiling without sysinfo")
+}

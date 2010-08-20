@@ -23,7 +23,9 @@
 
 #include "DeviceInfo.h"
 #include "LogMacros.h"
+#if __SYSINFO__
 #include <sysinfo.h>
+#endif
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -89,6 +91,7 @@ QString DeviceInfo::getDeviceIMEI()
 QString DeviceInfo::getSysInfo(const QString &key)
 {
     QString value;
+#if __SYSINFO__
     struct system_config *sc = 0;
     if( sysinfo_init(&sc) == 0 )
     {
@@ -109,6 +112,7 @@ QString DeviceInfo::getSysInfo(const QString &key)
     }
 
     LOG_DEBUG("Key is  " << key << "it's Value is " << value);
+#endif
     return value;
 }
 

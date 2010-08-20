@@ -1,14 +1,25 @@
 TEMPLATE = lib
 TARGET = hcontacts-storage
 
+linux-g++-maemo {
+  message("Compiling for maemo")
+  INCLUDEPATH += \
+    /usr/include/qt4/QtMobility/ \
+    /usr/include/qt4/QtMobility/QtContacts \
+    /usr/include/qt4/QtMobility/QtVersit \
+} else {
+  message("Compiling for non-maemo")
+  INCLUDEPATH += \
+    /usr/include/QtMobility/ \
+    /usr/include/QtContacts \
+    /usr/include/QtVersit \
+}
+
 DEPENDPATH += .
 INCLUDEPATH += .  \
     /usr/include/libsynccommon \
 	/usr/include/libsyncpluginmgr \
 	/usr/include/sync/ \
-    /usr/include/qt4/QtMobility/ \
-    /usr/include/qt4/QtMobility/QtContacts \
-    /usr/include/qt4/QtMobility/QtVersit \
 	../../syncmlcommon
 	
 CONFIG += debug plugin silent

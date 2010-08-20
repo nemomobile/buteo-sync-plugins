@@ -6,7 +6,7 @@ INCLUDEPATH += . ../../syncmlcommon \
     /usr/include/libsyncprofile \
     /usr/include/sync \
 
-LIBS += -L../../syncmlcommon -lsyncpluginmgr -lsyncprofile -lmeegosyncml -lsysinfo -lsyncmlcommon
+LIBS += -L../../syncmlcommon -lsyncpluginmgr -lsyncprofile -lmeegosyncml -lsyncmlcommon
 
 CONFIG += debug plugin silent
 
@@ -49,5 +49,14 @@ storage.path = /etc/sync/profiles/storage
 storage.files = xml/storage/*
 
 INSTALLS += target client sync service storage 
+
+# for compiling on meego
+linux-g++-maemo {
+  message("Compiling with sysinfo support")
+  DEFINES += __SYSINFO__
+  LIBS += -lsysinfo
+} else {
+  message("Compiling without sysinfo")
+}
 
 
