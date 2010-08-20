@@ -20,11 +20,11 @@
  * 02110-1301 USA
  *
  */
-
 #ifndef CONTACT_STORAGE_HEADER_1717
 #define CONTACT_STORAGE_HEADER_1717
 
 #include <QDateTime>
+#include <QMap>
 
 #include "StoragePlugin.h"
 #include "ContactsBackend.h"
@@ -32,131 +32,132 @@
 
 class SimpleItem;
 
-/// \brief Harmattan Contact storage plugin
-///
-///  Interface to Storage Plugin towards Sync FW
+//! \brief Harmattan Contact storage plugin
+//
+//  Interface to Storage Plugin towards Sync FW
 class ContactStorage : public Buteo::StoragePlugin
 {
 
 public:
-    /* !\brief Constructor
+    /*! \brief Constructor
+     *
      */
-	ContactStorage(const QString& aPluginName);
+    ContactStorage(const QString& aPluginName);
 
-    /* !\brief Destructor
+    /*! \brief Destructor
+     *
      */
-	virtual ~ContactStorage();
+    virtual ~ContactStorage();
 
-    /* !\brief convert list of contacts into vector of storage items
+    ////////////////////////////////////////////////////////////////////////////////
+    //             Functions below are derived from storage plugin   ///////////////
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /*! \brief Initializes the plugin
      *
      *
-     * @param list List of contacts
-     * @return list of storage items
+     * @param aProperties Properties that should be set for this plugin
+     * @return True on success, otherwise false
      */
-    QList<Buteo::StorageItem*> getStoreList(QList<QContactLocalId>&aList);
+    virtual bool init( const QMap<QString, QString>& aProperties );
 
-	////////////////////////////////////////////////////////////////////////////////
-	//             Functions below are derived from storage plugin   ///////////////
-	////////////////////////////////////////////////////////////////////////////////
+    /*! \brief Uninitializes the plugin
+     *
+     */
+    virtual bool uninit();
 
-	/* !\brief Initializes the plugin
-	 *
-	 *
-	 * @param aProperties Properties that should be set for this plugin
-	 * @return True on success, otherwise false
-	 */
-	virtual bool init( const QMap<QString, QString>& aProperties );
-
-	/*! \brief Uninitializes the plugin
-	 *
-	 */
-	virtual bool uninit();
-
-	/*! \brief Returns all known items
-	 *
-	 * @param aItems Array where to place items
-	 * @return True on success, otherwise false
-	 */
+    /*! \brief Returns all known items
+     *
+     * @param aItems Array where to place items
+     * @return True on success, otherwise false
+     */
     virtual bool getAllItems(QList<Buteo::StorageItem*> &aItems);
 
 
-	/*! \brief Returns id's of all known items
-	 *
-	 * @param aItems Array where to place item id's
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getAllItemIds( QList<QString>& aItems );
+    /*! \brief Returns id's of all known items
+         *
+     * @param aItems Array where to place item id's
+     * @return True on success, otherwise false
+     */
+    virtual bool getAllItemIds( QList<QString>& aItems );
 
 
-	/*! \brief Returns all new items since aTime
-	 *
-	 * @param aNewItems Array where to place items
-	 * @param aTime Timestamp
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getNewItems( QList<Buteo::StorageItem*>& aNewItems, const QDateTime& aTime );
+    /*! \brief Returns all new items since aTime
+     *
+     * @param aNewItems Array where to place items
+     * @param aTime Timestamp
+     * @return True on success, otherwise false
+     */
+    virtual bool getNewItems( QList<Buteo::StorageItem*>& aNewItems, const QDateTime& aTime );
 
 
-	/*! \brief Returns id's of all new items since aTime
-	 *
-	 * @param aNewItems Array where to place item id's
-	 * @param aTime Timestamp
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getNewItemIds( QList<QString>& aNewItemIds, const QDateTime& aTime );
+    /*! \brief Returns id's of all new items since aTime
+     *
+     * @param aNewItemIds Array where to place item id's
+     * @param aTime Timestamp
+     * @return True on success, otherwise false
+     */
+    virtual bool getNewItemIds( QList<QString>& aNewItemIds, const QDateTime& aTime );
 
-	/*! \brief Returns all modified items since aTime
-	 *
-	 * @param aNewItems Array where to place items
-	 * @param aTime Timestamp
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getModifiedItems( QList<Buteo::StorageItem*>& aModifiedItems, const QDateTime& aTime );
+    /*! \brief Returns all modified items since aTime
+     *
+     * @param aModifiedItems Array where to place items
+     * @param aTime Timestamp
+     * @return True on success, otherwise false
+     */
+    virtual bool getModifiedItems( QList<Buteo::StorageItem*>& aModifiedItems, const QDateTime& aTime );
 
-	/*! \brief Returns id's of all modified items since aTime
-	 *
-	 * @param aNewItems Array where to place item id's
-	 * @param aTime Timestamp
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getModifiedItemIds( QList<QString>& aModifiedItemIds, const QDateTime& aTime );
-
-
-	/*! \brief Returns id's of all deleted items since aTime
-	 *
-	 * @param aDeletedItems Array where to place item id's
-	 * @param aTime Timestamp
-	 * @return True on success, otherwise false
-	 */
-	virtual bool getDeletedItemIds( QList<QString>& aDeletedItemIds, const QDateTime& aTime );
-
-	/*! \brief Generates a new item
-	 *
-	 * Returned item is temporary. Therefore returned item ALWAYS has its id
-	 * set as empty ID (""). ID will be assigned only after addItem() has been
-	 * called for the item.
-	 *
-	 * @return On success pointer to the item generated, otherwise NULL
-	 */
-	virtual Buteo::StorageItem* newItem();
+    /*! \brief Returns id's of all modified items since aTime
+     *
+     * @param aModifiedItemIds Array where to place item id's
+     * @param aTime Timestamp
+     * @return True on success, otherwise false
+     */
+    virtual bool getModifiedItemIds( QList<QString>& aModifiedItemIds, const QDateTime& aTime );
 
 
-	/*! \brief Returns an item based on id
-	 *
-	 * @param aItemId Id of the item to return
-	 * @return On success pointer to the item, otherwise NULL
-	 */
-	virtual Buteo::StorageItem* getItem( const QString& aItemId );
+    /*! \brief Returns id's of all deleted items since aTime
+     *
+     * @param aDeletedItemIds Array where to place item id's
+     * @param aTime Timestamp
+     * @return True on success, otherwise false
+     */
+    virtual bool getDeletedItemIds( QList<QString>& aDeletedItemIds, const QDateTime& aTime );
 
-	/*! \brief Adds an item to the storage
-	 *
-	 * Upon successful addition, item is updated with its
-	 * assigned ID.
-	 *
-	 * @param aItem Item to add
-	 * @return Operation status code
-	 */
-	virtual OperationStatus addItem( Buteo::StorageItem& aItem );
+    /*! \brief Generates a new item
+     *
+     * Returned item is temporary. Therefore returned item ALWAYS has its id
+     * set as empty ID (""). ID will be assigned only after addItem() has been
+     * called for the item.
+     *
+     * @return On success pointer to the item generated, otherwise NULL
+     */
+    virtual Buteo::StorageItem* newItem();
+
+
+    /*! \brief Returns an item based on id
+     *
+     * @param aItemId Id of the item to return
+     * @return On success pointer to the item, otherwise NULL
+     */
+    virtual Buteo::StorageItem* getItem( const QString& aItemId );
+
+    /*! \brief Returns items based on ids
+     *
+     * @param aItemIdList Ids of the items
+     * @return List of items
+     */
+        virtual QList<Buteo::StorageItem*> getItems( const QStringList& aItemIdList );
+
+    /*! \brief Adds an item to the storage
+     *
+     * Upon successful addition, item is updated with its
+     * assigned ID.
+     *
+     * @param aItem Item to add
+     * @return Operation status code
+     */
+    virtual OperationStatus addItem( Buteo::StorageItem& aItem );
 
 
     /*! \brief Adds items to the storage
@@ -170,59 +171,53 @@ public:
     virtual QList<OperationStatus> addItems( const QList<Buteo::StorageItem*>& aItems );
 
 
-	/*! \brief Modifies an item in the storage
-	 *
-	 * @param aItem Item to modify
-	 * @return Operation status code
-	 */
-	virtual OperationStatus modifyItem( Buteo::StorageItem& aItem );
+    /*! \brief Modifies an item in the storage
+     *
+     * @param aItem Item to modify
+     * @return Operation status code
+     */
+    virtual OperationStatus modifyItem( Buteo::StorageItem& aItem );
 
-	/*! \brief Modifies item in the storage
-	 *
-	 * @param aItems Items to add
-	 * @return Operation status codes
-	 */
-	virtual QList<OperationStatus> modifyItems( const QList<Buteo::StorageItem*>& aItems );
+    /*! \brief Modifies item in the storage
+     *
+     * @param aItems Items to add
+     * @return Operation status codes
+     */
+    virtual QList<OperationStatus> modifyItems( const QList<Buteo::StorageItem*>& aItems );
 
-	/*! \brief Deletes an item from the storage
-	 *
-	 * @param aItemId Id of the item to be deleted
-	 * @return Operation status code
-	 */
-	virtual OperationStatus deleteItem( const QString& aItemId );
+    /*! \brief Deletes an item from the storage
+     *
+     * @param aItemId Id of the item to be deleted
+     * @return Operation status code
+     */
+    virtual OperationStatus deleteItem( const QString& aItemId );
 
-	/*! \brief Deletes an item from the storage
-	 *
-	 * @param aItemIds Id's of the item to be deleted
-	 * @return Operation status codes
-	 */
-	virtual QList<OperationStatus> deleteItems( const QList<QString>& aItemIds );
+    /*! \brief Deletes an item from the storage
+     *
+     * @param aItemIds Id's of the item to be deleted
+     * @return Operation status codes
+     */
+    virtual QList<OperationStatus> deleteItems( const QList<QString>& aItemIds );
 
 
 private:
 
-	ContactsBackend *iBackend;
+    bool doInitItemAnalysis();
 
-    Buteo::DeletedItemsIdStorage iDeletedItems; ///< Backend for tracking deleted items
+    bool doUninitItemAnalysis();
 
-	QByteArray getCtCaps( const QString& aFilename ) const;
+    /*! \brief convert list of contacts into vector of storage items
+     *
+     *
+     * @param aList List of contacts
+     * @return list of storage items
+     */
+    QList<Buteo::StorageItem*> getStoreList(QList<QContactLocalId>&aList);
+
+    QByteArray getCtCaps( const QString& aFilename ) const;
 
     ContactStorage::OperationStatus mapErrorStatus(const QContactManager::Error &aContactError) const;
-    
-    /**
-     * \brief Initiates the backend used for tracking deleted items
-     * @return True if initialization was successful otherwise false
-     */
-    bool initDeletedItemsIdStorage();
-    
-    /**
-     * \brief Updates backend snapshot (IDs of items). Used by deleted items detection.
-     * @return True if update was successful, otherwise false
-     */
-    void updateSnapshot(QDateTime aSnapshotCreationtime);
-    void readBackendItems();
-    bool updateDeletedItemsList();
-    
+
     /**
      * \brief Converts a vcard data to a storage item object
      * @param aItemKey ID of the item
@@ -232,13 +227,13 @@ private:
     SimpleItem* convertVcardToStorageItem(const QContactLocalId aItemKey,
                                           const QString& aItemData);
     
-    QList<QContactLocalId> iItemsInBackend;
+    ContactsBackend*                    iBackend;
 
-    QDateTime iSnapshotCreationTime;
+    Buteo::DeletedItemsIdStorage        iDeletedItems; ///< Backend for tracking deleted items
 
-    QList<QContactLocalId> iAddedItemsList;
-    
-    QList<QDateTime> iCreationTimes;
+    QMap<QContactLocalId, QDateTime>    iSnapshot;
+    QList<QContactLocalId>              iFreshItems;
+
 
 };
 

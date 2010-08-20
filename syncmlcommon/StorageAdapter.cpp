@@ -272,6 +272,35 @@ DataSync::SyncItem* StorageAdapter::getSyncItem( const DataSync::SyncItemKey& aK
 
 }
 
+QList<DataSync::SyncItem*> StorageAdapter::getSyncItems( const QList<DataSync::SyncItemKey>& aKeyList )
+{
+    FUNCTION_CALL_TRACE;
+
+    QStringList idList;
+    QList<DataSync::SyncItemKey>::const_iterator i;
+    QList<Buteo::StorageItem*>::const_iterator j;
+    for( i = aKeyList.constBegin(); i != aKeyList.constEnd(); ++i)
+    {
+        idList.append( iIdMapper.key( *i ) );
+    }
+
+    QList<Buteo::StorageItem*> items = iPlugin->getItems( idList );
+    QList<DataSync::SyncItem*> adapters;
+
+    for( j = items.constBegin(); j != items.constEnd(); ++j)
+    {
+        ItemAdapter* adapter = new ItemAdapter( *j );
+        adapter->setKey( iIdMapper.value( (*j)->getId() ) );
+        adapter->setType( (*j)->getType() );
+        if( !(*j)->getParentId().isEmpty() ) {
+            adapter->setParentKey( iIdMapper.value( (*j)->getParentId() ) );
+        }
+        adapters.append( adapter );
+    }
+
+    return adapters;
+}
+
 QList<DataSync::StoragePlugin::StoragePluginStatus> StorageAdapter::addItems( const QList<DataSync::SyncItem*>& aItems )
 {
 

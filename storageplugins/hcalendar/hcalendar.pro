@@ -14,19 +14,15 @@ CONFIG += debug plugin silent
 
 QT -= gui
 
-LIBS += -lsyncpluginmgr -lextendedkcal
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr -lextendedkcal
 LIBS +=  -lQtTest
 
 HEADERS += CalendarStorage.h \
            definitions.h \
 	   CalendarBackend.h \ 
-	   ../../syncmlcommon/SimpleItem.h \
-	   ../../syncmlcommon/SyncMLConfig.h 
 
 SOURCES += CalendarStorage.cpp \
            CalendarBackend.cpp \
-	   ../../syncmlcommon/SimpleItem.cpp \
-	   ../../syncmlcommon/SyncMLConfig.cpp 
 
 
 QMAKE_CXXFLAGS = -Wall \

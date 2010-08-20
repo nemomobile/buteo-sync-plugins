@@ -21,6 +21,7 @@
  *
  */
 
+
 #include <QtCore>
 #include <QCoreApplication>
 #include <QtTest/QtTest>

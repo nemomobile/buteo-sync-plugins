@@ -6,7 +6,7 @@
     <set name="storageplugins" description="tests for storage plugins" feature="storage-plugins">
       <!-- Possibly some pre-steps to execute before running the test cases -->
       <pre_steps>
-        <step>dui-run</step>
+        <step>meego-run</step>
         <step>source /tmp/session_bus_address.user;export DISPLAY=:1</step>
         <step>/usr/lib/tracker/tracker-store &amp; </step>
         <step>export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH</step>

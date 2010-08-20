@@ -20,7 +20,6 @@
  * 02110-1301 USA
  *
  */
-
 #ifndef HCALENDARTEST_H
 #define HCALENDARTEST_H
 

@@ -1,35 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<profile name="btS40" type="service">
-
-    <field name="bt_address" />
-    <field name="bt_name" />
+<profile name="ovisuite" type="service">
     
     <key name="bt_uuid" value="00000002-0000-1000-8000-0002ee000002"/>
     
     <key name="destinationtype" value="device"/>
+
+    <key name="hidden" value="true"/>
     
     <profile name="syncml" type="client" >
 		<key name="use_wbxml" value="true" />
 		<key name="Sync Transport" value="OBEX" />
-	    <key name="Sync Direction" value="two-way" />
-	    <key name="Sync Protocol" value="SyncML11" />
     </profile>
 
     <profile name="hcalendar" type="storage" >
-    	<key name="Local URI" value="./calendar" />
-		<key name="Target URI" value="./calendar" />
+    	<key name="Local URI" value="./Calendar" />
+		<key name="Target URI" value="./Calendar" />
 		<key name="Calendar Format" value="vcalendar" />
+    </profile>
+
+    <profile name="hcontacts" type="storage" >
+    	<key name="Local URI" value="./Contacts" />
+		<key name="Target URI" value="./Contacts" />
+    </profile>
+    
+    <profile name="hbookmarks" type="storage" >    
+    	<key name="Local URI" value="./Bookmarks" />
+		<key name="Target URI" value="./Bookmarks" />
     </profile>
     
     <profile name="hnotes" type="storage" >    
     	<key name="Local URI" value="./Notepad" />
-		<key name="Target URI" value="./notes" />
-    </profile>
-
-    <profile name="hcontacts" type="storage" >
-    	<key name="Local URI" value="./contacts" />
-		<key name="Target URI" value="./contacts" />
+		<key name="Target URI" value="./Notes" />
     </profile>
 
 </profile>

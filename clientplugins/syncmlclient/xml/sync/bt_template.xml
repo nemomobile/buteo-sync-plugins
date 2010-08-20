@@ -5,8 +5,14 @@
     <key name="enabled" value="false"/>
     <key name="hidden" value="true"/>
     <key name="remote_id" value="/"/>
+    <!-- For purpose of localization in UI -->
+    <key name="displayname" value="qtn_sync_dest_name_device_default"/>
 
     <profile type="service" name="bt">
+    </profile>
+
+    <profile name="syncml" type="client" >
+        <key name="Sync Direction" value="two-way" />
     </profile>
 
     <profile name="hcontacts" type="storage">

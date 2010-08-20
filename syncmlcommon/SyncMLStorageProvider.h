@@ -90,6 +90,8 @@ public:
 
 private:
 
+    QString getPreferredURINames( const QString &aURI );
+
     DataSync::StoragePlugin* acquireStorage( const Buteo::Profile* aProfile );
 
     Buteo::Profile*            iProfile;

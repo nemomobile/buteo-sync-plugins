@@ -41,6 +41,6 @@ QMAKE_CLEAN += $(TARGET)
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
 
 #install
-target.path = /usr/lib/sync/
+target.path = /usr/lib/
 
 INSTALLS += target

@@ -13,6 +13,8 @@ INCLUDEPATH += . \
     /usr/include/libsyncpluginmgr \
     /usr/include/sync \
     /usr/include/qt4/QtMobility \
+    /usr/include/qt4/QtMobility/QtContacts \
+    /usr/include/qt4/QtMobility/QtVersit \
     ../../../syncmlcommon
 
 HEADERS += ContactsTest.h SyncMLConfig.h
@@ -27,8 +29,7 @@ SOURCES += main.cpp \
 LIBS += -L ../
 LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile -lQtContacts -lQtVersit
 
-CONFIG += silent qtestlib link_pkgconfig
-PKGCONFIG += QtContacts QtVersit
+CONFIG += silent qtestlib
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
@@ -37,6 +38,6 @@ QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
 testfiles.path = /usr/share/sync-app-tests/
 testfiles.files =  hcontacts-tests.ref vcard1.txt vcard2.txt vcard3.txt
 
-target.path = /usr/bin/
+target.path = /usr/share/sync-app-tests/
 INSTALLS += target \
             testfiles

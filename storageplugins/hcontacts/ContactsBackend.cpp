@@ -20,17 +20,17 @@
  * 02110-1301 USA
  *
  */
-
 #include "ContactsBackend.h"
 #include <LogMacros.h>
-#include <qversitcontactexporter.h>
-#include <qversitcontactimporter.h>
-#include <qversitreader.h>
-#include <qversitwriter.h>
-#include <QBuffer>
-#include <QSet>
+#include <QVersitContactExporter>
+#include <QVersitContactImporter>
+#include <QVersitReader>
+#include <QVersitWriter>
 #include <QContactTimestamp>
 #include <QContactLocalIdFilter>
+#include <QBuffer>
+#include <QSet>
+
 
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer) :
 iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
@@ -147,110 +147,49 @@ QList<QContactLocalId> ContactsBackend::getAllDeletedContactIds(const QDateTime 
 	return idList;
 }
 
-
-
-QContactManager::Error ContactsBackend::addContact(const QString &aContactString,
-                                                   QString &aContactId, QList<QDateTime> &creationTimes)
-{
-	FUNCTION_CALL_TRACE;
-
-    QContactManager::Error result = QContactManager::UnspecifiedError;
-
-    // Check backend availability first, because it makes no sense to do
-    // anything else if the contact cannot be saved.
-    if (iMgr == NULL) {
-        LOG_WARNING("Contacts backend not available");
-    }
-    else {
-        QStringList contactStringList; 
-        contactStringList.append(aContactString);
-        QContact contact = convertVCardListToQContactList(contactStringList).first();
-        /*
-        QContactTimestamp timestamp;
-        timestamp.setCreated( QDateTime::currentDateTime() );
-        contact.saveDetail( &timestamp );
-        */
-
-        LOG_DEBUG("Saving contact info for " << contact.displayLabel());
-
-        if (contact.isEmpty()) {
-            result = QContactManager::BadArgumentError;
-        }
-        else if(iMgr->saveContact(&contact)){
-            aContactId = QString::number(contact.localId());
-            LOG_DEBUG("Contact Added Successfully, its id is " << aContactId);
-            result = iMgr->error();
-            QDateTime creationTime = this->creationTime(contact);
-            creationTimes.append(creationTime);
-            LOG_DEBUG("Creation time" << creationTime.toString() );
-        }
-        else {
-            // either contact exists or something wrong with one of the detailed definitions
-            LOG_WARNING("Contact Addition Failed, whatever value we return is not valid");
-            LOG_DEBUG("Contact Manager Error Code " << iMgr->error());
-            result = iMgr->error();
-        }
-        
-        /*
-        QContactTimestamp timestamp = contact.detail(
-            QContactTimestamp::DefinitionName);
-        LOG_DEBUG( "Contact created at" << timestamp.created() );
-        */
-
-    }
-
-    return result;
-}
-
-bool ContactsBackend::addContacts(const QStringList &aContactDataList,
-		QMap<int, QContactManager::Error> &statusMap,
-	       	QList<QDateTime> &creationTimes)
+bool ContactsBackend::addContacts( const QStringList& aContactDataList,
+                                   QMap<int, ContactsStatus>& aStatusMap )
 {
     FUNCTION_CALL_TRACE;
 
-    QMap<int, QContactManager::Error>  errorMap;
-    bool retVal = false;
-    if (iMgr == NULL) {
-        for (int i=0; i < aContactDataList.size(); i++) {
-            errorMap.insert(i, QContactManager::UnspecifiedError);
-        }
+    Q_ASSERT( iMgr );
 
-        LOG_WARNING("Contacts backend not available");
-    }
-    else{
-	QList<QContact> qContactList = convertVCardListToQContactList(aContactDataList);
-        
+    QList<QContact> contactList = convertVCardListToQContactList(aContactDataList);
+    ContactsStatus status;
+    QMap<int, QContactManager::Error> errorMap;
 
-	retVal = iMgr->saveContacts(&qContactList, &errorMap);
-	
-        // QContactManager will populate errorMap only for errors, but we use this as a status map,
-	// so populate NoError if there's no error.
-	// TODO QContactManager populates indices from the qContactList, but we populate keys, is this OK?
-	for (int i = 0; i < qContactList.size(); i++) {
-            QContactLocalId contactId = qContactList.at(i).id().localId();
-            if( !errorMap.contains(i) )
-            {
-                LOG_DEBUG("No error for contact with id " << contactId << " and index " << i);
-                statusMap.insert((int)contactId, QContactManager::NoError);
-                QDateTime creationTime = this->creationTime(qContactList.at(i));
-                creationTimes.append(creationTime);
-                LOG_DEBUG("Creation time" << creationTime.toString() );
-            }
-            else 
-            {
-                LOG_DEBUG("contact with id " << contactId << " and index " << i <<" is in error");
-                QContactManager::Error errorCode = errorMap.value(i);
-                statusMap.insert((int)contactId, errorCode);
-            }
-        }
+    bool retVal = iMgr->saveContacts(&contactList, &errorMap);
 
-	
-	if (!retVal)
-		LOG_CRITICAL("Error Saving Contacts" << iMgr->error());
-	
+    if( !retVal )
+    {
+        LOG_WARNING( "Errors reported while saving contacts:" << iMgr->error() );
     }
 
-	return retVal;
+    // QContactManager will populate errorMap only for errors, but we use this as a status map,
+    // so populate NoError if there's no error.
+    // TODO QContactManager populates indices from the qContactList, but we populate keys, is this OK?
+    for (int i = 0; i < contactList.size(); i++)
+    {
+        QContactLocalId contactId = contactList.at(i).id().localId();
+        if( !errorMap.contains(i) )
+        {
+            status.id = (int)contactId;
+            status.errorCode = QContactManager::NoError;
+            aStatusMap.insert(i, status);
+
+        }
+        else
+        {
+            LOG_WARNING("Contact with id " << contactId << " and index " << i <<" is in error");
+            QContactManager::Error errorCode = errorMap.value(i);
+            status.id = (int)contactId;
+            status.errorCode = errorCode;
+            aStatusMap.insert(i, status);
+        }
+    }
+
+    return retVal;
+
 }
 
 QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const QString &aContact)
@@ -268,7 +207,7 @@ QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const 
         QContact oldContactData;
         getContact(aID.toUInt(), oldContactData);
         QStringList contactStringList; 
-        contactStringList.append(aID);
+        contactStringList.append(aContact);
         QContact newContactData = convertVCardListToQContactList(contactStringList).first();
 
         newContactData.setId(oldContactData.id());
@@ -286,13 +225,15 @@ QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const 
 	return modificationStatus;
 }
 
-QMap<int,QContactManager::Error> ContactsBackend::modifyContacts(
+QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
     const QStringList &aVCardDataList, const QStringList &aContactIdList)
 {
 	FUNCTION_CALL_TRACE;
+
+    ContactsStatus status;
     
-	QMap<int,QContactManager::Error> errors;
-	QMap<int,QContactManager::Error> statusMap;
+    QMap<int,QContactManager::Error> errors;
+    QMap<int,ContactsStatus> statusMap;
 
     if (iMgr == NULL) {
         for (int i=0; i < aVCardDataList.size(); i++) {
@@ -331,13 +272,17 @@ QMap<int,QContactManager::Error> ContactsBackend::modifyContacts(
             if( !errors.contains(i) )
             {
                 LOG_DEBUG("No error for contact with id " << contactId << " and index " << i);
-                statusMap.insert((int)contactId, QContactManager::NoError);
+                status.id = (int)contactId;
+                status.errorCode = QContactManager::NoError;
+                statusMap.insert(i, status);
             }
             else 
             {
                 LOG_DEBUG("contact with id " << contactId << " and index " << i <<" is in error");
                 QContactManager::Error errorCode = errors.value(i);
-                statusMap.insert((int)contactId, errorCode);
+                status.id = (int)contactId;
+                status.errorCode = errorCode;
+                statusMap.insert(i, status);
             }
         }
 	}
@@ -345,38 +290,13 @@ QMap<int,QContactManager::Error> ContactsBackend::modifyContacts(
 	return statusMap;
 }
 
-QContactManager::Error ContactsBackend::deleteContact(const QString &aContactID)
+QMap<int , ContactsStatus> ContactsBackend::deleteContacts(const QStringList &aContactIDList)
 {
 	FUNCTION_CALL_TRACE;
 
-    QContactManager::Error error = QContactManager::UnspecifiedError;
-
-    if (iMgr == NULL) {
-        LOG_WARNING("Contacts backend not available");
-    }
-    else {
-        QContactLocalId id = aContactID.toUInt();
-        LOG_DEBUG("Removing Contact with id " << id);
-        bool removedSuccesfully = iMgr->removeContact(id);
-
-        if(!removedSuccesfully) {
-            LOG_WARNING("Contact Remove Failed");
-        } // no else
-
-        error = iMgr->error();
-        LOG_DEBUG("Contact Manager Error Code " << error);
-    }
-    
-
-	return error;
-}
-
-QMap<int , QContactManager::Error> ContactsBackend::deleteContacts(const QStringList &aContactIDList)
-{
-	FUNCTION_CALL_TRACE;
-
+    ContactsStatus status;
     QMap<int , QContactManager::Error> errors;
-    QMap<int , QContactManager::Error> statusMap;
+    QMap<int , ContactsStatus> statusMap;
     
     if (iMgr == NULL) {
         for (int i=0; i < aContactIDList.size(); i++) {
@@ -406,13 +326,17 @@ QMap<int , QContactManager::Error> ContactsBackend::deleteContacts(const QString
             if( !errors.contains(i) )
             {
                 LOG_DEBUG("No error for contact with id " << contactId << " and index " << i);
-                statusMap.insert((int)contactId, QContactManager::NoError);
+                status.id = (int)contactId;
+                status.errorCode = QContactManager::NoError;
+                statusMap.insert(i, status);
             }
             else 
             {
                 LOG_DEBUG("contact with id " << contactId << " and index " << i <<" is in error");
                 QContactManager::Error errorCode = errors.value(i);
-                statusMap.insert((int)contactId, errorCode);
+                status.id = (int)contactId;
+                status.errorCode = errorCode;
+                statusMap.insert(i, status);
             }
         }
     }
@@ -422,49 +346,56 @@ QMap<int , QContactManager::Error> ContactsBackend::deleteContacts(const QString
 
 QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringList &aVCardList)
 {
-	FUNCTION_CALL_TRACE;
-	
-	QByteArray byteArray;
-        //QVersitReader needs LF/CRLF/CR between successive vcard's in the list,
-	//CRLF didn't work though.
-        QString LF = "\n";
+    FUNCTION_CALL_TRACE;
 
-        foreach ( QString vcard, aVCardList )
-        {
-	    byteArray.append(vcard.toUtf8());
-	    byteArray.append(LF.toUtf8());
-        }
+    QByteArray byteArray;
+    //QVersitReader needs LF/CRLF/CR between successive vcard's in the list,
+    //CRLF didn't work though.
+    const QString LF = "\n";
 
-	QBuffer readBuf(&byteArray);
-	readBuf.open(QIODevice::ReadOnly);
-	readBuf.seek(0);
+    foreach ( const QString& vcard, aVCardList )
+    {
+        byteArray.append(vcard.toUtf8());
+        byteArray.append(LF.toUtf8());
+    }
 
-	QVersitReader versitReader;
-	versitReader.setDevice (&readBuf);
-	
-	if (!versitReader.startReading())
-		LOG_WARNING ("Error while reading vcard");
-	
-	if (!versitReader.waitForFinished())
-		LOG_WARNING ("Error while finishing reading vcard");
-	
-	QList<QVersitDocument> versitDocList = versitReader.results ();
-	readBuf.close();
-	
-	QVersitContactImporter contactImporter;
-	QContact contact;
-        QList<QContact> contactList;
-	bool contactsImported = contactImporter.importDocuments(versitDocList);
-	if (contactsImported){
-		contactList =  contactImporter.contacts();
-		if (!contactList.isEmpty()) {
-        	    foreach (QContact contact, contactList) {
-			LOG_DEBUG("Converted item: " << contact.displayLabel());
-                    }
-		} // no else
-	}
+    QBuffer readBuf(&byteArray);
+    readBuf.open(QIODevice::ReadOnly);
+    readBuf.seek(0);
 
-	return contactList;
+    QVersitReader versitReader;
+    versitReader.setDevice (&readBuf);
+
+    if (!versitReader.startReading())
+    {
+        LOG_WARNING ("Error while reading vcard");
+    }
+
+    if (!versitReader.waitForFinished() )
+    {
+        LOG_WARNING ("Error while finishing reading vcard");
+    }
+
+    QList<QVersitDocument> versitDocList = versitReader.results();
+    readBuf.close();
+
+    QVersitContactImporter contactImporter;
+    QList<QContact> contactList;
+    bool contactsImported = contactImporter.importDocuments(versitDocList);
+    if (contactsImported)
+    {
+        contactList =  contactImporter.contacts();
+        if (!contactList.isEmpty()) {
+            foreach (QContact contact, contactList) {
+                LOG_DEBUG("Converted item: " << contact.displayLabel());
+            }
+        } // no else
+
+    }
+
+    LOG_DEBUG( "Converted" << contactList.count() << "VCards" );
+
+    return contactList;
 }
 
 QString ContactsBackend::convertQContactToVCard(const QContact &aContact)
@@ -574,45 +505,6 @@ QDateTime ContactsBackend::lastModificationTime(const QContactLocalId &aContactI
     return lastModificationTime;
 }
 
-QDateTime ContactsBackend::creationTime(const QContactLocalId &aContactId)
-{
-    FUNCTION_CALL_TRACE;
-
-    QDateTime creationTime = QDateTime::fromTime_t(0);
-
-    if (iMgr == NULL) {
-        LOG_WARNING("Contacts backend not available");
-    }
-    else {
-        QContact contact;
-        getContact(aContactId, contact);
-        QContactTimestamp contactTimestamps;
-        QString definitionName = contactTimestamps.definitionName();
-        contactTimestamps = (QContactTimestamp)contact.detail(definitionName);
-        creationTime = contactTimestamps.created();
-    }
-
-    return creationTime;
-}
-
-
-
-QDateTime ContactsBackend::creationTime(const QContact &aContact)
-{
-    FUNCTION_CALL_TRACE;
-
-    QDateTime creationTime = QDateTime::fromTime_t(0);
-
-    if (iMgr) {
-        QContactTimestamp contactTimestamps;
-        QString definitionName = contactTimestamps.definitionName();
-        contactTimestamps = (QContactTimestamp)aContact.detail(definitionName);
-        creationTime = contactTimestamps.created();
-    }
-
-    return creationTime;
-}
-
 /*!
     \fn ContactsBackend::getContact(QContactLocalId aContactId)
  */
@@ -623,27 +515,13 @@ void ContactsBackend::getContact(const QContactLocalId& aContactId, QContact& aC
     QList<QContactLocalId> contactId;
     contactId.append(aContactId);
     QList<QContact>        returnedContacts;
-    
+
     getContacts(contactId, returnedContacts);
 
     if (!returnedContacts.isEmpty()) {
         aContact = returnedContacts.first();
     }
-    
-}
 
-
-void ContactsBackend::getContact(const QContactLocalId& aItemId,
-                                 QString& aVcard)
-{
-    FUNCTION_CALL_TRACE;
-
-    // As this is an overloaded convenience function, these two functions
-    // are utilized to get the contact from the backend and to convert it
-    // to vcard format.
-    QContact contact;
-    getContact(aItemId, contact);
-    aVcard = convertQContactToVCard(contact);
 }
 
 /*!
@@ -676,4 +554,86 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>&  aIdsList,
     getContacts(aIdsList, returnedContacts);
     aDataMap = convertQContactListToVCardList(returnedContacts);
 
+}
+
+QDateTime ContactsBackend::getCreationTime( const QContact& aContact )
+{
+    FUNCTION_CALL_TRACE;
+
+    QContactTimestamp contactTimestamp = aContact.detail<QContactTimestamp>();
+
+    return contactTimestamp.created();
+}
+
+QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>& aContactIds )
+{
+    FUNCTION_CALL_TRACE;
+
+    Q_ASSERT( iMgr );
+
+    /* Retrieve QContacts from backend based on id's in aContactsIds. Since we're only interested
+     * in timestamps, set up fetch hint accordingly to speed up the operation.
+     */
+    QList<QDateTime> creationTimes;
+    QList<QContact> contacts;
+
+    QContactLocalIdFilter contactFilter;
+    contactFilter.setIds(aContactIds);
+
+    QContactTimestamp contactTimestampDef;
+    QString definitionName = contactTimestampDef.definitionName();
+
+    /* Set up fetch hints so that not all details of QContacts be fetched:
+     * 1) Fetch only QContactTimestamp details
+     * 2) Do not try to resolve contact relationships (siblings etc)
+     * 3) Do not include action preferences of contacts
+     * 4) Do not fetch binary blogs (avatar pictures etc)
+     */
+    QContactFetchHint contactHint;
+    contactHint.setOptimizationHints( QContactFetchHint::NoRelationships |
+                                      QContactFetchHint::NoActionPreferences |
+                                      QContactFetchHint::NoBinaryBlobs );
+
+    QStringList definitionNames;
+    definitionNames.append( definitionName );
+    contactHint.setDetailDefinitionsHint( definitionNames );
+
+    QDateTime currentTime = QDateTime::currentDateTime();
+
+    contacts = iMgr->contacts( contactFilter, QList<QContactSortOrder>(), contactHint );
+
+    if( contacts.count() == aContactIds.count() )
+    {
+        for( int i = 0; i < aContactIds.count(); ++i )
+        {
+            QDateTime creationTime = currentTime;
+
+            for( int a = 0; a < contacts.count(); ++a )
+            {
+                if( contacts[a].id().localId() == aContactIds[i] )
+                {
+                    QContactTimestamp contactTimestamp = contacts[a].detail<QContactTimestamp>();
+                    if( !contactTimestamp.created().isNull() &&
+                        contactTimestamp.created().isValid() )
+                    {
+                        creationTime = contactTimestamp.created();
+                    }
+                    contacts.removeAt( a );
+                    break;
+                }
+            }
+
+            creationTimes.append( creationTime );
+        }
+    }
+    else
+    {
+        LOG_WARNING( "Unable to fetch creation times" );
+        for( int i = 0; i < aContactIds.count(); ++i )
+        {
+            creationTimes.append( currentTime );
+        }
+    }
+
+    return creationTimes;
 }

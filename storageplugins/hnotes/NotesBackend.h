@@ -20,7 +20,6 @@
  * 02110-1301 USA
  *
  */
-
 #ifndef NOTESBACKEND_H
 #define NOTESBACKEND_H
 
@@ -67,28 +66,90 @@ public:
      */
     bool uninit();
 
+    /*! \brief retrieves all Notes from the backend
+     *
+     * @param  aItems Output Parameter - List of Buteo::StorageItems retrieved from Backend.
+     * @return True on success, otherwise false
+     */
     bool getAllNotes( QList<Buteo::StorageItem*>& aItems );
 
+    /*! \brief gets are note ids from the backend
+     *
+     * @param aIds - list of notes ids
+     * @return True on success, otherwise false
+     */
     bool getAllNoteIds( QList<QString>& aIds );
 
+    /*! \brief get all new notes from a timestamp
+     *
+     * @param  aNewItems List of new items.(output parameter)
+     * @param  aTime - time from which to retrieve the notes
+     * @return True on success, otherwise false
+     */
     bool getNewNotes( QList<Buteo::StorageItem*>& aNewItems, const QDateTime& aTime );
 
+    /*! \brief get all new note ids from a timestamp
+     *
+     * @param  aNewIds List of new ids (output parameter)
+     * @param  aTime - time from which to retrieve the notes
+     * @return True on success, otherwise false
+     */
     bool getNewNoteIds( QList<QString>& aNewIds, const QDateTime& aTime );
 
+    /*! \brief get all modified notes from the backend
+     *
+     * @param aModifiedItems - list of modified items (output parameter)
+     * @param aTime -    timestamp from which the modified notes are needed.
+     * @return True on success, otherwise false
+     */
     bool getModifiedNotes( QList<Buteo::StorageItem*>& aModifiedItems, const QDateTime& aTime );
 
+    /*! \brief get all modified notes ids from the backend
+     *
+     * @param aModifiedIds - list of modified ids (output parameter)
+     * @param aTime -    timestamp from which the modified notes ids are needed.
+     * @return True on success, otherwise false
+     */
     bool getModifiedNoteIds( QList<QString>& aModifiedIds, const QDateTime& aTime );
 
+    /*! \brief gets all deleted note ids
+     *
+     * @param aDeletedIds - deleted ids.
+     * @param aTime - timestamp from which the deleted ids are needed.
+     * @return True on success, otherwise false
+     */
     bool getDeletedNoteIds( QList<QString>& aDeletedIds, const QDateTime& aTime );
 
+    /*! \brief fetch a new StorageItem
+     *
+     * @return pointer to the newly created StorageItem
+     */
     Buteo::StorageItem* newItem();
 
+    /*! \brief get an item
+     *
+     * @param aItemId - id of the item to get
+     * @return pointer to the StorageItem
+     */
     Buteo::StorageItem* getItem( const QString& aItemId );
 
+    /*! \brief Uninitializes backend
+     *
+     * @param aItem - item to add
+     * @return True on success, otherwise false
+     */
     bool addNote( Buteo::StorageItem& aItem );
 
+    /*! \brief Uninitializes backend
+     *
+     * @return True on success, otherwise false
+     */
     bool modifyNote( Buteo::StorageItem& aItem );
 
+    /*! \brief Uninitializes backend
+     *
+     * @return True on success, otherwise false
+     */
     bool deleteNote( const QString& aId );
 
 protected:

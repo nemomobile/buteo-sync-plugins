@@ -24,6 +24,7 @@
 #include "NotesStorage.h"
 
 #include <QFile>
+#include <QStringListIterator>
 
 #include <libsyncpluginmgr/StorageItem.h>
 
@@ -32,7 +33,7 @@
 #include "SyncMLCommon.h"
 #include "SyncMLConfig.h"
 
-// @todo: Because Calendar does not support batched operations ( or it does
+// @todo: Because CalendarMaemo does not support batched operations ( or it does
 //        but we can't use it as we cannot retrieve the id's of committed items ),
 //        batched operations are currently done in series.
 
@@ -142,6 +143,21 @@ bool NotesStorage::getDeletedItemIds( QList<QString>& aDeletedItemIds, const QDa
 Buteo::StorageItem* NotesStorage::newItem()
 {
     return iBackend.newItem();
+}
+
+QList<Buteo::StorageItem*> NotesStorage::getItems( const QStringList& aItemIdList )
+{
+    FUNCTION_CALL_TRACE;
+
+    QList<Buteo::StorageItem*> items;
+    QStringListIterator itr( aItemIdList );
+
+    while( itr.hasNext() )
+    {
+        items.append( iBackend.getItem( itr.next() ) );
+    }
+
+    return items;
 }
 
 Buteo::StorageItem* NotesStorage::getItem( const QString& aItemId )

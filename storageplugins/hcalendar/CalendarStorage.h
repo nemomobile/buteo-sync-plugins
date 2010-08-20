@@ -20,7 +20,6 @@
  * 02110-1301 USA
  *
  */
-
 #ifndef CALENDARSTORAGE_H
 #define CALENDARSTORAGE_H
 
@@ -100,6 +99,11 @@ public:
      *
      */
     virtual Buteo::StorageItem* getItem( const QString& aItemId );
+
+    /*! \see StoragePlugin::getItems()
+     *
+     */
+    virtual QList<Buteo::StorageItem*> getItems( const QStringList& aItemIdList );
 
     /*! \see StoragePlugin::addItem()
      *

@@ -80,7 +80,7 @@ public:
 
     /*! \brief Uninitializes adapter
      *
-     * @param True if uninitialization was successful, otherwise false
+     * @return True if uninitialization was successful, otherwise false
      */
     bool uninit();
 
@@ -131,6 +131,11 @@ public:
      *
      */
     virtual DataSync::SyncItem* getSyncItem( const DataSync::SyncItemKey& aKey );
+
+    /*! \see DataSync::StoragePlugin::getSyncItems()
+     *
+     */
+    virtual QList<DataSync::SyncItem*> getSyncItems( const QList <DataSync::SyncItemKey>& aKeyList );
 
     /*! \see DataSync::StoragePlugin::addItems()
      *

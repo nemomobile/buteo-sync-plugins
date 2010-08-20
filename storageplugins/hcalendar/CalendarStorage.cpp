@@ -24,6 +24,7 @@
 #include "CalendarStorage.h"
 
 #include <QFile>
+#include <QStringListIterator>
 
 #include "SimpleItem.h"
 #include "SyncMLCommon.h"
@@ -31,7 +32,7 @@
 
 #include <LogMacros.h>
 
-// @todo: Because Calendar does not support batched operations ( or it does
+// @todo: Because CalendarMaemo does not support batched operations ( or it does
 //        but we can't use it as we cannot retrieve the id's of committed items ),
 //        batched operations are currently done in series.
 
@@ -261,6 +262,35 @@ Buteo::StorageItem* CalendarStorage::newItem()
     FUNCTION_CALL_TRACE;
 
     return new SimpleItem();
+}
+
+QList<Buteo::StorageItem*> CalendarStorage::getItems( const QStringList& aItemIdList )
+{
+    FUNCTION_CALL_TRACE;
+
+    KCal::Incidence::List incidences;
+    KCal::Incidence* item;
+    QList<Buteo::StorageItem*> items;
+    QStringListIterator itr( aItemIdList );
+
+    while( itr.hasNext() )
+    {
+        //TODO Does calendar backend support batch fetch, check!
+        QString id = itr.next();
+        item = iCalendar.getIncidence( id );
+        if( item )
+        {
+            incidences.append( item );
+        }
+        else
+        {
+            LOG_WARNING("Could not find item " << id);
+        }
+    }
+
+    retrieveItems( incidences, items );
+ 
+    return items;
 }
 
 Buteo::StorageItem* CalendarStorage::getItem( const QString& aItemId )

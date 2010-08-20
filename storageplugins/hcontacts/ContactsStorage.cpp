@@ -20,16 +20,15 @@
  * 02110-1301 USA
  *
  */
-
 #include <QFile>
+#include <QStringListIterator>
 #include <LogMacros.h>
 #include "ContactsStorage.h"
 #include "SimpleItem.h"
 #include "SyncMLCommon.h"
 #include "SyncMLConfig.h"
-#include <qcontact.h>
-#include <qcontactmanager.h>
-#include <qversitdocument.h>
+
+#include <QContact>
 
 
 QTM_USE_NAMESPACE
@@ -39,56 +38,29 @@ const char* CTCAPSFILENAME12 = "CTCaps_contacts_12.xml";
 
 
 extern "C" Buteo::StoragePlugin*  createPlugin(const QString& aPluginName)
-		{
-	return new ContactStorage(aPluginName);
-		}
+{
+    return new ContactStorage(aPluginName);
+}
 
 extern "C" void destroyPlugin(Buteo::StoragePlugin* storage)
 {
-	delete storage;
+    delete storage;
 }
 
-ContactStorage::ContactStorage(const QString& aPluginName) :
-        		Buteo::StoragePlugin(aPluginName)
-        		{
-	FUNCTION_CALL_TRACE;
-	iPluginName = aPluginName;
-	iBackend = NULL;
-        		}
+ContactStorage::ContactStorage(const QString& aPluginName)
+ : Buteo::StoragePlugin(aPluginName), iBackend( 0 )
+{
+    FUNCTION_CALL_TRACE;
+}
 
 ContactStorage::~ContactStorage()
 {
-	FUNCTION_CALL_TRACE;
-	if(iBackend) {
-		qWarning()  << "uninit method has not been called" ;
-		delete iBackend;
-	}
-}
-
-QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &aStrIDList)
-{
-	FUNCTION_CALL_TRACE;
-    
-	QList<Buteo::StorageItem*> itemList;
-
-
-    if (iBackend != NULL) {
-        QMap<QContactLocalId,QString> idDataMap;
-        iBackend->getContacts(aStrIDList, idDataMap);
-        QMapIterator<QContactLocalId, QString > iter(idDataMap);
-
-        while (iter.hasNext()) {
-            iter.next();
-            SimpleItem* item = convertVcardToStorageItem(iter.key(), iter.value());
-
-            if (item  != NULL) {
-                itemList.append(item);
-            }
-            
-        }
+    FUNCTION_CALL_TRACE;
+    if(iBackend) {
+        LOG_WARNING( "Uninit method has not been called!" );
+        delete iBackend;
+        iBackend = 0;
     }
-
-	return itemList;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -97,61 +69,61 @@ QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &
 
 bool ContactStorage::init( const QMap<QString, QString>& aProperties )
 {
-	FUNCTION_CALL_TRACE;
-   
-    QVersitDocument::VersitType vCardVersion;	
+    FUNCTION_CALL_TRACE;
+
     iDeletedItems.uninit();
 
-    if (!initDeletedItemsIdStorage()) {
+    const QString dbFile = "hcontacts.db";
+    QString fullDbPath = SyncMLConfig::getDatabasePath() + dbFile;
+
+    if( !iDeletedItems.init(fullDbPath) ) {
+        return false;
+    }
+   
+    QVersitDocument::VersitType vCardVersion;
+
+    iProperties = aProperties;
+
+    QString propVersion = iProperties[STORAGE_DEFAULT_MIME_VERSION_PROP];
+
+    if(propVersion == "3.0") {
+        LOG_DEBUG( "Storage is using VCard version 3.0" );
+        vCardVersion =  QVersitDocument::VCard30Type;
+        iProperties[STORAGE_DEFAULT_MIME_PROP] = "text/vcard";
+    }
+    else {
+        LOG_DEBUG( "Storage is using VCard version 2.1");
+        vCardVersion = QVersitDocument::VCard21Type;
+    }
+
+    iProperties[STORAGE_SYNCML_CTCAPS_PROP_11] = getCtCaps( CTCAPSFILENAME11 );
+    iProperties[STORAGE_SYNCML_CTCAPS_PROP_12] = getCtCaps( CTCAPSFILENAME12 );
+
+    iBackend = new ContactsBackend(vCardVersion);
+
+    if( !iBackend->init() ) {
+        LOG_CRITICAL( "Failed to init contacts backend" );
         return false;
     }
 
-	iProperties = aProperties;
-
-	QString propVersion = iProperties[STORAGE_DEFAULT_MIME_VERSION_PROP];
-
-	if(propVersion == "3.0") {
-		qDebug()  << "Storage is using VCard version 3.0\n";
-		vCardVersion =  QVersitDocument::VCard30Type;
-		iProperties[STORAGE_DEFAULT_MIME_PROP]          = "text/vcard";
-	}
-	else {
-		qDebug()  << "Storage is using VCard version 2.1\n";
-		vCardVersion = QVersitDocument::VCard21Type;
-	}
-
-	iProperties[STORAGE_SYNCML_CTCAPS_PROP_11]      = getCtCaps( CTCAPSFILENAME11 );
-	iProperties[STORAGE_SYNCML_CTCAPS_PROP_12]      = getCtCaps( CTCAPSFILENAME12 );
-
-	iBackend = new ContactsBackend(vCardVersion);
-    
-	if(!iBackend)  {
-		qDebug()  <<"Memory Allocation Failed ";
-		return false;
-	}
-    else if(!iBackend->init()) {
-		qDebug() << "Failed To Init the Contacts Backend";
-		return false;
-	}
-
-    if (!updateDeletedItemsList()) {
+    if( !doInitItemAnalysis() ) {
         return false;
     }
     
-	return true;
+    return true;
 }
 
 bool ContactStorage::uninit()
 {
-	FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-    updateSnapshot(iSnapshotCreationTime);
+    doUninitItemAnalysis();
 
     // If the backend object is NULL, there is nothing to do anyway, 
     // so the default value can be 'true' here.
     bool backendUninitOk = true;
     
-    if (iBackend != NULL) {
+    if( iBackend != NULL) {
         backendUninitOk = iBackend->uninit();
         delete iBackend;
         iBackend = NULL;
@@ -161,23 +133,6 @@ bool ContactStorage::uninit()
 
     return (backendUninitOk && deleteItemsIdStorageUninitOk);
 }
-
-QByteArray ContactStorage::getCtCaps( const QString& aFilename ) const
-		{
-	FUNCTION_CALL_TRACE;
-
-	QFile ctCapsFile( SyncMLConfig::getXmlDataPath() + aFilename  );
-	QByteArray ctCaps;
-
-	if( ctCapsFile.open(QIODevice::ReadOnly)) {
-		ctCaps = ctCapsFile.readAll();
-		ctCapsFile.close();
-	} else {
-		qWarning()  << "Failed to open CTCaps file for contacts storage:" << aFilename ;
-	}
-
-	return ctCaps;
-		}
 
 bool ContactStorage::getAllItems(QList<Buteo::StorageItem*> &aItems)
 {
@@ -205,7 +160,6 @@ bool ContactStorage::getAllItemIds( QList<QString>& aItems )
 		list = iBackend->getAllContactIds();
 		qDebug() << " Number of items retrieved from Contacts " << list.size();
 		foreach(QContactLocalId id , list) {
-			qDebug()  << "appending id " << id;
 			aItems.append(QString::number(id));
 		}
 		operationStatus = true;
@@ -297,117 +251,169 @@ bool ContactStorage::getDeletedItemIds( QList<QString>& aDeletedItemIds, const Q
 
 Buteo::StorageItem* ContactStorage::newItem()
 {
-	FUNCTION_CALL_TRACE;
-	return new SimpleItem;
+    FUNCTION_CALL_TRACE;
+    return new SimpleItem;
+}
+
+QList<Buteo::StorageItem*> ContactStorage::getItems( const QStringList& aItemIdList )
+{
+    FUNCTION_CALL_TRACE;
+
+    QList<Buteo::StorageItem*> items;
+    QMap<QContactLocalId,QString> vcards;
+    QList<QContactLocalId> ids;
+    QStringListIterator itr( aItemIdList );
+
+    if( iBackend )
+    {
+        while( itr.hasNext() )
+        {
+            ids.append( itr.next().toUInt() );
+        }
+        iBackend->getContacts( ids, vcards );
+        QMapIterator<QContactLocalId,QString> i(vcards);
+        while( i.hasNext() )
+        {
+            i.next();
+            if( !i.value().isEmpty() )
+            {
+                SimpleItem *item = new SimpleItem;
+                item->setId( QString::number( i.key() ) );
+                item->setType( iProperties[STORAGE_DEFAULT_MIME_PROP] );
+                item->write( 0, i.value().toUtf8() );
+                items.append( item );
+            }
+            else
+            {
+                LOG_WARNING("Contact with id " << i.key() <<" doesn't exist!");
+            }
+        }
+    }
+
+    return items;
 }
 
 Buteo::StorageItem* ContactStorage::getItem( const QString& aItemId )
 {
-	FUNCTION_CALL_TRACE;
-    
-	SimpleItem *newItem = NULL;
-    
-	if(iBackend) {
-		QString contactData;
-        iBackend->getContact(aItemId.toUInt(), contactData);
-        
-		if(!contactData.isEmpty()) {
-			newItem = new SimpleItem;
-			newItem->setId(aItemId);
-			newItem->setType(iProperties[STORAGE_DEFAULT_MIME_PROP]);
-			newItem->write(0,contactData.toUtf8());
-		}
-        else {
-			qDebug()  << "Contact does not exist. the id given is : " << aItemId;
-		}
-	}
-    
-	return newItem;
+    FUNCTION_CALL_TRACE;
+
+    if( !iBackend )
+    {
+        return NULL;
+    }
+
+    SimpleItem* newItem = NULL;
+
+    QContactLocalId id = aItemId.toUInt();
+    QContact contact;
+
+    iBackend->getContact( id, contact );
+
+    if( iFreshItems.contains( id ) )
+    {
+        LOG_DEBUG( "Intercepted fresh item:" << id );
+        QDateTime creationTime = iBackend->getCreationTime( contact );
+        iSnapshot.insert( id, creationTime );
+        iFreshItems.removeOne( id );
+    }
+
+    QString contactData = iBackend->convertQContactToVCard( contact );
+
+    if(!contactData.isEmpty())
+    {
+        newItem = new SimpleItem;
+        newItem->setId(aItemId);
+        newItem->setType(iProperties[STORAGE_DEFAULT_MIME_PROP]);
+        newItem->write(0,contactData.toUtf8());
+    }
+    else
+    {
+        LOG_WARNING( "Contact does not exist:" << aItemId );
+    }
+
+    return newItem;
 }
 
 ContactStorage::OperationStatus ContactStorage::addItem(Buteo::StorageItem& aItem)
 {
-	FUNCTION_CALL_TRACE;
-	QString strID("");
-        QList<QDateTime> creationTimes;
-        QList<QString> newSnapShot;
-	ContactStorage::OperationStatus status = STATUS_ERROR;
-	if(iBackend) {
-		QByteArray data;
+    FUNCTION_CALL_TRACE;
 
-		aItem.read(0, aItem.getSize(), data );
-		QString Contact = QString::fromUtf8( data.data() );
+    QList<Buteo::StorageItem*> items;
+    items.append( &aItem );
 
-		qDebug() << "Adding an Item with data : " << Contact;
-		QContactManager::Error error = iBackend->addContact(Contact ,strID, creationTimes);
+    QList<ContactStorage::OperationStatus> status = addItems( items );
 
-		status = mapErrorStatus(error);
-		qDebug() << "After Adding an Item backend returned its id as : " << strID;
-
-		aItem.setId(strID);
-
-                iAddedItemsList.append(strID.toUInt());
-                iCreationTimes += creationTimes;
-
-	}else {
-		qDebug()  << "Backend is not properly initialised";
-	}
-	return status;
+    return status.first();
 }
 
-QList<ContactStorage::OperationStatus> ContactStorage:: addItems( const QList<Buteo::StorageItem*>& aItems )
+QList<ContactStorage::OperationStatus> ContactStorage::addItems( const QList<Buteo::StorageItem*>& aItems )
 {
-	FUNCTION_CALL_TRACE;
-	QList<ContactStorage::OperationStatus> storageErrorList;
 
-	if(iBackend) {
+    FUNCTION_CALL_TRACE;
 
-		QList<QString> contactsList;
-		foreach(Buteo::StorageItem *item , aItems) {
-			QByteArray data;
-			item->read(0,item->getSize(),data);
-			contactsList.append(QString::fromUtf8(data.data()));
-		}
+    QList<ContactStorage::OperationStatus> storageErrorList;
+    QDateTime currentTime = QDateTime::currentDateTime();
 
-		QList<QString> contactsIdList;
-		QList<QDateTime> creationTimes;
-                QList<QString> newSnapShot;
-		QMap<int, QContactManager::Error> contactsErrorMap; 
-		bool retVal = iBackend->addContacts(contactsList, contactsErrorMap, creationTimes);
+    if( !iBackend )
+    {
+        for ( int i = 0; i < aItems.size(); i++)
+        {
+            storageErrorList.append(STATUS_ERROR);
+        }
+        return storageErrorList;
+    }
 
-		if((contactsErrorMap.size()  != contactsList.size()) || !retVal)
-		{
+    QList<QString> contactsList;
+    foreach(Buteo::StorageItem *item , aItems) {
+        QByteArray data;
+        item->read(0,item->getSize(),data);
+        contactsList.append(QString::fromUtf8(data.data()));
+    }
 
-			LOG_WARNING("Something Wrong with Batch Addition in Contacts Backend : " << retVal);
-			LOG_DEBUG("contactsErrorMap.size() " << contactsErrorMap.size() );
-			LOG_DEBUG("contactsList.size()" << contactsList.size());
+    QList<QString> contactsIdList;
+    QMap<int, ContactsStatus> contactsErrorMap;
+    bool retVal = iBackend->addContacts(contactsList, contactsErrorMap);
 
-			for ( int i = 0; i < aItems.size(); i++) {
-					storageErrorList.append(STATUS_ERROR);
-			}
+    if((contactsErrorMap.size()  != contactsList.size()) ||
+        (contactsList.size() != aItems.size()))
+    {
 
-		} else  {
+        LOG_WARNING("Something Wrong with Batch Addition in Contacts Backend : " << retVal);
+        LOG_DEBUG("contactsErrorMap.size() " << contactsErrorMap.size() );
+        LOG_DEBUG("contactsList.size()" << contactsList.size());
+        LOG_DEBUG("aItems.size()" << aItems.size());
 
-			QMapIterator<int ,QContactManager::Error> i(contactsErrorMap);
-			int j = 0;
-			while (i.hasNext()) {
-				i.next();
-				Buteo::StorageItem *item = aItems[j];
-				item->setId(QString::number(i.key()));
-                                iAddedItemsList.append(i.key());
-				storageErrorList.append(mapErrorStatus(i.value()));
-				j++;
-			}
-                        iCreationTimes += creationTimes;
+        for ( int i = 0; i < aItems.size(); i++) {
+            storageErrorList.append(STATUS_ERROR);
+        }
 
-		}
-	} else {
-		for ( int i = 0; i < aItems.size(); i++) {
-			storageErrorList.append(STATUS_ERROR);
-		}
-	}
+    }
+    else
+    {
 
-	return storageErrorList;
+        QMapIterator<int ,ContactsStatus> i(contactsErrorMap);
+        int j = 0;
+        while (i.hasNext()) {
+            i.next();
+            Buteo::StorageItem *item = aItems[j];
+            item->setId(QString::number(i.value().id));
+
+            ContactStorage::OperationStatus status = mapErrorStatus(i.value().errorCode);
+
+            if( status == STATUS_OK )
+            {
+                // This item was successfully added, so let's add it to the snapshot
+                iSnapshot.insert( i.value().id, currentTime );
+            }
+
+            storageErrorList.append(status);
+            j++;
+        }
+
+    }
+
+    return storageErrorList;
+
 }
 
 
@@ -450,7 +456,7 @@ QList<ContactStorage::OperationStatus> ContactStorage::modifyItems(const QList<B
 			contactsIdList.append(item->getId());
 		}
 
-        QMap<int, QContactManager::Error> contactsErrorMap =
+        QMap<int, ContactsStatus> contactsErrorMap =
                 iBackend->modifyContacts(contactsList, contactsIdList);
 
 		if(contactsErrorMap.size()  != contactsList.size())
@@ -465,14 +471,14 @@ QList<ContactStorage::OperationStatus> ContactStorage::modifyItems(const QList<B
 
 		} else  {
 
-            QMapIterator<int, QContactManager::Error> i(contactsErrorMap);
+            QMapIterator<int, ContactsStatus> i(contactsErrorMap);
 			int j = 0;
 			while (i.hasNext()) {
 				i.next();
 				Buteo::StorageItem *item = aItems[j];
-				item->setId(QString::number(i.key()));
+				item->setId(QString::number(i.value().id));
 				LOG_DEBUG("Id set in Storage " << item->getId());
-				storageErrorList.append(mapErrorStatus(i.value()));
+				storageErrorList.append(mapErrorStatus(i.value().errorCode));
 				j++;
 			}
 
@@ -490,209 +496,325 @@ QList<ContactStorage::OperationStatus> ContactStorage::modifyItems(const QList<B
 
 ContactStorage::OperationStatus ContactStorage::deleteItem( const QString& aItemId )
 {
-	FUNCTION_CALL_TRACE;
-    
-	ContactStorage::OperationStatus status = STATUS_ERROR;
+    FUNCTION_CALL_TRACE;
 
-    QString itemIdString = aItemId;
-    QContactLocalId itemId = (QContactLocalId)aItemId.toUInt();
-    QDateTime creationTime;
-    
-	if(iBackend != NULL) {
-                creationTime = iBackend->creationTime(itemId);
-		QContactManager::Error error = iBackend->deleteContact( itemIdString );
-		status = mapErrorStatus(error);
-                QDateTime deletionTime = QDateTime::currentDateTime();
-                iDeletedItems.addDeletedItem( aItemId, creationTime, deletionTime);
-	}
-    
-	return status;
+    QList<QString> itemIds;
+    itemIds.append( aItemId );
+
+    QList<ContactStorage::OperationStatus> status = deleteItems( itemIds );
+
+    return status.first();
 }
 
 QList<ContactStorage::OperationStatus> ContactStorage::deleteItems(const QList<QString>& aItemIds )
 {
-	FUNCTION_CALL_TRACE;
-	QList<ContactStorage::OperationStatus> statusList;
+    FUNCTION_CALL_TRACE;
 
-	if(iBackend) {
+    QList<ContactStorage::OperationStatus> statusList;
+    QDateTime currentTime = QDateTime::currentDateTime();
 
-		if(iBackend->batchUpdatesEnabled()) {
+    if( !iBackend )
+    {
+        for ( int i = 0; i < aItemIds.size(); i++)
+        {
+            statusList.append(STATUS_ERROR);
+        }
+        return statusList;
+    }
 
-			QMap<int , QContactManager::Error> errorMap  =  iBackend->deleteContacts(aItemIds);
-			if(errorMap.size() !=aItemIds.size() ) {
-				LOG_WARNING("Something wrong with batch deletion of Contacts");
-			LOG_DEBUG("contactsErrroMap.size() " << errorMap.size() );
-			LOG_DEBUG("contactsList.size()" << aItemIds.size() );
-		        for ( int i = 0; i < aItemIds.size(); i++) {
-			    statusList.append(STATUS_ERROR);
-		        }
-			}
-                        else
-                        {
+    QMap<int, ContactsStatus> errorMap = iBackend->deleteContacts(aItemIds);
+    if(errorMap.size() !=aItemIds.size() )
+    {
+        LOG_WARNING("Something wrong with batch deletion of Contacts");
+        LOG_DEBUG("contactsErrroMap.size() " << errorMap.size() );
+        LOG_DEBUG("contactsList.size()" << aItemIds.size() );
+        for ( int i = 0; i < aItemIds.size(); i++)
+        {
+            statusList.append(STATUS_ERROR);
+        }
+    }
+    else
+    {
+        QList<QString> itemIds;
+        QList<QDateTime> creationTimes;
+        QList<QDateTime> deletionTimes;
 
-			QMapIterator<int ,QContactManager::Error> i(errorMap);
-			while (i.hasNext()) {
-				i.next();
-				statusList.append(mapErrorStatus(i.value()));
-			}
-                        }
+        QMapIterator<int, ContactsStatus> i(errorMap);
+        int j = 0;
+        while( i.hasNext() )
+        {
+            i.next();
+            ContactStorage::OperationStatus status = mapErrorStatus( i.value().errorCode );
 
-		} else {
+            if( status == STATUS_OK )
+            {
 
-			foreach(QString id, aItemIds) {
-				statusList.append(this->deleteItem(id));
-			}
+                // This item was successfully deleted, so let's remove it from the snapshot and
+                // add it to the deleted items.
 
-		} // end if(iBackend->batchUpdatesEnabled())
+                QString itemId = aItemIds[j];
 
-	} else {
+                itemIds.append( itemId );
+                creationTimes.append( iSnapshot.value( itemId.toUInt()) );
+                deletionTimes.append( currentTime );
 
-		for(int i =0 ; i < aItemIds.size() ; i++) {
-			statusList.append(STATUS_ERROR);
-		}
 
-	}
+                iSnapshot.remove( itemId.toUInt() );
+            }
 
-	return statusList;
+            statusList.append( status );
+            j++;
+        }
+
+        if( !itemIds.isEmpty() )
+        {
+            iDeletedItems.addDeletedItems( itemIds, creationTimes, deletionTimes );
+        }
+    }
+
+
+    return statusList;
+}
+
+bool ContactStorage::doInitItemAnalysis()
+{
+    /* Items are analyzed using two sets of items: those that existed at the end
+     * of the previous time this plugin was uninitiated (called snapshot), and those
+     * that exists now (called backend). The point of the analysis is to divide the
+     * items into 3 groups:
+     * 1) Items that exist only in the snapshot. These items have been deleted, and
+     *    should be moved to the list of deleted items. The creation time of these
+     *    items is known, as they are stored in the database.
+     * 2) Items that exist both in the snapshot and the backend. Since there's no
+     *    change in the lifetime of these items, they do not need any special
+     *    attention.
+     * 3) Items that exist only in the backed. These items have been created recently,
+     *    so their creation time needs to be fetched from the backend before they
+     *    are added to snapshot we are storing to database during uninit(). We could
+     *    retrieve creation times here, but because these items are usually accessed
+     *    anyway during a session, we will just add them to a list of "fresh items"
+     *    which will be checked whenever a contact is retrieved from backend.
+     *    The creation times of all remaining "fresh" items which were not accessed
+     *    during the session will be retrieved in uninit()
+     *
+     * After items have been analyzed, the in-memory snapshot will be identical to
+     * backend. In-memory snapshot is updated whenever we add or delete items. In
+     * the item analysis of uninit() we therefore have an up-to-date snapshot of the
+     * contents of the backend. Changes that external application do the beckend
+     * during the sync session will get discovered in the next session.
+     */
+
+    FUNCTION_CALL_TRACE;
+
+    Q_ASSERT( iBackend );
+    iSnapshot.clear();
+    iFreshItems.clear();
+
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QMap<QContactLocalId, QDateTime> snapshot;
+    QList<QContactLocalId> backend;
+    QList<QContactLocalId> freshItems;
+
+
+    // ** Retrieve previous snapshot from db and convert to QHash
+    QList<QString> snapshotItems;
+    QList<QDateTime> snapshotCreationTimes;
+
+    if( !iDeletedItems.getSnapshot(snapshotItems, snapshotCreationTimes) ) {
+        return false;
+    }
+
+    for( int i = 0; i < snapshotItems.count(); ++i )
+    {
+        snapshot.insert( snapshotItems[i].toUInt(), snapshotCreationTimes[i] );
+    }
+
+    // ** Retrieve backend
+    backend = iBackend->getAllContactIds();
+
+    LOG_DEBUG( "Found" << snapshot.count() << "items from snapshot" );
+    LOG_DEBUG( "Found" << backend.count() << "items from backend" );
+
+    // ** Find items only in the snapshot and mark them as deleted
+
+    QMutableMapIterator<QContactLocalId, QDateTime> i( snapshot );
+
+    QList<QString> itemIds;
+    QList<QDateTime> creationTimes;
+    QList<QDateTime> deletionTimes;
+
+    while( i.hasNext() )
+    {
+        i.next();
+        if( !backend.contains( i.key() ) )
+        {
+            itemIds.append( QString::number( i.key() ) );
+            creationTimes.append( i.value() );
+            deletionTimes.append( currentTime );
+            i.remove();
+        }
+    }
+
+    LOG_DEBUG( "Detected" << itemIds.count() <<"deleted items" );
+
+    if( !itemIds.isEmpty() )
+    {
+        iDeletedItems.addDeletedItems( itemIds, creationTimes, deletionTimes );
+    }
+
+    // ** Find items only in backend and mark them as fresh items
+
+    for( int i = 0; i < backend.count(); ++i )
+    {
+        if( !snapshot.contains( backend[i] ) )
+        {
+            freshItems.append( backend[i] );
+            snapshot.insert( backend[i], QDateTime() );
+        }
+    }
+
+    iSnapshot = snapshot;
+    iFreshItems = freshItems;
+
+    LOG_DEBUG( "Detected" << iFreshItems.count() <<"fresh items" );
+
+    return true;
+
+}
+
+bool ContactStorage::doUninitItemAnalysis()
+{
+    FUNCTION_CALL_TRACE;
+
+    Q_ASSERT( iBackend );
+
+    // ** Retrieve creation times for the remaining "fresh" items from the backend
+
+    if( !iFreshItems.isEmpty() )
+    {
+
+        LOG_DEBUG( "Retrieving creation times for" << iFreshItems.count() << "fresh items" );
+
+        QList<QDateTime> freshCreationTimes = iBackend->getCreationTimes( iFreshItems );
+
+        for( int i = 0; i < iFreshItems.count(); ++i )
+        {
+            iSnapshot.insert( iFreshItems[i], freshCreationTimes[i] );
+        }
+    }
+
+    // ** Store the snapshot to the database
+
+    QTime timer;
+    timer.start();
+    QList<QContactLocalId> intIds = iSnapshot.keys();
+
+    QList<QString> ids;
+    for( int i = 0; i < intIds.count(); ++i )
+    {
+        ids.append( QString::number( intIds[i] ) );
+    }
+
+    QList<QDateTime> creationTimes = iSnapshot.values();
+
+    LOG_DEBUG( "Storing" << ids.count() <<"items to snapshot" );
+
+    iDeletedItems.setSnapshot( ids, creationTimes );
+
+    iSnapshot.clear();
+    iFreshItems.clear();
+
+    return true;
+}
+
+
+QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &aStrIDList)
+{
+        FUNCTION_CALL_TRACE;
+
+        QList<Buteo::StorageItem*> itemList;
+
+
+    if (iBackend != NULL) {
+        QMap<QContactLocalId,QString> idDataMap;
+        iBackend->getContacts(aStrIDList, idDataMap);
+        QMapIterator<QContactLocalId, QString > iter(idDataMap);
+
+        while (iter.hasNext()) {
+            iter.next();
+            SimpleItem* item = convertVcardToStorageItem(iter.key(), iter.value());
+
+            if (item  != NULL) {
+                itemList.append(item);
+            }
+
+        }
+    }
+
+    return itemList;
+}
+
+QByteArray ContactStorage::getCtCaps( const QString& aFilename ) const
+{
+    FUNCTION_CALL_TRACE;
+
+    QFile ctCapsFile( SyncMLConfig::getXmlDataPath() + aFilename  );
+    QByteArray ctCaps;
+
+    if( ctCapsFile.open(QIODevice::ReadOnly)) {
+        ctCaps = ctCapsFile.readAll();
+        ctCapsFile.close();
+    } else {
+        qWarning()  << "Failed to open CTCaps file for contacts storage:" << aFilename ;
+    }
+
+    return ctCaps;
 }
 
 ContactStorage::OperationStatus ContactStorage::mapErrorStatus\
 (const QContactManager::Error &aContactError) const
 {
-	ContactStorage::OperationStatus iStorageStatus = STATUS_ERROR;
-	switch(aContactError) {
-	case QContactManager::NoError:
-		iStorageStatus = STATUS_OK;
-		break;
+        ContactStorage::OperationStatus iStorageStatus = STATUS_ERROR;
+        switch(aContactError) {
+        case QContactManager::NoError:
+                iStorageStatus = STATUS_OK;
+                break;
 
-	case QContactManager::DoesNotExistError:
-		iStorageStatus = STATUS_NOT_FOUND;
-		break;
+        case QContactManager::DoesNotExistError:
+                iStorageStatus = STATUS_NOT_FOUND;
+                break;
 
-	case QContactManager::AlreadyExistsError:
-		iStorageStatus = STATUS_DUPLICATE;
-		break;
+        case QContactManager::AlreadyExistsError:
+                iStorageStatus = STATUS_DUPLICATE;
+                break;
 
-	case QContactManager::InvalidDetailError:
-	case QContactManager::VersionMismatchError:
-	case QContactManager::InvalidContactTypeError:
-		iStorageStatus = STATUS_INVALID_FORMAT;
-		break;
+        case QContactManager::InvalidDetailError:
+        case QContactManager::VersionMismatchError:
+        case QContactManager::InvalidContactTypeError:
+                iStorageStatus = STATUS_INVALID_FORMAT;
+                break;
 
-	case QContactManager::OutOfMemoryError:
-		iStorageStatus = STATUS_STORAGE_FULL;
-		break;
+        case QContactManager::OutOfMemoryError:
+                iStorageStatus = STATUS_STORAGE_FULL;
+                break;
 
-	case QContactManager::LimitReachedError:
-		iStorageStatus = STATUS_OBJECT_TOO_BIG;
-		break;
+        case QContactManager::LimitReachedError:
+                iStorageStatus = STATUS_OBJECT_TOO_BIG;
+                break;
 
-	case QContactManager::InvalidRelationshipError:
-	case QContactManager::LockedError:
-	case QContactManager::DetailAccessError:
-	case QContactManager::PermissionsError:
-	case QContactManager::NotSupportedError:
-	case QContactManager::BadArgumentError:
-	case QContactManager::UnspecifiedError:
-	default:
-		iStorageStatus = STATUS_ERROR;
-		break;
-	}
-	return iStorageStatus;
-}
-
-
-/*!
-    \fn ContactStorage::initDeletedItemsIdStorage()
- */
-bool ContactStorage::initDeletedItemsIdStorage()
-{
-    FUNCTION_CALL_TRACE;
-
-    const QString dbFile = "hcontacts.db";
-    QString fullDbPath = SyncMLConfig::getDatabasePath() + dbFile;
-
-    return iDeletedItems.init(fullDbPath);
-}
-
-
-/*!
-    \fn ContactStorage::updateSnaphot()
- */
-void ContactStorage::updateSnapshot(QDateTime aSnapshotCreationtime)
-{
-    FUNCTION_CALL_TRACE;
-
-    Q_UNUSED(aSnapshotCreationtime);
-    
-    QList<QString> newSnapshot;
-    QList<QDateTime> creationTimes;
-    QList<QContact> contactList;
-
-    iBackend->getContacts(iItemsInBackend,contactList);
-    LOG_DEBUG(iItemsInBackend.size() << " items in backend");
-    LOG_DEBUG(iAddedItemsList.size() << " items added");
-
-    foreach (QContact contact, contactList) {
-	creationTimes.append(iBackend->creationTime(contact));
-	newSnapshot.append(QString::number(contact.id().localId()));
-    }
-    foreach( QContactLocalId id, iAddedItemsList )
-    {
-        newSnapshot.append( QString::number( id ) );
-    }
-    creationTimes += iCreationTimes;
-    iDeletedItems.setSnapshot( newSnapshot, creationTimes );
-
-    iAddedItemsList.clear();
-}
-
-
-/*!
-    \fn ContactStorage::readBackendItems()
- */
-void ContactStorage::readBackendItems()
-{
-    FUNCTION_CALL_TRACE;
-    
-    iItemsInBackend = iBackend->getAllContactIds();
-    iSnapshotCreationTime = QDateTime::currentDateTime();
-}
-
-
-/*!
-    \fn ContactStorage::updateDeletedItemsList()
- */
-bool ContactStorage::updateDeletedItemsList()
-{
-    FUNCTION_CALL_TRACE;
-    
-    QList<QString> items;
-    QList<QDateTime> creationTimes;
-    
-    if( !iDeletedItems.getSnapshot(items, creationTimes) ) {
-        return false;
-    }
-
-    readBackendItems();
-   
-    LOG_DEBUG( "Found" << items.count() << "items from snapshot" );
-    LOG_DEBUG( "Found" << iItemsInBackend.count() << "items from backend" );
-
-    QDateTime deletionTime = QDateTime::currentDateTime();
-    
-    // Item has been deleted if it can be found from snapshot but not from given items
-    foreach (QString snapshotItemId, items) {
-        if (!iItemsInBackend.contains(snapshotItemId.toUInt())) {
-            LOG_DEBUG("Adding item " << snapshotItemId << " to deleted items list");
-            int index = items.indexOf(snapshotItemId);
-            iDeletedItems.addDeletedItem( items.at(index), creationTimes.at(index), deletionTime );
+        case QContactManager::InvalidRelationshipError:
+        case QContactManager::LockedError:
+        case QContactManager::DetailAccessError:
+        case QContactManager::PermissionsError:
+        case QContactManager::NotSupportedError:
+        case QContactManager::BadArgumentError:
+        case QContactManager::UnspecifiedError:
+        default:
+                iStorageStatus = STATUS_ERROR;
+                break;
         }
-    }
-
-    return true;
+        return iStorageStatus;
 }
-
 
 /*!
     \fn ContactStorage::convertVcardToStorageItem(const QContactLocalId, const QString&)
@@ -700,10 +822,11 @@ bool ContactStorage::updateDeletedItemsList()
 SimpleItem* ContactStorage::convertVcardToStorageItem(const QContactLocalId aItemKey,
                                                       const QString& aItemData)
 {
+
     FUNCTION_CALL_TRACE;
 
     SimpleItem* storageItem = new SimpleItem;
-    
+
     if(storageItem != NULL) {
         qDebug() << "ID is " << aItemKey;
         qDebug() << "Data is " << aItemData;
@@ -714,6 +837,6 @@ SimpleItem* ContactStorage::convertVcardToStorageItem(const QContactLocalId aIte
     else {
         qWarning() << "Memory Allocation Failed";
     }
-    
+
     return storageItem;
 }

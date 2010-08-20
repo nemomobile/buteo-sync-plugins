@@ -6,7 +6,7 @@ INCLUDEPATH += . ../../syncmlcommon \
     /usr/include/sync \
     /usr/include/kcal
 
-LIBS += -lsyncpluginmgr -lextendedkcal -lQtTest
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr -lextendedkcal -lQtTest
 
 CONFIG += debug plugin silent
 
@@ -15,14 +15,9 @@ QT -= gui
 #input
 HEADERS += NotesStorage.h \
            NotesBackend.h \
-           ../../syncmlcommon/SimpleItem.h \
-           ../../syncmlcommon/SyncMLConfig.h \
-           ../../syncmlcommon/SyncMLCommon.h
 
 SOURCES += NotesStorage.cpp \
            NotesBackend.cpp \
-           ../../syncmlcommon/SimpleItem.cpp \
-           ../../syncmlcommon/SyncMLConfig.cpp 
 
 QMAKE_CXXFLAGS = -Wall \
     -g \

@@ -40,9 +40,12 @@ namespace Buteo {
 
     public:
 
-        // getDeviceInformation call checks this enum
+        //! getDeviceInformation call checks this enum
         enum Source {
+	    //! read from system 	
             ReadFromSystem,
+
+	    //! read from xml 
             ReadFromXml
         };
 
@@ -55,22 +58,6 @@ namespace Buteo {
      *
      */
         virtual ~DeviceInfo();
-
-        /*! \brief set properties to read from the device
-         *
-         * This API sets the properties to be read.
-         * @return none
-         */
-        void setPropertiesToRead(QStringList &);
-
-
-        /*! \brief properties to read from the device
-         *
-         * get method to know the set properties.
-         * @return Properties
-         */
-        QStringList PropertiesToRead();
-
 
         /*! \brief set properties to read from the devicse
          *
@@ -121,6 +108,7 @@ namespace Buteo {
 
     private:
 
+
         Source iSource;
         QStringList iProperties;
         QString iDeviceInfoFile;
@@ -145,6 +133,11 @@ namespace Buteo {
         QString getFwVersion();
         QString getModel();
         QString getDeviceType();
+
+#ifdef SYNC_APP_UNITTESTS
+       friend class DeviceInfoTest;
+#endif
+
 
     };
 

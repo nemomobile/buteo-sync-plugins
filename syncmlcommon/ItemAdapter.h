@@ -40,7 +40,6 @@ public:
     /*! \brief Constructor
      *
      * @param aItem Item that this instance should adapt. Ownership transferred
-     * @param aType Type of this item
      */
     ItemAdapter( Buteo::StorageItem* aItem );
 

@@ -25,32 +25,43 @@
 #define TESTCONTACTS_H_
 
 #include <QObject>
-#include <QList>
-#include "ContactsStorage.h"
-#include "StorageItem.h"
-#include "SimpleItem.h"
 
-const QString VCARD_VERSION_PROP    = "vcard version";
-const QString VERSION_PROP          = "Version";
-const QString TYPE_PROP             = "Type";
+#include <QList>
+#include <QStringList>
+#include <QContactManager>
+#include <QContactId>
+
+QTM_USE_NAMESPACE;
+
+namespace Buteo
+{
+    class StoragePlugin;
+}
 
 class ContactsTest : public QObject
 {
-    Q_OBJECT
+Q_OBJECT
 
-    private slots:
-		void initTestCase();
-       void cleanupTestCase();
+private slots:
+    void initTestCase();
+    void cleanupTestCase();
 
-       void testSuite();
+    void testSuiteSingle();
 
-       void testBatchAddition();
+    void testSuiteBatched();
 
-    private:
-       void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                          Buteo::StoragePlugin& aPlugin );
+    //void pf177715();
+private:
 
-		ContactStorage* iStorage;
+    void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
+                       Buteo::StoragePlugin& aPlugin, bool aBatched );
+
+    /*
+    void directDelete( const QList<QContactLocalId>& aContactIds, QContactManager& manager );
+
+    void directAdd( const QStringList& aVCards, QContactManager& manager );
+    */
+
 };
 
 #endif /* TESTCONTACTS_H_ */

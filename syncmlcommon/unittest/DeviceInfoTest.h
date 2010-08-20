@@ -20,33 +20,38 @@
  * 02110-1301 USA
  *
  */
-#ifndef NOTESTEST_H
-#define NOTESTEST_H
+#ifndef DEVICEINFOTEST_H_
+#define DEVICEINFOTEST_H_
 
 #include <QObject>
+#include <QtTest/QtTest>
 
-#include "NotesStorage.h"
+#include "DeviceInfo.h"
+namespace Buteo {
 
-class NotesTest : public QObject
-{
-    Q_OBJECT;
-public:
-    NotesTest();
-    virtual ~NotesTest();
+class DeviceInfoTest: public QObject {
+	Q_OBJECT
 
 private slots:
 
-    void initTestCase();
-    void cleanupTestCase();
-
-    void testSuite();
+	void initTestCase();
+	void cleanupTestCase();
+	void testSaveDeviceInformation();
+	void testSourceToRead();
+	void testSetDeviceXml();
+	void testGetDeviceInformation();
+	void testGetSysInfo();
+	void testGetDeviceIMEI();
+	void testGetSwVersion();
+	void testGetHwVersion();
+	void testGetFwVersion();
+	void testGetModel();
+	void testGetDeviceType();
 
 private:
-
-    void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                       Buteo::StoragePlugin& aPlugin );
-
-    NotesStorage iNotesStorage;
+	Buteo::DeviceInfo *iDevInfo;
 };
 
-#endif  //  NOTESTEST_H
+};
+
+#endif /*DEVICEINFOTEST_H_*/

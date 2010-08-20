@@ -28,10 +28,10 @@
 
 #include <libsyncpluginmgr/PluginCbInterface.h>
 #include <libmeegosyncml/SyncAgentConfig.h>
+#include <libmeegosyncml/SyncAgentConfigProperties.h>
 #include <libmeegosyncml/HTTPTransport.h>
 #include <libmeegosyncml/OBEXTransport.h>
 #include <libmeegosyncml/DeviceInfo.h>
-
 
 #include "SyncMLConfig.h"
 #include "SyncMLCommon.h"
@@ -39,92 +39,84 @@
 
 #include <LogMacros.h>
 
-// Number of times that the re-sending of initialization package over HTTP is
-// attempted
-const int MAXHTTPRETRIES = 3;
+const QString CONFIGFILE("/etc/sync/nokia-syncml-conf.xml");
 
 // Timeout in seconds for OBEX transport
 const int OBEXTIMEOUT = 120;
 
-extern "C" SyncMLClient* createPlugin( const QString& aPluginName,
-                                       const Buteo::SyncProfile& aProfile,
-                                       Buteo::PluginCbInterface *aCbInterface )
-{
-    return new SyncMLClient( aPluginName, aProfile, aCbInterface );
+extern "C" SyncMLClient* createPlugin(const QString& aPluginName,
+		const Buteo::SyncProfile& aProfile,
+		Buteo::PluginCbInterface *aCbInterface) {
+	return new SyncMLClient(aPluginName, aProfile, aCbInterface);
 }
 
-extern "C" void destroyPlugin( SyncMLClient *aClient )
-{
-    delete aClient;
+extern "C" void destroyPlugin(SyncMLClient *aClient) {
+	delete aClient;
 }
 
-SyncMLClient::SyncMLClient( const QString& aPluginName,
-                            const Buteo::SyncProfile& aProfile,
-                            Buteo::PluginCbInterface *aCbInterface )
- :  ClientPlugin( aPluginName, aProfile, aCbInterface ),
-    iAgent( 0 ), iTransport( 0 ), iConfig( 0 )
-{
-    FUNCTION_CALL_TRACE;
+SyncMLClient::SyncMLClient(const QString& aPluginName,
+		const Buteo::SyncProfile& aProfile,
+		Buteo::PluginCbInterface *aCbInterface) :
+	ClientPlugin(aPluginName, aProfile, aCbInterface), iAgent(0),
+			iTransport(0), iConfig(0), iCommittedItems(0) {
+	FUNCTION_CALL_TRACE;
 }
 
-SyncMLClient::~SyncMLClient()
-{
-    FUNCTION_CALL_TRACE;
+SyncMLClient::~SyncMLClient() {
+	FUNCTION_CALL_TRACE;
 }
 
-bool SyncMLClient::init()
-{
-    FUNCTION_CALL_TRACE;
+bool SyncMLClient::init() {
+	FUNCTION_CALL_TRACE;
 
-    iProperties = iProfile.allNonStorageKeys();
+	iProperties = iProfile.allNonStorageKeys();
 
-    if( initAgent() && initTransport() && initConfig() ) {
-        return true;
-    }
-    else {
-        // Uninitialize everything that was initialized before failure.
-        uninit();
+	if (initAgent() && initTransport() && initConfig()) {
+		return true;
+	} else {
+		// Uninitialize everything that was initialized before failure.
+		uninit();
 
-        return false;
-    }
+		return false;
+	}
 
 }
 
-bool SyncMLClient::uninit()
-{
-    FUNCTION_CALL_TRACE;
+bool SyncMLClient::uninit() {
+	FUNCTION_CALL_TRACE;
 
-    closeAgent();
+	closeAgent();
 
-    closeConfig();
+	closeConfig();
 
-    closeTransport();
+	closeTransport();
 
-    return true;
+	return true;
 }
 
-bool SyncMLClient::startSync()
-{
-    if ( iAgent == 0 || iConfig == 0 || iTransport == 0)
-        return false;
+bool SyncMLClient::startSync() {
+        if (iAgent == 0 || iConfig == 0 || iTransport == 0)
+		return false;
 
-    FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE;
 
-    connect( iAgent, SIGNAL( stateChanged( DataSync::SyncState ) ),
-             this, SLOT( syncStateChanged( DataSync::SyncState ) ) );
+	connect(iAgent, SIGNAL(stateChanged(DataSync::SyncState)), this, SLOT(
+			syncStateChanged(DataSync::SyncState)));
 
-    connect( iAgent, SIGNAL( syncFinished( DataSync::SyncState ) ),
-             this, SLOT( syncFinished( DataSync::SyncState ) ) );
+	connect(iAgent, SIGNAL(syncFinished(DataSync::SyncState)), this, SLOT(
+			syncFinished(DataSync::SyncState)));
 
-    connect( iAgent, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString,QString) ),
-             this, SLOT( receiveItemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString,QString) ) );
+	connect(iAgent, SIGNAL(itemProcessed(DataSync::ModificationType,
+			DataSync::ModifiedDatabase, QString, QString,int)), this, SLOT(
+			receiveItemProcessed(DataSync::ModificationType,
+					DataSync::ModifiedDatabase, QString, QString,int)));
 
-    connect( iAgent, SIGNAL(storageAccquired(QString)),
-		    this, SLOT( storageAccquired(QString)));
+	connect(iAgent, SIGNAL(storageAccquired(QString)), this, SLOT(
+			storageAccquired(QString)));
 
-    iConfig->setTransport( iTransport );
+	iConfig->setTransport(iTransport);
 
-    return iAgent->startSync( *iConfig );
+	return iAgent->startSync(*iConfig);
 
 }
 
@@ -132,63 +124,92 @@ void SyncMLClient::abortSync()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iAgent && iAgent->abort() )
+    if( iAgent )
     {
-        LOG_DEBUG( "SyncMLClient: Agent active, abort event posted" );
+        if( !iAgent->abort() )
+        {
+            LOG_DEBUG( "Agent not active, aborting immediately" );
+            syncFinished(DataSync::ABORTED);
+        }
+        else
+        {
+            LOG_DEBUG( "Agent active, abort event posted" );
+        }
     }
     else
     {
-        syncFinished( DataSync::ABORTED );
+        LOG_WARNING( "abortSync() called before init(), ignoring" );
     }
+
 }
 
-bool SyncMLClient::cleanUp()
-{
-    FUNCTION_CALL_TRACE;
+bool SyncMLClient::cleanUp() {
+	FUNCTION_CALL_TRACE;
 
-    iProperties = iProfile.allNonStorageKeys();
-    initAgent();
-    initConfig();
+	iProperties = iProfile.allNonStorageKeys();
+	initAgent();
+	initConfig();
 
-    bool retVal = iAgent->cleanUp(iConfig);
+	bool retVal = iAgent->cleanUp(iConfig);
 
-    closeAgent();
-    closeConfig();
-    return retVal;
+	closeAgent();
+	closeConfig();
+	return retVal;
 }
 
-void SyncMLClient::syncStateChanged( DataSync::SyncState aState )
-{
+void SyncMLClient::syncStateChanged(DataSync::SyncState aState) {
 
-    FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE;
+
+	switch(aState) {
+	case DataSync::LOCAL_INIT:
+	case DataSync::REMOTE_INIT: {
+		emit syncProgressDetail(getProfileName(),Sync::SYNC_PROGRESS_INITIALISING);
+		break;
+	}
+	case DataSync::SENDING_ITEMS: {
+		emit syncProgressDetail(getProfileName(),Sync::SYNC_PROGRESS_SENDING_ITEMS);
+		break;
+	}
+	case DataSync::RECEIVING_ITEMS: {
+		emit syncProgressDetail(getProfileName(),Sync::SYNC_PROGRESS_RECEIVING_ITEMS);
+		break;
+	}
+	case DataSync::FINALIZING: {
+		emit syncProgressDetail(getProfileName(),Sync::SYNC_PROGRESS_FINALISING);
+		break;
+	}
+	default:
+		//do nothing
+		break;
+	};
 
 #ifndef QT_NO_DEBUG
-    LOG_DEBUG("***********  Sync Status has Changed to:" << toText( aState ) <<"****************");
+	LOG_DEBUG("***********  Sync Status has Changed to:" << toText(aState)
+			<< "****************");
 #endif  //  QT_NO_DEBUG
-
 }
 
+void SyncMLClient::syncFinished(DataSync::SyncState aState) {
 
-void SyncMLClient::syncFinished( DataSync::SyncState aState )
-{
-
-    FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE;
 
 #ifndef QT_NO_DEBUG
-    LOG_DEBUG("***********  Sync has finished with:" << toText( aState ) <<"****************");
+	LOG_DEBUG("***********  Sync has finished with:" << toText(aState)
+			<< "****************");
 #endif  //  QT_NO_DEBUG
-
     switch(aState)
     {
         case DataSync::INTERNAL_ERROR:
         case DataSync::AUTHENTICATION_FAILURE:
         case DataSync::DATABASE_FAILURE:
-        //FIXME! Add extra headers here
         case DataSync::CONNECTION_ERROR:
         case DataSync::INVALID_SYNCML_MESSAGE:
+        case DataSync::UNSUPPORTED_SYNC_TYPE:
+        case DataSync::UNSUPPORTED_STORAGE_TYPE:
         {
             generateResults( false );
-            emit error( getProfileName(), QString::number(aState), 0 );
+            emit error( getProfileName(), "", aState);
             break;
         }
         case DataSync::SUSPENDED:
@@ -196,7 +217,7 @@ void SyncMLClient::syncFinished( DataSync::SyncState aState )
         case DataSync::SYNC_FINISHED:
         {
             generateResults( true );
-            emit success( getProfileName(), QString::number(aState) );
+            emit success( getProfileName(), QString::number(aState));
             break;
         }
         case DataSync::NOT_PREPARED:
@@ -214,312 +235,347 @@ void SyncMLClient::syncFinished( DataSync::SyncState aState )
             break;
         }
     }
-
 }
 
-void SyncMLClient::storageAccquired( QString aMimeType )
-{
+void SyncMLClient::storageAccquired(QString aMimeType) {
 	FUNCTION_CALL_TRACE;
-	LOG_DEBUG(" MimeType " << aMimeType   );
+	LOG_DEBUG(" MimeType " << aMimeType);
 	emit accquiredStorage(aMimeType);
 }
 
+void SyncMLClient::receiveItemProcessed(
+		DataSync::ModificationType aModificationType,
+		DataSync::ModifiedDatabase aModifiedDatabase, QString aLocalDatabase,
+		QString aMimeType, int aCommittedItems) {
 
-void SyncMLClient::receiveItemProcessed( DataSync::ModificationType aModificationType,
-                                  DataSync::ModifiedDatabase aModifiedDatabase,
-                                  QString aLocalDatabase,
-                                  QString aMimeType)
-{
+	FUNCTION_CALL_TRACE;
 
-    FUNCTION_CALL_TRACE;
+	LOG_DEBUG("Modification Type " << aModificationType);
+	LOG_DEBUG("Modification Database " << aModifiedDatabase);
+	LOG_DEBUG(" Database " << aLocalDatabase);
+	LOG_DEBUG(" MimeType " << aMimeType);
+	
 
-
-    LOG_DEBUG("Modification Type " << aModificationType   );
-    LOG_DEBUG("Modification Database " << aModifiedDatabase   );
-    LOG_DEBUG(" Database " << aLocalDatabase   );
-    LOG_DEBUG(" MimeType " << aMimeType   );
-
-    Sync::TransferType type = Sync::ITEM_ADDED;
-    Sync::TransferDatabase db = Sync::LOCAL_DATABASE;
-
-    switch( aModificationType )
-    {
-        case DataSync::MOD_ITEM_ADDED:
+        ++iCommittedItems;
+        if(!receivedItems.contains(aLocalDatabase))
         {
-            type = Sync::ITEM_ADDED;
-            break;
+            ReceivedItemDetails details;
+            details.added = details.modified = details.deleted = details.error = 0;
+            details.mime = aMimeType;
+            receivedItems[aLocalDatabase] = details;
         }
-        case DataSync::MOD_ITEM_MODIFIED:
+
+	Sync::TransferDatabase db = Sync::LOCAL_DATABASE;
+
+	switch (aModificationType) {
+	case DataSync::MOD_ITEM_ADDED: {
+                ++receivedItems[aLocalDatabase].added;
+		break;
+	}
+	case DataSync::MOD_ITEM_MODIFIED: {
+                ++receivedItems[aLocalDatabase].modified;
+		break;
+	}
+	case DataSync::MOD_ITEM_DELETED: {
+                ++receivedItems[aLocalDatabase].deleted;
+		break;
+	}
+	case DataSync::MOD_ITEM_ERROR: {
+                ++receivedItems[aLocalDatabase].error;
+		break;
+	}
+	default: {
+		Q_ASSERT(0);
+		break;
+
+	}
+
+	}
+
+	if (aModifiedDatabase == DataSync::MOD_LOCAL_DATABASE) {
+		db = Sync::LOCAL_DATABASE;
+	} else {
+		db = Sync::REMOTE_DATABASE;
+	}
+
+        if( iCommittedItems == aCommittedItems )
         {
-            type = Sync::ITEM_MODIFIED;
-            break;
+            QMapIterator<QString,ReceivedItemDetails> itr(receivedItems);
+            while( itr.hasNext() )
+            {
+                itr.next();
+                if( itr.value().added )
+                {
+	            emit transferProgress(getProfileName(), db, Sync::ITEM_ADDED, itr.value().mime, itr.value().added);
+                }
+                if( itr.value().modified )
+                {
+	            emit transferProgress(getProfileName(), db, Sync::ITEM_MODIFIED, itr.value().mime, itr.value().modified);
+                }
+                if( itr.value().deleted )
+                {
+	            emit transferProgress(getProfileName(), db, Sync::ITEM_DELETED, itr.value().mime, itr.value().deleted);
+                }
+                if( itr.value().error )
+                {
+	            emit transferProgress(getProfileName(), db, Sync::ITEM_ERROR, itr.value().mime, itr.value().error);
+                }
+            }
+            iCommittedItems = 0;
+            receivedItems.clear();
         }
-        case DataSync::MOD_ITEM_DELETED:
-        {
-            type = Sync::ITEM_DELETED;
-            break;
-        }
-        case DataSync::MOD_ITEM_ERROR:
-        {
-            type = Sync::ITEM_ERROR;
-            break;
-        }
-        default:
-        {
-            Q_ASSERT(0);
-            break;
-
-        }
-
-    }
-
-    if( aModifiedDatabase == DataSync::MOD_LOCAL_DATABASE ) {
-        db = Sync::LOCAL_DATABASE;
-    }
-    else {
-        db = Sync::REMOTE_DATABASE;
-    }
-
-    emit transferProgress( getProfileName(), db, type ,aMimeType );
 
 }
 
-bool SyncMLClient::initAgent()
-{
+bool SyncMLClient::initAgent() {
 
-    FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE;
 
-    LOG_DEBUG("Creating agent...");
+	LOG_DEBUG("Creating agent...");
 
-    bool success = false;
+	bool success = false;
 
-    createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve( "libmeegosyncml.so", "createSyncAgent");
-    if(createSyncAgent) {
+	createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve(
+			"libmeegosyncml.so", "createSyncAgent");
+	if (createSyncAgent) {
 
-        iAgent = createSyncAgent(0);
-        if (!iAgent) {
-            LOG_DEBUG("Agent creation failed");
-        }
-        else {
-            success = true;
-            LOG_DEBUG("Agent created");
-        }
-    } else {
-        LOG_DEBUG("Could not find the library libmeegosyncml.so");
-    }
+		iAgent = createSyncAgent(0);
+		if (!iAgent) {
+			LOG_DEBUG("Agent creation failed");
+		} else {
+			success = true;
+			LOG_DEBUG("Agent created");
+		}
+	} else {
+		LOG_DEBUG("Could not find the library libmeegosyncml.so");
+	}
 
-    return success;
-
-}
-
-void SyncMLClient::closeAgent()
-{
-
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Destroying agent...");
-
-    if( iAgent ) {
-
-        destroySyncAgent_t* destroySyncAgent = (destroySyncAgent_t*) QLibrary::resolve("libmeegosyncml.so", "destroySyncAgent");
-
-        if( destroySyncAgent ) {
-            destroySyncAgent( iAgent );
-            iAgent = NULL;
-            LOG_DEBUG("Agent destroyed");
-        }
-        else {
-            LOG_DEBUG("Could not find the library libmeegosyncml.so");
-        }
-
-    }
+	return success;
 
 }
 
-bool SyncMLClient::initTransport()
-{
-    FUNCTION_CALL_TRACE;
+void SyncMLClient::closeAgent() {
 
-    LOG_DEBUG("Initiating transport..." );
+	FUNCTION_CALL_TRACE;
 
-    bool success = false;
-    QString transportType = iProperties[PROF_SYNC_TRANSPORT];
+	LOG_DEBUG("Destroying agent...");
 
-    if( transportType == HTTP_TRANSPORT ) {
-        success = initHttpTransport();
-    }
-    else if( transportType == OBEX_TRANSPORT ) {
-        success = initObexTransport();
-    }
-    else {
-        LOG_DEBUG("Unknown transport type:" << transportType);
-    }
+	if (iAgent) {
 
-    return success;
-}
+		destroySyncAgent_t* destroySyncAgent =
+				(destroySyncAgent_t*) QLibrary::resolve("libmeegosyncml.so",
+						"destroySyncAgent");
 
-void SyncMLClient::closeTransport()
-{
+		if (destroySyncAgent) {
+			destroySyncAgent(iAgent);
+			iAgent = NULL;
+			LOG_DEBUG("Agent destroyed");
+		} else {
+			LOG_DEBUG("Could not find the library libmeegosyncml.so");
+		}
 
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Closing transport...");
-
-    delete iTransport;
-    iTransport = NULL;
-
-    LOG_DEBUG("Transport closed");
+	}
 
 }
 
-bool SyncMLClient::initConfig()
-{
+bool SyncMLClient::initTransport() {
+	FUNCTION_CALL_TRACE;
 
-    FUNCTION_CALL_TRACE;
+	LOG_DEBUG("Initiating transport...");
 
-    LOG_DEBUG("Initiating config...");
+	bool success = false;
+	QString transportType = iProperties[PROF_SYNC_TRANSPORT];
 
-    if( !iStorageProvider.init( &iProfile, this, iCbInterface, false ) ) {
-        LOG_CRITICAL( "Could not initialize storage provider" );
-        return false;
-    }
+	if (transportType == HTTP_TRANSPORT) {
+		success = initHttpTransport();
+	} else if (transportType == OBEX_TRANSPORT) {
+		success = initObexTransport();
+	} else {
+		LOG_DEBUG("Unknown transport type:" << transportType);
+	}
 
-    QStringList storageNames = iProfile.subProfileNames( Buteo::Profile::TYPE_STORAGE );
+	return success;
+}
 
-    if( storageNames.isEmpty() ) {
-        LOG_CRITICAL("No storages defined for profile, nothing to sync");
-        return false;
-    }
+void SyncMLClient::closeTransport() {
 
-    iConfig = new DataSync::SyncAgentConfig;
+	FUNCTION_CALL_TRACE;
 
-    for( int i = 0; i < storageNames.count(); ++i ) {
-        const Buteo::Profile *storageProfile =
-                iProfile.subProfile( storageNames[i], Buteo::Profile::TYPE_STORAGE );
+	LOG_DEBUG("Closing transport...");
 
-        QString sourceDb = storageProfile->key( STORAGE_SOURCE_URI );
+	delete iTransport;
+	iTransport = NULL;
 
-	if( !storageProfile->isEnabled() ) {
-            LOG_DEBUG( "Adding disabled sync target:" << sourceDb);
-	    iConfig->addDisabledSyncTarget( sourceDb );
-            continue;
-        }
-
-
-        QString targetDb = storageProfile->key( STORAGE_REMOTE_URI );
-        LOG_DEBUG( "Adding sync target:" << sourceDb << "->" << targetDb );
-        iConfig->addSyncTarget( sourceDb, targetDb );
-    }
-
-    iConfig->setStorageProvider( &iStorageProvider );
-    iConfig->setDatabaseFilePath( QString( SyncMLConfig::getDatabasePath() + LIBMEEGOSYNCMLDB ) );
-
-    QString remoteImei = iProperties[PROF_REMOTE_ADDRESS];
-    LOG_DEBUG("RemoteDevice: " << remoteImei);
-
-    if (!remoteImei.isEmpty())
-	    iConfig->setRemoteDevice( iProperties[PROF_REMOTE_ADDRESS] ) ;
-
-
-    QString DEV_INFO_FILE_PATH = SyncMLConfig::getDevInfoFile();
-    QFile devInfoFile(DEV_INFO_FILE_PATH);
-
-    if(!devInfoFile.exists()) {
-        Buteo::DeviceInfo appDevInfo;
-        QMap<QString , QString> deviceInfoMap = appDevInfo.getDeviceInformation();
-        appDevInfo.saveDevInfoToFile(deviceInfoMap,DEV_INFO_FILE_PATH);
-    }
-
-    DataSync::DeviceInfo syncDeviceInfo;
-    syncDeviceInfo.readFromFile(DEV_INFO_FILE_PATH);
-    iConfig->setDeviceInfo(syncDeviceInfo);
-
-    QString username = iProperties[PROF_USERID];
-    QString password = iProperties[PROF_PASSWD];
-
-    if( !username.isEmpty() ) {
-        LOG_DEBUG("Setting username: ********");
-        iConfig->setUsername( username );
-    }
-
-    if( !password.isEmpty() ) {
-        LOG_DEBUG("Setting password: ********");
-        iConfig->setPassword( password );
-    }
-
-    QString protocol = iProperties[PROF_SYNC_PROTOCOL];
-
-    if( protocol == SYNCML11 ) {
-        LOG_DEBUG( "Using SyncML DS 1.1 protocol" );
-        iConfig->setProtocolVersion( DataSync::DS_1_1 );
-    }
-    else if( protocol == SYNCML12 ) {
-        LOG_DEBUG( "Using SyncML DS 1.2 protocol" );
-        iConfig->setProtocolVersion( DataSync::DS_1_2 );
-    }
-    else {
-        LOG_WARNING( "Could not find, or unknown value, for property" << PROF_SYNC_PROTOCOL
-                     << ", using default of" << SYNCML12 );
-        iConfig->setProtocolVersion( DataSync::DS_1_2 );
-    }
-
-    QString transportType = iProperties[PROF_SYNC_TRANSPORT];
-
-    if( transportType == HTTP_TRANSPORT ) {
-        initHttpTransportConfig();
-
-    }
-    else if( transportType == OBEX_TRANSPORT ) {
-
-        // @todo: This is disabled, we cannot just prefer usb over bt.
-        //        Find a better way to do this
-        /*
-        if (isUsbCableConnected()) {
-            initUsbTransportConfig();
-        }
-        else {
-            initBtTransportConfig();
-        }
-        */
-        initBtTransportConfig();
-
-    }
-
-    return true;
+	LOG_DEBUG("Transport closed");
 
 }
 
-void SyncMLClient::closeConfig()
-{
+bool SyncMLClient::initConfig() {
 
-    FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE;
 
-    LOG_DEBUG("Closing config...");
+	LOG_DEBUG("Initiating config...");
 
-    delete iConfig;
-    iConfig = NULL;
+	QStringList storageNames = iProfile.subProfileNames(
+			Buteo::Profile::TYPE_STORAGE);
 
-    if( !iStorageProvider.uninit() ) {
-        LOG_CRITICAL( "Could not uninitialize storage provider" );
-    }
+	if (storageNames.isEmpty()) {
+		LOG_CRITICAL("No storages defined for profile, nothing to sync");
+		return false;
+	}
 
-    LOG_DEBUG("Config closed");
+	if (!iStorageProvider.init(&iProfile, this, iCbInterface, false)) {
+		LOG_CRITICAL("Could not initialize storage provider");
+		return false;
+	}
+
+	iConfig = new DataSync::SyncAgentConfig;
+
+	// ** Read basic configuration
+
+	if (!iConfig->fromFile(CONFIGFILE)) {
+		LOG_CRITICAL("Could not read SyncML config file:" << CONFIGFILE);
+		return false;
+	}
+
+	// ** Set up storage provider
+
+	iConfig->setStorageProvider(&iStorageProvider);
+
+	// ** Set up device info
+
+	QString DEV_INFO_FILE_PATH = SyncMLConfig::getDevInfoFile();
+	QFile devInfoFile(DEV_INFO_FILE_PATH);
+
+	if (!devInfoFile.exists()) {
+		Buteo::DeviceInfo appDevInfo;
+		QMap < QString, QString > deviceInfoMap
+				= appDevInfo.getDeviceInformation();
+		appDevInfo.saveDevInfoToFile(deviceInfoMap, DEV_INFO_FILE_PATH);
+	}
+
+	DataSync::DeviceInfo syncDeviceInfo;
+	syncDeviceInfo.readFromFile(DEV_INFO_FILE_PATH);
+	iConfig->setDeviceInfo(syncDeviceInfo);
+
+	// ** Set up sync targets
+
+	for (int i = 0; i < storageNames.count(); ++i) {
+		const Buteo::Profile *storageProfile = iProfile.subProfile(
+				storageNames[i], Buteo::Profile::TYPE_STORAGE);
+
+		QString sourceDb = storageProfile->key(STORAGE_SOURCE_URI);
+
+		if (storageProfile->isEnabled()) {
+			QString targetDb = storageProfile->key(STORAGE_REMOTE_URI);
+			LOG_DEBUG("Adding sync target:" << sourceDb << "->" << targetDb);
+			iConfig->addSyncTarget(sourceDb, targetDb);
+		} else {
+			LOG_DEBUG("Adding disabled sync target:" << sourceDb);
+			iConfig->addDisabledSyncTarget(sourceDb);
+		}
+
+	}
+
+	// ** Set up sync parameters
+	QString transportType = iProperties[PROF_SYNC_TRANSPORT];
+
+	QString remoteDeviceName;
+
+	if (transportType == HTTP_TRANSPORT) {
+		// Ovi.com requires remote device name to be the sync URI
+		remoteDeviceName = iProperties[PROF_REMOTE_URI];
+	} else if (transportType == OBEX_TRANSPORT) {
+		// Over OBEX, set remote device to it's address as designated in profile
+		remoteDeviceName = iProperties[PROF_REMOTE_ADDRESS];
+	}
+
+	QString versionProp = iProperties[PROF_SYNC_PROTOCOL];
+	DataSync::ProtocolVersion version = DataSync::DS_1_2;
+
+	if (versionProp == SYNCML11) {
+		LOG_DEBUG("Using SyncML DS 1.1 protocol");
+		version = DataSync::DS_1_1;
+	} else if (versionProp == SYNCML12) {
+		LOG_DEBUG("Using SyncML DS 1.2 protocol");
+		version = DataSync::DS_1_2;
+	}
+
+	DataSync::SyncInitiator initiator = DataSync::INIT_CLIENT;
+
+	if (transportType == HTTP_TRANSPORT) {
+		initiator = DataSync::INIT_CLIENT;
+	} else if (transportType == OBEX_TRANSPORT) {
+		initiator = DataSync::INIT_SERVER;
+	}
+
+	DataSync::SyncDirection direction = resolveSyncDirection(initiator);
+
+	DataSync::SyncMode syncMode(direction, initiator);
+
+	iConfig->setSyncParams(remoteDeviceName, version, syncMode);
+
+	// ** Set up auth parameters
+
+	DataSync::AuthenticationType type = DataSync::AUTH_NONE;
+	QString username;
+	QString password;
+
+	if (transportType == HTTP_TRANSPORT) {
+		type = DataSync::AUTH_BASIC;
+		username = iProperties[PROF_USERID];
+		password = iProperties[PROF_PASSWD];
+	} else if (transportType == OBEX_TRANSPORT) {
+		type = DataSync::AUTH_NONE;
+	}
+
+	iConfig->setAuthParams(type, username, password);
+
+	// ** Set up other parameters
+
+	DataSync::ConflictResolutionPolicy policy =
+			resolveConflictResolutionPolicy(initiator);
+	iConfig->setAgentProperty(DataSync::CONFLICTRESOLUTIONPOLICYPROP,
+			QString::number(policy));
+
+	if (transportType == HTTP_TRANSPORT) {
+		// Make sure that S60 EMI tags are not sent over HTTP.
+		iConfig->clearExtension(DataSync::EMITAGSEXTENSION);
+	}
+
+	return true;
 
 }
 
-Buteo::SyncResults SyncMLClient::getSyncResults() const
-{
-    FUNCTION_CALL_TRACE;
+void SyncMLClient::closeConfig() {
 
-    return iResults;
+	FUNCTION_CALL_TRACE;
+
+	LOG_DEBUG("Closing config...");
+
+	delete iConfig;
+	iConfig = NULL;
+
+	if (!iStorageProvider.uninit()) {
+		LOG_CRITICAL("Could not uninitialize storage provider");
+	}
+
+	LOG_DEBUG("Config closed");
+
 }
 
-void SyncMLClient::connectivityStateChanged( Sync::ConnectivityType aType,
-                                             bool aState )
-{
-    FUNCTION_CALL_TRACE;
+Buteo::SyncResults SyncMLClient::getSyncResults() const {
+	FUNCTION_CALL_TRACE;
 
-    LOG_DEBUG( "Received connectivity change event:" << aType <<" changed to " << aState );
+	return iResults;
+}
+
+void SyncMLClient::connectivityStateChanged(Sync::ConnectivityType aType,
+		bool aState) {
+	FUNCTION_CALL_TRACE;
+
+	LOG_DEBUG("Received connectivity change event:" << aType << " changed to "
+			<< aState);
 }
 
 #ifndef QT_NO_DEBUG
@@ -529,412 +585,233 @@ void SyncMLClient::connectivityStateChanged( Sync::ConnectivityType aType,
 // only the state of the app will be sent now
 // and UI has to map to a localisation string based on
 // the state of the stack
-QString SyncMLClient::toText( const DataSync::SyncState& aState )
-{
+QString SyncMLClient::toText(const DataSync::SyncState& aState) {
 
-    {
-        switch( aState )
-        {
-        case DataSync::NOT_PREPARED:
-            return "NOT PREPARED";
+	switch (aState) {
+	case DataSync::NOT_PREPARED:
+		return "NOT PREPARED";
 
-        case DataSync::LOCAL_INIT:
-        case DataSync::REMOTE_INIT:
-            return "INITIALIZING";
+	case DataSync::LOCAL_INIT:
+	case DataSync::REMOTE_INIT:
+		return "INITIALIZING";
 
-        case DataSync::SENDING_ITEMS:
-            return "SENDING ITEMS";
+	case DataSync::SENDING_ITEMS:
+		return "SENDING ITEMS";
 
-        case DataSync::RECEIVING_ITEMS:
-            return "RECEIVING_ITEMS";
+	case DataSync::RECEIVING_ITEMS:
+		return "RECEIVING_ITEMS";
 
-        case DataSync::SENDING_MAPPINGS:
-            return "SENDING MAPPINGS";
+	case DataSync::SENDING_MAPPINGS:
+		return "SENDING MAPPINGS";
 
-        case DataSync::RECEIVING_MAPPINGS:
-            return "RECEIVING MAPPINGS";
+	case DataSync::RECEIVING_MAPPINGS:
+		return "RECEIVING MAPPINGS";
 
-        case DataSync::FINALIZING:
-            return "FINALIZING";
+	case DataSync::FINALIZING:
+		return "FINALIZING";
 
-        case DataSync::SUSPENDING:
-            return "SUSPENDING";
+	case DataSync::SUSPENDING:
+		return "SUSPENDING";
 
-        case DataSync::PREPARED:
-            return "PREPARED";
+	case DataSync::PREPARED:
+		return "PREPARED";
 
-        case DataSync::SYNC_FINISHED:
-            return "SYNC FINISHED";
+	case DataSync::SYNC_FINISHED:
+		return "SYNC FINISHED";
 
-        case DataSync::INTERNAL_ERROR:
-            return "INTERNAL_ERROR";
+	case DataSync::INTERNAL_ERROR:
+		return "INTERNAL_ERROR";
 
-        case DataSync::AUTHENTICATION_FAILURE:
-            return "AUTHENTICATION FAILURE";
+	case DataSync::AUTHENTICATION_FAILURE:
+		return "AUTHENTICATION FAILURE";
 
-        case DataSync::DATABASE_FAILURE:
-            return "DATABASE_FAILURE";
+	case DataSync::DATABASE_FAILURE:
+		return "DATABASE_FAILURE";
 
-        //FIXME! Add extra headers here
+	case DataSync::SUSPENDED:
+		return "SUSPENDED";
 
-        case DataSync::SUSPENDED:
-            return "SUSPENDED";
+	case DataSync::ABORTED:
+		return "ABORTED";
 
-        case DataSync::ABORTED:
-            return "ABORTED";
+	case DataSync::CONNECTION_ERROR:
+		return "CONNECTION ERROR";
 
-        case DataSync::CONNECTION_ERROR:
-            return "CONNECTION ERROR";
+	case DataSync::INVALID_SYNCML_MESSAGE:
+		return "INVALID SYNCML MESSAGE";
 
-        case DataSync::INVALID_SYNCML_MESSAGE:
-            return "INVALID SYNCML MESSAGE";
-
-        default:
-            return "UNKNOWN";
-            break;
-        }
-
-    }
+	default:
+		return "UNKNOWN";
+		break;
+	}
 
 }
 #endif //#ifndef QT_NO_DEBUG
+bool SyncMLClient::initObexTransport() {
+	FUNCTION_CALL_TRACE;
 
-/*!
-    \fn SyncMLClient::initObexTransport()
- */
-bool SyncMLClient::initObexTransport()
-{
-    FUNCTION_CALL_TRACE;
+	LOG_DEBUG("Creating OBEX transport");
 
-    LOG_DEBUG("Creating OBEX transport" );
+	QString btAddress = iProperties[PROF_BT_ADDRESS];
+	bool success = false;
 
-    bool success = false;
+	if (!btAddress.isEmpty()) {
 
-    // @todo: This is disabled, we cannot just prefer usb over bt.
-    //        Find a better way to do this
-    /*
-    if ( isUsbCableConnected()) {
-        success = initUsbTransport();
-    }
-    else {
-        success = initBtTransport();
-    }
-    */
+		QString btService = iProperties[PROF_BT_UUID];
 
-    success = initBtTransport();
+		LOG_DEBUG("Setting BT address:" << btAddress);
+		LOG_DEBUG("Setting BT service UUID:" << btService);
 
-    return success;
+		DataSync::OBEXTransport* transport = new DataSync::OBEXTransport(
+				btAddress, btService, OBEXTIMEOUT);
+
+		if (iProperties[PROF_USE_WBXML] == PROPS_TRUE) {
+			LOG_DEBUG("Using wbXML");
+			transport->setWbXml(true);
+		} else {
+			LOG_DEBUG("Not using wbXML");
+			transport->setWbXml(false);
+		}
+
+		iTransport = transport;
+		success = true;
+	} else {
+		LOG_DEBUG("Could not find 'bt_address' property");
+	}
+
+	return success;
 }
 
+bool SyncMLClient::initHttpTransport() {
+	FUNCTION_CALL_TRACE;
 
-/*!
-    \fn SyncMLClient::initBtTransport()
- */
-bool SyncMLClient::initBtTransport()
-{
-    FUNCTION_CALL_TRACE;
+	LOG_DEBUG("Creating HTTP transport");
 
-    QString btAddress = iProperties[PROF_BT_ADDRESS];
-    bool success = false;
+	QString remoteURI = iProperties[PROF_REMOTE_URI];
+	bool success = false;
 
-    if( !btAddress.isEmpty() ) {
+	if (!remoteURI.isEmpty()) {
 
-        QString btService = iProperties[PROF_BT_UUID];
+		DataSync::HTTPTransport* transport = new DataSync::HTTPTransport();
 
-        LOG_DEBUG("Setting BT address:" <<btAddress );
-        LOG_DEBUG("Setting BT service UUID:" <<btService );
+		LOG_DEBUG("Setting remote URI to" << remoteURI);
+		transport->setRemoteLocURI(remoteURI);
 
-        DataSync::OBEXTransport* transport = new DataSync::OBEXTransport( btAddress, btService, OBEXTIMEOUT );
+		QString proxyHost = iProperties[PROF_HTTP_PROXY_HOST];
+		if (!proxyHost.isEmpty()) {
 
-        if( iProperties[PROF_USE_WBXML] == PROPS_TRUE ) {
-            LOG_DEBUG("Using wbXML");
-            transport->setWbXml( true );
-        }
-        else {
-            LOG_DEBUG("Not using wbXML");
-            transport->setWbXml( false );
-        }
+			QString proxyPort = iProperties[PROF_HTTP_PROXY_PORT];
 
-        iTransport = transport;
-        success = true;
-    }
-    else {
-        LOG_DEBUG("Could not find 'bt_address' property");
-    }
+			QNetworkProxy proxy = transport->getProxyConfig();
+			proxy.setType(QNetworkProxy::HttpProxy);
+			proxy.setHostName(proxyHost);
+			proxy.setPort(proxyPort.toInt());
+			transport->setProxyConfig(proxy);
 
-    return success;
-}
+			LOG_DEBUG("Using proxy");
+			LOG_DEBUG("Proxy host:" << proxyHost);
+			LOG_DEBUG("Proxy port:" << proxyPort);
+		} else {
+			LOG_DEBUG("Not using proxy");
+		}
 
-/*!
-    \fn SyncMLClient::initUsbTransport()
- */
-bool SyncMLClient::initUsbTransport()
-{
-    FUNCTION_CALL_TRACE;
+		if (iProperties[PROF_USE_WBXML] == PROPS_TRUE) {
+			LOG_DEBUG("Using wbXML");
+			transport->setWbXml(true);
+		} else {
+			LOG_DEBUG("Not using wbXML");
+			transport->setWbXml(false);
+		}
 
-    // @todo: this needs to be fixed to use file descriptor
+		QString xheaders = iProperties[PROF_HTTP_XHEADERS];
+		QStringList hdrlist = xheaders.split("\r\n");
+		foreach (QString hdr, hdrlist) {
+			QString fname = hdr.section(':', 0, 0);
+			QString fvalue = hdr.section(':', 1);
+			LOG_DEBUG("fname: " << fname << ", fvalue" << fvalue);
+			transport->addXheader(fname, fvalue);
+		}
 
-    Q_ASSERT(0);
-    /*
-    bool success = false;
-    QString usbPort = "/dev/ttyGS1";
+		transport->init();
+		iTransport = transport;
+		success = true;
+	} else {
+		LOG_DEBUG("Could not find 'Remote database' property");
+	}
 
-    if (!usbPort.isEmpty()) {
-        DataSync::OBEXTransport* transport = new DataSync::OBEXTransport( usbPort );
-
-        if( iProperties[PROF_USE_WBXML] == PROPS_TRUE ) {
-            LOG_DEBUG("Using wbXML");
-            transport->setWbXml( true );
-        }
-        else {
-            LOG_DEBUG("Not using wbXML");
-            transport->setWbXml( false );
-        }
-
-        iTransport = transport;
-        success = true;
-    }
-    else {
-        LOG_DEBUG("Could not find usb address property");
-    }
-
-    return success;
-    */
-
-    return false;
-
-}
-
-
-/*!
-    \fn SyncMLClient::initHttpTransport()
- */
-bool SyncMLClient::initHttpTransport()
-{
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Creating HTTP transport" );
-
-    QString remoteURI = iProperties[PROF_REMOTE_URI];
-    bool success = false;
-
-    if( !remoteURI.isEmpty() ) {
-
-        DataSync::HTTPTransport* transport = new DataSync::HTTPTransport();
-
-        LOG_DEBUG("Setting remote URI to" <<remoteURI );
-        transport->setRemoteLocURI( remoteURI );
-
-        QString proxyHost = iProperties[PROF_HTTP_PROXY_HOST];
-        if( !proxyHost.isEmpty() ) {
-
-            QString proxyPort = iProperties[PROF_HTTP_PROXY_PORT];
-
-            QNetworkProxy& proxy = transport->getProxyConfig();
-            proxy.setType( QNetworkProxy::HttpProxy );
-            proxy.setHostName( proxyHost );
-            proxy.setPort( proxyPort.toInt() );
-
-            LOG_DEBUG("Using proxy");
-            LOG_DEBUG("Proxy host:" << proxyHost );
-            LOG_DEBUG("Proxy port:" << proxyPort );
-        }
-        else {
-            LOG_DEBUG("Not using proxy");
-        }
-
-        if( iProperties[PROF_USE_WBXML] == PROPS_TRUE ) {
-            LOG_DEBUG("Using wbXML");
-            transport->setWbXml( true );
-        }
-        else {
-            LOG_DEBUG("Not using wbXML");
-            transport->setWbXml( false );
-        }
-
-
-        transport->init();
-        transport->setResendAttempts( MAXHTTPRETRIES );
-        iTransport = transport;
-        success = true;
-    }
-    else {
-        LOG_DEBUG("Could not find 'Remote database' property" );
-    }
-
-    return success;
-}
-
-
-
-/*!
-    \fn SyncMLClient::initHttpTransportConfig()
- */
-void SyncMLClient::initHttpTransportConfig()
-{
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Setting HTTP profile hardcoded values");
-
-    DataSync::SyncInitiator initiator = DataSync::INIT_CLIENT;
-    DataSync::SyncDirection direction = resolveSyncDirection( initiator );
-    DataSync::ConflictResolutionPolicy policy = resolveConflictResolutionPolicy(initiator);
-    DataSync::SyncMode mode( direction, initiator );
-    iConfig->setSyncMode( mode );
-    iConfig->setConflictResolutionPolicy( policy );
-    iConfig->setAuthenticationType( DataSync::AUTH_BASIC );
-
-    // Needed for ovi.com
-    iConfig->setRemoteDevice( iProperties[PROF_REMOTE_URI] );
+	return success;
 }
 
 DataSync::SyncDirection SyncMLClient::resolveSyncDirection(
-    const DataSync::SyncInitiator& aInitiator )
-{
-    FUNCTION_CALL_TRACE;
+		const DataSync::SyncInitiator& aInitiator) {
+	FUNCTION_CALL_TRACE;
 
-    Buteo::SyncProfile::SyncDirection directionFromProfile = iProfile.syncDirection();
+	Buteo::SyncProfile::SyncDirection directionFromProfile =
+			iProfile.syncDirection();
 
-    DataSync::SyncDirection direction = DataSync::DIRECTION_TWO_WAY;
+	DataSync::SyncDirection direction = DataSync::DIRECTION_TWO_WAY;
 
-    if( aInitiator == DataSync::INIT_CLIENT )
-    {
+	if (aInitiator == DataSync::INIT_CLIENT) {
 
-        if( directionFromProfile == Buteo::SyncProfile::SYNC_DIRECTION_FROM_REMOTE )
-        {
-            direction = DataSync::DIRECTION_FROM_SERVER;
-        }
-        else if( directionFromProfile == Buteo::SyncProfile::SYNC_DIRECTION_TO_REMOTE )
-        {
-            direction = DataSync::DIRECTION_FROM_CLIENT;
-        }
-    }
-    else if( aInitiator == DataSync::INIT_SERVER )
-    {
-        if( directionFromProfile == Buteo::SyncProfile::SYNC_DIRECTION_FROM_REMOTE )
-        {
-            direction = DataSync::DIRECTION_FROM_CLIENT;
-        }
-        else if( directionFromProfile == Buteo::SyncProfile::SYNC_DIRECTION_TO_REMOTE )
-        {
-            direction = DataSync::DIRECTION_FROM_SERVER;
-        }
-    }
+		if (directionFromProfile
+				== Buteo::SyncProfile::SYNC_DIRECTION_FROM_REMOTE) {
+			direction = DataSync::DIRECTION_FROM_SERVER;
+		} else if (directionFromProfile
+				== Buteo::SyncProfile::SYNC_DIRECTION_TO_REMOTE) {
+			direction = DataSync::DIRECTION_FROM_CLIENT;
+		}
+	} else if (aInitiator == DataSync::INIT_SERVER) {
+		if (directionFromProfile
+				== Buteo::SyncProfile::SYNC_DIRECTION_FROM_REMOTE) {
+			direction = DataSync::DIRECTION_FROM_CLIENT;
+		} else if (directionFromProfile
+				== Buteo::SyncProfile::SYNC_DIRECTION_TO_REMOTE) {
+			direction = DataSync::DIRECTION_FROM_SERVER;
+		}
+	}
 
-    return direction;
+	return direction;
 }
 
 DataSync::ConflictResolutionPolicy SyncMLClient::resolveConflictResolutionPolicy(
-    const DataSync::SyncInitiator& aInitiator)
-{
-    FUNCTION_CALL_TRACE;
+		const DataSync::SyncInitiator& aInitiator) {
+	FUNCTION_CALL_TRACE;
 
-    Buteo::SyncProfile::ConflictResolutionPolicy crPolicyFromProfile =
-        iProfile.conflictResolutionPolicy();
+	Buteo::SyncProfile::ConflictResolutionPolicy crPolicyFromProfile =
+			iProfile.conflictResolutionPolicy();
 
-    DataSync::ConflictResolutionPolicy crPolicy = DataSync::PREFER_LOCAL_CHANGES;
+	/* In case if we have to resolve conflict the choice will be based on the user selection when
+	 * creating a sync profile , if to prefer local changes or remote changes.
+	 */
+	DataSync::ConflictResolutionPolicy crPolicy =
+			DataSync::PREFER_LOCAL_CHANGES;
 
-    switch (crPolicyFromProfile)
-    {
-        case Buteo::SyncProfile::CR_POLICY_PREFER_SERVER:
-        {
-            if( aInitiator == DataSync::INIT_CLIENT )
-            {
-                crPolicy = DataSync::PREFER_REMOTE_CHANGES;
-            }
-            else if( aInitiator == DataSync::INIT_SERVER )
-            {
-                crPolicy = DataSync::PREFER_LOCAL_CHANGES;
-            }
-            break;
-        }
+	switch (crPolicyFromProfile) {
+	case Buteo::SyncProfile::CR_POLICY_PREFER_LOCAL_CHANGES: {
+		LOG_DEBUG("Buteo::SyncProfile::CR_POLICY_PREFER_LOCAL_CHANGES");
+		crPolicy = DataSync::PREFER_LOCAL_CHANGES;
+		break;
+	}
 
-        case Buteo::SyncProfile::CR_POLICY_PREFER_CLIENT:
-        {
-            if( aInitiator == DataSync::INIT_CLIENT )
-            {
-                crPolicy = DataSync::PREFER_LOCAL_CHANGES;
-            }
-            else if( aInitiator == DataSync::INIT_SERVER )
-            {
-                crPolicy = DataSync::PREFER_REMOTE_CHANGES;
-            }
-            break;
-        }
+	case Buteo::SyncProfile::CR_POLICY_PREFER_REMOTE_CHANGES: {
+		LOG_DEBUG("Buteo::SyncProfile::CR_POLICY_PREFER_REMOTE_CHANGES");
+		crPolicy = DataSync::PREFER_REMOTE_CHANGES;
+		break;
+	}
 
-        default:
-        {
-            break;
-        }
-    }
+	default: {
+		break;
+	}
+	}
 
-    return crPolicy;
+	return crPolicy;
 }
-
-
-/*!
-    \fn SyncMLClient::initUsbTransportConfig()
- */
-void SyncMLClient::initUsbTransportConfig()
-{
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Setting USB profile hardcoded values");
-
-    DataSync::SyncInitiator initiator = DataSync::INIT_SERVER;
-    DataSync::SyncDirection direction = resolveSyncDirection( initiator );
-    DataSync::ConflictResolutionPolicy policy = resolveConflictResolutionPolicy(initiator);
-    DataSync::SyncMode mode( direction, initiator );
-    iConfig->setSyncMode( mode );
-    iConfig->setConflictResolutionPolicy( policy );
-    iConfig->setAuthenticationType( DataSync::AUTH_NONE );
-    //FIXME! Add extra headers here
-}
-
-
-/*!
-    \fn SyncMLClient::initBtTransportConfig()
- */
-void SyncMLClient::initBtTransportConfig()
-{
-    FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Setting BT profile hardcoded values\n");
-
-    DataSync::SyncInitiator initiator;
-
-    if ( isOviSuiteSync() ) {
-        initiator = DataSync::INIT_CLIENT;
-    } else {
-        initiator = DataSync::INIT_SERVER;
-    }
-
-    DataSync::SyncDirection direction = resolveSyncDirection( initiator );
-    DataSync::SyncMode mode( direction , initiator );
-    DataSync::ConflictResolutionPolicy policy = resolveConflictResolutionPolicy(initiator);
-    iConfig->setSyncMode( mode );
-    iConfig->setConflictResolutionPolicy( policy );
-    iConfig->setAuthenticationType( DataSync::AUTH_NONE );
-    //FIXME! Add extra headers here
-}
-
-
-/*!
-    \fn SyncMLClient::isOviSuiteSync()
- */
-bool SyncMLClient::isOviSuiteSync()
-{
-    FUNCTION_CALL_TRACE;
-    const QString OVISUITESERVICENAME = "ovisuite";
-    return( iProfile.serviceProfile()->name() == OVISUITESERVICENAME );
-}
-
 
 void SyncMLClient::generateResults( bool aSuccessful )
 {
     FUNCTION_CALL_TRACE;
 
-    iResults.setResultCode( aSuccessful ? Buteo::SyncResults::SYNC_RESULT_SUCCESS : Buteo::SyncResults::SYNC_RESULT_FAILED );
+    iResults.setMajorCode( aSuccessful ? Buteo::SyncResults::SYNC_RESULT_SUCCESS : Buteo::SyncResults::SYNC_RESULT_FAILED );
 
     iResults.setTargetId(iAgent->getResults().getRemoteDeviceId());
     const QMap<QString, DataSync::DatabaseResults>* dbResults = iAgent->getResults().getDatabaseResults();

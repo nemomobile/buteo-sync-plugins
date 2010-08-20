@@ -24,10 +24,6 @@
 #ifndef SYNCMLCOMMON_H
 #define SYNCMLCOMMON_H
 
-
-// Database file for SyncML stack
-const QString LIBMEEGOSYNCMLDB( "syncml.db" );
-
 const QString PROPS_FALSE                               = "false";
 const QString PROPS_TRUE                                = "true";
 
@@ -78,5 +74,7 @@ const QString PROF_USERID             = "Username";
 
 const QString SYNCML11                = "SyncML11";
 const QString SYNCML12                = "SyncML12";
+
+const QString PROF_HTTP_XHEADERS      = "http_xheaders";
 
 #endif  //  SYNCMLCOMMON_H

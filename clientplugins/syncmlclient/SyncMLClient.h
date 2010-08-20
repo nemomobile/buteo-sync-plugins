@@ -80,21 +80,43 @@ public:
 
 public slots:
 
+	//! @see SyncPluginBase::connectivityStateChanged
     virtual void connectivityStateChanged( Sync::ConnectivityType aType,
                                            bool aState );
 
 protected slots:
 
+	/*!
+	 * \brief state change slot for DataSync::SyncAgent::stateChanged signal
+	 * \param aState - new state
+	 */
     void syncStateChanged( DataSync::SyncState aState );
 
+    /*!
+     * \brief sync Finished slot for DataSync::SyncAgent::syncFinished signal
+     * \param aState - final state
+     */
     void syncFinished( DataSync::SyncState aState );
 
+    /*!
+     * \brief slot for DataSync::SyncAgent::storageAcquired signal
+     * \param aMimeType - mimetype of the storage acquired.
+     */
     void storageAccquired(QString aMimeType);
 
+    /*!
+     * \brief slot for DataSync::SyncAgent::itemProcessed signal
+     * \param aModificationType - modification type
+     * \param aModifiedDatabase - modified database .
+     * \param aLocalDatabase - local database
+     * \param aMimeType - mime type of the database
+     * \param aCommittedItems - No. of items committed for this operation
+     */
     void receiveItemProcessed( DataSync::ModificationType aModificationType,
-                        DataSync::ModifiedDatabase aModifiedDatabase,
-                        QString aLocalDatabase,
-                        QString aMimeType);
+								DataSync::ModifiedDatabase aModifiedDatabase,
+								QString aLocalDatabase,
+								QString aMimeType,
+                                                                int aCommittedItems );
 
 private:
 
@@ -108,12 +130,6 @@ private:
 
     bool initConfig();
 
-    void initHttpTransportConfig();
-
-    void initUsbTransportConfig();
-
-    void initBtTransportConfig();
-
     void closeConfig();
 
     /**
@@ -123,32 +139,10 @@ private:
     bool initObexTransport();
 
     /**
-     * \brief Subroutine for usb transport initiation
-     * @return True is success, false if not
-     */
-    bool initUsbTransport();
-
-    /**
-     * \brief Subroutine for bt transport initiation
-     * @return True is success, false if not
-     */
-    bool initBtTransport();
-
-    /**
      * \brief Subroutine for http transport initiation
      * @return True is success, false if not
      */
     bool initHttpTransport();
-
-    /**
-     * \brief Is the current sync done with Ovi Suite
-     * This is needed in certain situations when setting the configuration.
-     * If syncing via BT with any other than Ovi Suite, the device needs to act
-     * as (sync) server.
-     *
-     * @return True if syncing with Ovi Suite, false it not
-     */
-    bool isOviSuiteSync();
 
     /*! \brief Resolves sync direction from current profile
      *
@@ -185,6 +179,8 @@ private:
     Buteo::SyncResults          iResults;
 
     SyncMLStorageProvider       iStorageProvider;
+
+    quint32                     iCommittedItems;
 
 };
 

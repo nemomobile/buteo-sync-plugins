@@ -23,7 +23,7 @@
 
 #include "DeviceInfo.h"
 #include "LogMacros.h"
-//#include <sysinfo.h>
+#include <sysinfo.h>
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -89,24 +89,24 @@ QString DeviceInfo::getDeviceIMEI()
 QString DeviceInfo::getSysInfo(const QString &key)
 {
     QString value;
-//    struct system_config *sc = 0;
-//    if( sysinfo_init(&sc) == 0 )
-//    {
-//        uint8_t *data = 0;
-//        unsigned long size = 0;
-//        QByteArray ba = key.toLatin1();
-//        const char * key = ba.data();
-//        if( sysinfo_get_value(sc, key, &data, &size) == 0 )
-//        {
-//            unsigned long k;
-//            for( k = 0; k < size; ++k )
-//            {
-//                int c = data[k];
-//                value.append(c);
-//            }
-//        }
-//        sysinfo_finish(sc);
-//    }
+    struct system_config *sc = 0;
+    if( sysinfo_init(&sc) == 0 )
+    {
+        uint8_t *data = 0;
+        unsigned long size = 0;
+        QByteArray ba = key.toLatin1();
+        const char * key = ba.data();
+        if( sysinfo_get_value(sc, key, &data, &size) == 0 )
+        {
+            unsigned long k;
+            for( k = 0; k < size; ++k )
+            {
+                int c = data[k];
+                value.append(c);
+            }
+        }
+        sysinfo_finish(sc);
+    }
 
     LOG_DEBUG("Key is  " << key << "it's Value is " << value);
     return value;
@@ -248,10 +248,17 @@ QMap<QString,QString> DeviceInfo::getDeviceInformation()
                 QByteArray data = file.readAll();
                 QXmlStreamReader reader(data);
                 while(!reader.atEnd()) {
-                    reader.readNext();
-                    QString key =  reader.name().toString();
-                    reader.readNext();
-                    deviceMap.insert(key,reader.text().toString());
+                     if(reader.tokenType() == QXmlStreamReader::StartElement) {
+                    	 if(reader.name() ==  "DevInfo" ) {
+                    		  reader.readNext();
+                    	 } else {
+                    	    QString key =  reader.name().toString();
+                            reader.readNext();
+                            deviceMap.insert(key,reader.text().toString());
+                            reader.readNext();
+                    	 }
+                     }
+                	reader.readNext();
                 }
                 file.close();
             } else {

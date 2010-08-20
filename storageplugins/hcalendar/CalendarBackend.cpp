@@ -52,7 +52,7 @@ bool CalendarBackend::init( const QString& aNotebookName )
 
     iCalendar = new KCal::ExtendedCalendar(KDateTime::Spec::LocalZone());
 
-    LOG_DEBUG("Creating Default MeeGo Storage");
+    LOG_DEBUG("Creating Default Maemo Storage");
     iStorage = iCalendar->defaultStorage();
 
     bool opened = iStorage->open();
@@ -219,7 +219,7 @@ QString CalendarBackend::getVCalString(KCal::Incidence* aInci)
     KCal::Incidence* temp = aInci->clone();
 
     if(temp) {
-    	KCal::ExtendedCalendar tempCalendar(QLatin1String("UTC"));
+    	KCal::CalendarLocal tempCalendar(QLatin1String("UTC"));
     	tempCalendar.addIncidence(temp);
         KCal::VCalFormat vcf;
         vcal = vcf.toString(&tempCalendar);
@@ -244,7 +244,7 @@ QString CalendarBackend::getICalString(KCal::Incidence* aInci)
     KCal::Incidence* temp = aInci->clone();
 
     if( temp ) {
-		KCal::ExtendedCalendar tempCalendar(QLatin1String("UTC"));
+		KCal::CalendarLocal tempCalendar(QLatin1String("UTC"));
 		tempCalendar.addIncidence(temp);
 	    KCal::ICalFormat icf;
 	    ical = icf.toString(&tempCalendar);
@@ -262,7 +262,7 @@ KCal::Incidence* CalendarBackend::getIncidenceFromVcal( const QString& aVString 
 
 	KCal::Incidence* pInci = NULL;
 
-    KCal::ExtendedCalendar tempCalendar(KDateTime::Spec::LocalZone());
+    KCal::CalendarLocal tempCalendar(KDateTime::Spec::LocalZone());
     KCal::VCalFormat vcf;
     vcf.fromString(&tempCalendar, aVString);
     KCal::Incidence::List lst = tempCalendar.rawIncidences();
@@ -282,7 +282,7 @@ KCal::Incidence* CalendarBackend::getIncidenceFromIcal( const QString& aIString 
 
 	KCal::Incidence* pInci = NULL;
 
-    KCal::ExtendedCalendar tempCalendar(KDateTime::Spec::LocalZone());
+    KCal::CalendarLocal tempCalendar(KDateTime::Spec::LocalZone());
     KCal::ICalFormat icf;
     icf.fromString(&tempCalendar, aIString);
     KCal::Incidence::List lst = tempCalendar.rawIncidences();

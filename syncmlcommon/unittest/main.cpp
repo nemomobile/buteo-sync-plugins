@@ -28,6 +28,7 @@
 #include "SyncMLConfigTest.h"
 #include "SyncMLStorageProviderTest.h"
 #include "FolderItemParserTest.h"
+#include "DeviceInfoTest.h"
 
 int main(int argc, char* argv[])
 {
@@ -36,8 +37,9 @@ int main(int argc, char* argv[])
 	SimpleItemTest simpleItemTest;
 	ItemIdMapperTest mapperTest;
 	SyncMLConfigTest configTest;
-    Buteo::SyncMLStorageProviderTest storageTest;
+	Buteo::SyncMLStorageProviderTest storageTest;
 	FolderItemParserTest parserTest;
+	Buteo::DeviceInfoTest deviceInfoTest;
 
 	if (QTest::qExec(&simpleItemTest, argc, argv))
 		return 1;
@@ -47,9 +49,11 @@ int main(int argc, char* argv[])
 		return 1;
 	if (QTest::qExec(&configTest, argc, argv))
 		return 1;        
-        if (QTest::qExec(&storageTest, argc, argv))
-                return 1;
+	if (QTest::qExec(&storageTest, argc, argv))
+		return 1;
 	if (QTest::qExec(&parserTest, argc, argv))
+		return 1;
+	if (QTest::qExec(&deviceInfoTest, argc, argv))
 		return 1;
 	return 0;
 }

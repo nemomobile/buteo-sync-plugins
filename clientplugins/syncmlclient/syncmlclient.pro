@@ -6,7 +6,7 @@ INCLUDEPATH += . ../../syncmlcommon \
     /usr/include/libsyncprofile \
     /usr/include/sync \
 
-LIBS += -lsyncpluginmgr -lsyncprofile -lmeegosyncml #-lsysinfo
+LIBS += -L../../syncmlcommon -lsyncpluginmgr -lsyncprofile -lmeegosyncml -lsysinfo -lsyncmlcommon
 
 CONFIG += debug plugin silent
 
@@ -14,23 +14,9 @@ QT += dbus sql network
 QT -= gui
 
 #input
-HEADERS += SyncMLClient.h \
-           ../../syncmlcommon/StorageAdapter.h \
-           ../../syncmlcommon/ItemAdapter.h \
-           ../../syncmlcommon/ItemIdMapper.h \
-           ../../syncmlcommon/SyncMLCommon.h \
-           ../../syncmlcommon/SyncMLConfig.h \
-           ../../syncmlcommon/SyncMLStorageProvider.h \
-           ../../syncmlcommon/DeviceInfo.h 
+HEADERS += SyncMLClient.h
 
-
-SOURCES += SyncMLClient.cpp \
-           ../../syncmlcommon/StorageAdapter.cpp \
-           ../../syncmlcommon/ItemAdapter.cpp \
-           ../../syncmlcommon/ItemIdMapper.cpp \
-	   ../../syncmlcommon/SyncMLConfig.cpp \
-	   ../../syncmlcommon/SyncMLStorageProvider.cpp \
-           ../../syncmlcommon/DeviceInfo.cpp 
+SOURCES += SyncMLClient.cpp
 
 QMAKE_CXXFLAGS = -Wall \
     -g \

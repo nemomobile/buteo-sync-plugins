@@ -1,25 +1,25 @@
-#
-# This file is part of buteo-sync-app package
-#
-# Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-#
-# Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License
-# version 2.1 as published by the Free Software Foundation.
-#
-# This library is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA
-#
-#
+#/*
+# * This file is part of buteo-sync-plugins package
+# *
+# * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+# *
+# * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+# *
+# * This library is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU Lesser General Public License
+# * version 2.1 as published by the Free Software Foundation.
+# *
+# * This library is distributed in the hope that it will be useful, but
+# * WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# * Lesser General Public License for more details.
+# *
+# * You should have received a copy of the GNU Lesser General Public
+# * License along with this library; if not, write to the Free Software
+# * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# * 02110-1301 USA
+# *
+# */
 
 TEMPLATE = app
 TARGET = syncmlcommon-tests
@@ -30,37 +30,45 @@ INCLUDEPATH += . \
                ../ \
                /usr/include/libsynccommon
 
-LIBS += -lsyncpluginmgr -lsynccommon -lmeegosyncml -lsyncprofile -lQtTest
+LIBS += -lsyncpluginmgr -lsynccommon -lmeegosyncml -lsyncprofile -lQtTest -lsysinfo
+
+DEFINES +=  SYNC_APP_UNITTESTS
 
 #inputs
 HEADERS += ItemAdapterTest.h \
-           ItemAdapter.h \
-           SimpleItem.h \
+           ../ItemAdapter.h \
+           ../SimpleItem.h \
            SimpleItemTest.h \
-           ItemIdMapper.h \
+           ../ItemIdMapper.h \
            ItemIdMapperTest.h \
-           SyncMLConfig.h \
+           ../SyncMLConfig.h \
            SyncMLConfigTest.h \
-           StorageAdapter.h \
-           SyncMLStorageProvider.h \
+           ../StorageAdapter.h \
+           ../SyncMLStorageProvider.h \
            SyncMLStorageProviderTest.h \
-	   FolderItemParserTest.h \
-           FolderItemParser.h
+	       FolderItemParserTest.h \
+           ../FolderItemParser.h \
+           DeviceInfoTest.h \
+           ../DeviceInfo.h \
+           
 
 SOURCES += main.cpp \
            ItemAdapterTest.cpp \
-           ItemAdapter.cpp \
-           SimpleItem.cpp \
+           ../ItemAdapter.cpp \
+           ../SimpleItem.cpp \
            SimpleItemTest.cpp \
-           ItemIdMapper.cpp \
+           ../ItemIdMapper.cpp \
            ItemIdMapperTest.cpp \
-           SyncMLConfig.cpp \
+           ../SyncMLConfig.cpp \
            SyncMLConfigTest.cpp \
-           StorageAdapter.cpp \
-           SyncMLStorageProvider.cpp \
+           ../StorageAdapter.cpp \
+           ../SyncMLStorageProvider.cpp \
            SyncMLStorageProviderTest.cpp \
-	   FolderItemParserTest.cpp \
-           FolderItemParser.cpp
+	       FolderItemParserTest.cpp \
+           ../FolderItemParser.cpp \
+           DeviceInfoTest.cpp \
+           ../DeviceInfo.cpp 
+           
 
 QT += testlib sql xml
 QT -= gui

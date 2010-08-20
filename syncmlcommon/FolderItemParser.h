@@ -38,8 +38,11 @@ public:
 
     //! Structure for storing folder data.
     struct FolderData {
+    	//! Name of the folder
         QString iName;
+        //! Created Time
         QDateTime iCreated;
+        //! Modified Time
         QDateTime iModified;
     };
 

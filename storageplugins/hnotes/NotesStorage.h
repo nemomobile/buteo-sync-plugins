@@ -20,7 +20,6 @@
  * 02110-1301 USA
  *
  */
-
 #ifndef NOTESSTORAGE_H
 #define NOTESSTORAGE_H
 
@@ -103,6 +102,11 @@ public:
      *
      */
     virtual Buteo::StorageItem* getItem( const QString& aItemId );
+
+    /*! \see StoragePlugin::getItems()
+     *
+     */
+    virtual QList<Buteo::StorageItem*> getItems( const QStringList& aItemIdList );
 
     /*! \see StoragePlugin::addItem()
      *

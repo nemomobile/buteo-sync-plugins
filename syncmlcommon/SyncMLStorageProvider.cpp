@@ -75,11 +75,23 @@ bool SyncMLStorageProvider::uninit()
     return true;
 }
 
+QString SyncMLStorageProvider::getPreferredURINames( const QString &aURI )
+{
+    Q_UNUSED(aURI);	
+   // TODO : Handle possible multiple URI names in storage profiles
+   // One way to do this is to have separators for Local URI, like ./notes;./Notepad
+   return QString();
+}
+
 DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorageByURI( const QString& aURI )
 {
     FUNCTION_CALL_TRACE;
 
     LOG_DEBUG( "Incoming request to acquire storage by URI:" << aURI );
+
+#if 0
+    QString preferredURI = getPreferredURINames( aURI );
+#endif
 
     const Buteo::Profile* storageProfile =
             iProfile->subProfileByKeyValue( STORAGE_SOURCE_URI, aURI,
@@ -93,7 +105,6 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorageByURI( const QStri
     LOG_DEBUG( "Found storage for URI" << aURI << ":" << storageProfile->name() );
 
     return acquireStorage( storageProfile );
-
 }
 
 DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorageByMIME( const QString& aMIME )

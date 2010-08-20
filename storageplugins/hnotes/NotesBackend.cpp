@@ -60,7 +60,7 @@ bool NotesBackend::init( const QString& aNotebookName,
 
     iCalendar = new KCal::ExtendedCalendar( QLatin1String( "UTC" ) );
 
-    LOG_DEBUG("Creating Default MeeGo Storage for Notes");
+    LOG_DEBUG("Creating Default Maemo Storage for Notes");
     iStorage = iCalendar->defaultStorage();
 
     bool opened = iStorage->open();

@@ -47,7 +47,7 @@ public:
     /*! \brief Initializes ID mapper for storage
      *
      * @param aDbFile Path to database to use as persistent storage
-     * @param Identifier for storage
+     * @param aStorageId Identifier for storage
      * @return True if successfully initialized, otherwise false
      */
     bool init( const QString& aDbFile, const QString& aStorageId );

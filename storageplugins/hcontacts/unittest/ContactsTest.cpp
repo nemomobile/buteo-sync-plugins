@@ -20,12 +20,17 @@
  * 02110-1301 USA
  *
  */
-
 #include "ContactsTest.h"
-#include <QDebug>
-#include <QFile>
+
+#include <QVersitReader>
+#include <QVersitContactImporter>
 #include <QtTest/QtTest>
+#include <QDebug>
+#include <LogMacros.h>
 #include <Logger.h>
+
+#include "ContactsStorage.h"
+#include "SimpleItem.h"
 
 static const QByteArray originalData(
     "BEGIN:VCARD\r\n"
@@ -39,51 +44,6 @@ static const QByteArray originalData(
     "NOTE:\r\n"
     "END:VCARD\r\n");
 
-/*
-static const QByteArray originalData(
-    "BEGIN:VCARD \r\n" \
-    "VERSION:2.1 \r\n"
-    "REV:20091106T102538Z \r\n"
-    "N:Udupa;Kiran;Shama;Mr. \r\n"
-    "FN:Udupa Kiran \r\n"
-    "X-EPOCSECONDNAME: \r\n"
-    "X-EPOCSECONDNAME: \r\n"
-    "EMAIL;WORK:ext-kudupa2@nokia.com \r\n"
-    "EMAIL;HOME:kudupa3@something.com \r\n"
-    "X-SIP;SWIS: \r\n"
-    "X-SIP;POC: \r\n"
-    "X-SIP: \r\n"
-    "X-SIP;HOME;VOIP: \r\n"
-    "X-SIP;WORK;VOIP: \r\n"
-    "X-SIP;VOIP: \r\n"
-    "X-ASSISTANT: \r\n"
-    "X-ASSISTANT: \r\n"
-    "X-ANNIVERSARY: \r\n"
-    "X-ANNIVERSARY: \r\n"
-    "X-ASSISTANT-TEL: \r\n"
-    "X-ASSISTANT-TEL: \r\n"
-    "X-SPOUSE: \r\n"
-    "X-SPOUSE: \r\n"
-    "X-CHILDREN: \r\n"
-    "X-CHILDREN:  \r\n"
-    "NOTE:notes notes \r\n"
-    "URL:www.web.com \r\n"
-    "EMAIL:kudupa@nokia.com \r\n"
-    "X-NICKNAME:KSU \r\n"
-    "TITLE:Test Lead \r\n"
-    "X-CHILDREN:kkkkk \r\n"
-    "X-SPOUSE:xyz \r\n"
-    "ORG:Wipro \r\n"
-    "TEL:99999 \r\n"
-    "TEL;CELL:44444 \r\n"
-    "TEL;FAX;HOME:88888 \r\n"
-    "TEL;FAX;WORK:77777 \r\n"
-    "TEL;HOME;VOICE:33333 \r\n"
-    "TEL;PAGER:66666 \r\n"
-    "TEL;WORK;VOICE:11111 \r\n"
-    "END:VCARD \r\n" );
-*/
-
 static const QByteArray modifiedData(
    "BEGIN:VCARD\r\n"
    "VERSION:2.1\r\n"
@@ -96,82 +56,44 @@ static const QByteArray modifiedData(
    "NOTE:\r\n"
    "END:VCARD\r\n");
 
-/*
-static const QByteArray modifiedData(
-    "BEGIN:VCARD \r\n" \
-    "VERSION:2.1 \r\n"
-    "REV:20091106T102538Z \r\n"
-    "N:;Kiran;Shama;Mr. \r\n"
-    "FN:Kiran \r\n"
-    "X-EPOCSECONDNAME: \r\n"
-    "X-EPOCSECONDNAME: \r\n"
-    "EMAIL;WORK:kudupa2@wipro.com \r\n"
-    "EMAIL;HOME:kudupa3@gmail.com \r\n"
-    "X-SIP;SWIS: \r\n"
-    "X-SIP;POC: \r\n"
-    "X-SIP: \r\n"
-    "X-SIP;HOME;VOIP: \r\n"
-    "X-SIP;WORK;VOIP: \r\n"
-    "X-SIP;VOIP: \r\n"
-    "X-ASSISTANT: \r\n"
-    "X-ASSISTANT: \r\n"
-    "X-ANNIVERSARY: \r\n"
-    "X-ANNIVERSARY: \r\n"
-    "X-ASSISTANT-TEL: \r\n"
-    "X-ASSISTANT-TEL: \r\n"
-    "X-SPOUSE: \r\n"
-    "X-SPOUSE: \r\n"
-    "X-CHILDREN: \r\n"
-    "X-CHILDREN:  \r\n"
-    "NOTE:notes notes \r\n"
-    "URL:www.web.com \r\n"
-    "EMAIL:kudupa@nokia.com \r\n"
-    "X-NICKNAME:KSU \r\n"
-    "TITLE:Test Lead \r\n"
-    "X-CHILDREN:kkkkk \r\n"
-    "X-SPOUSE:xyz \r\n"
-    "ORG:Wipro \r\n"
-    "TEL:88888 \r\n"
-    "TEL;CELL:44444 \r\n"
-    "TEL;FAX;HOME:88888 \r\n"
-    "TEL;FAX;WORK:77777 \r\n"
-    "TEL;HOME;VOICE:33333 \r\n"
-    "TEL;PAGER:66666 \r\n"
-    "TEL;WORK;VOICE:11111 \r\n"
-    "END:VCARD \r\n" );
-*/
-
 // allocate all resources needed here
 void ContactsTest::initTestCase()
 {
     Buteo::Logger::createInstance();
-
-	iStorage = new ContactStorage("hcontacts");
-    QVERIFY(iStorage != 0);
-
-	QMap<QString, QString> props;
-    QVERIFY(iStorage->init( props )) ;
 }
 
 // de-allocate all resources used
 void ContactsTest::cleanupTestCase()
 {
-    QVERIFY(iStorage != 0);
-    QVERIFY(iStorage->uninit());
-
-    delete iStorage;
-    iStorage = 0;
-
     Buteo::Logger::deleteInstance();
 }
 
-void ContactsTest::testSuite()
+void ContactsTest::testSuiteSingle()
 {
-    runTestSuite( originalData, modifiedData, *iStorage );
+    QMap<QString, QString> props;
+
+    ContactStorage storage("hcontacts");
+    QVERIFY(storage.init( props )) ;
+
+    runTestSuite( originalData, modifiedData, storage, false );
+
+    QVERIFY(storage.uninit());
+}
+
+void ContactsTest::testSuiteBatched()
+{
+    QMap<QString, QString> props;
+
+    ContactStorage storage("hcontacts");
+    QVERIFY(storage.init( props )) ;
+
+    runTestSuite( originalData, modifiedData, storage, true );
+
+    QVERIFY(storage.uninit());
 }
 
 void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                                 Buteo::StoragePlugin& aPlugin )
+                                 Buteo::StoragePlugin& aPlugin, bool aBatched )
 {
     const int WAIT_TIME = 2000;
     QByteArray data;
@@ -199,7 +121,20 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( data == aOriginalData );
 
     qDebug() << "Adding new item...";
-    Buteo::StoragePlugin::OperationStatus status = aPlugin.addItem( *item );
+    Buteo::StoragePlugin::OperationStatus status;
+    if( aBatched )
+    {
+        QList<Buteo::StorageItem*> items;
+        items.append( item );
+
+        QList<Buteo::StoragePlugin::OperationStatus> results = aPlugin.addItems( items);
+        QCOMPARE( results.count(), 1 );
+        status = results.first();
+    }
+    else
+    {
+        status = aPlugin.addItem( *item );
+    }
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( !item->getId().isEmpty() );
@@ -239,9 +174,25 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( data == aModifiedData );
 
     qDebug() << "Modifying item...";
-    status = aPlugin.modifyItem( *item );
+    if( aBatched )
+    {
+        QList<Buteo::StorageItem*> items;
+        items.append( item );
+
+        QList<Buteo::StoragePlugin::OperationStatus> results = aPlugin.modifyItems( items);
+        QCOMPARE( results.count(), 1 );
+        status = results.first();
+    }
+    else
+    {
+        status = aPlugin.modifyItem( *item );
+    }
+
+
+
+
     QDateTime time = QDateTime::currentDateTime();
-     qDebug() << "item modified at :" << time;
+    qDebug() << "Item modified at :" << time;
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( item->getId() == id );
@@ -279,7 +230,21 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Test Delete Item
     qDebug() << "Deleting item...";
-    QVERIFY( aPlugin.deleteItem( id ) == Buteo::StoragePlugin::STATUS_OK );
+    if( aBatched )
+    {
+        QList<QString> items;
+        items.append( id );
+
+        QList<Buteo::StoragePlugin::OperationStatus> results = aPlugin.deleteItems( items );
+        QCOMPARE( results.count(), 1 );
+        status = results.first();
+    }
+    else
+    {
+        status = aPlugin.deleteItem( id );
+    }
+
+    QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
 
     // ** Check that item is no longer found from new items at t1
     qDebug() << "Checking that the item is NOT found from getNewItems(t1)...";
@@ -293,14 +258,11 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
     QVERIFY( !items.contains( id ) );
 
-    // commenting the below code as getDeletedItems is not supported by the backend.
-    /*
     // ** Check that item is not found from deleted items at t1
     qDebug() << "Checking that the item is NOT found from getDeletedItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t1 ) );
     QVERIFY( !items.contains( id ) );
-    */
 
     // ** Check that item is no longer found from modified items at t2
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t2)...";
@@ -308,21 +270,17 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
     QVERIFY( !items.contains( id ) );
 
-    // commenting the below code as getDeletedItems is not sypported by the backend
-    /*
     // ** Check that item is now found from deleted items at t2
     qDebug() << "Checking that the item is now found from getDeletedItems(t2)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t2 ) );
-    VERIFY( items.contains( id ) );
+    QVERIFY( items.contains( id ) );
 
     // ** Check that item is now found from deleted items at t3
     qDebug() << "Checking that the item is found from getDeletedItems(t3)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t3 ) );
     QVERIFY( items.contains( id ) );
-    */
-
     // ** Check that item is no longer found from all items
     qDebug() << "Checking that the item is NOT found from getItems()...";
     items.clear();
@@ -330,29 +288,193 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( !items.contains( id ) );
 }
 
-
-void ContactsTest::testBatchAddition()
+/*
+void ContactsTest::pf177715()
 {
-    QList<Buteo::StorageItem*> itemsList;
+    const QString vcardTemplate(
+        "BEGIN:VCARD\r\n"
+        "VERSION:2.1\r\n"
+        "N:%1;%2\r\n"
+        "TEL:%3\r\n"
+        "END:VCARD\r\n");
 
-    SimpleItem *item1 = new SimpleItem;
-    item1->write(0, originalData);
-    itemsList.append(item1);
+    const int numContacts = 1000;
+    const int contactsPerBatch = 20;
 
-    SimpleItem *item2 = new SimpleItem;
-    item2->write(0, modifiedData);
-    itemsList.append(item2);
+    QStringList vcards;
 
-    QList<Buteo::StoragePlugin::OperationStatus> statusList = iStorage->addItems(itemsList);
-    QCOMPARE(statusList.size(), itemsList.size());
-    QCOMPARE(statusList.first(), Buteo::StoragePlugin::STATUS_OK);
-    QCOMPARE(statusList.last(), Buteo::StoragePlugin::STATUS_OK);
+    for( int i = 0; i < numContacts; ++i )
+    {
 
-    delete item1;
-    item1 = 0;
+        QString number = QString::number(i);
+        QString vcard = vcardTemplate.arg( number ).arg( number ).arg( number);
+        vcards.append( vcard);
+    }
 
-    delete item2;
-    item2 = 0;
+    qDebug() << "Testing with" << numContacts << "contacts, using batches of" << contactsPerBatch;
+    QTime timer;
+
+    QStringList availableManagers = QContactManager::availableManagers();
+    QContactManager manager( "tracker" );
+
+
+
+    qDebug() << "Clearing existing contacts...";
+    QList<QContactLocalId> contactIDs = manager.contactIds();
+    for( int i = 0; i < contactIDs.count(); i += contactsPerBatch )
+    {
+        directDelete( contactIDs.mid( i, contactsPerBatch ), manager );
+    }
+
+    qDebug() << "Starting direct add...";
+    timer.start();
+
+    for( int i = 0; i < numContacts; i += contactsPerBatch )
+    {
+        directAdd( vcards.mid( i, contactsPerBatch ), manager );
+    }
+
+    qDebug() << "Direct add finished, took" << timer.elapsed() << "ms";
+
+
+
+    qDebug() << "Starting direct ids...";
+    timer.start();
+
+    contactIDs = manager.contactIds();
+
+    qDebug() << "Get  direct ids finished, took" << timer.elapsed() << "ms";
+
+
+
+    qDebug() << "Starting direct delete...";
+    timer.restart();
+
+    contactIDs = manager.contactIds();
+    for( int i = 0; i < contactIDs.count(); i += contactsPerBatch )
+    {
+        directDelete( contactIDs.mid( i, contactsPerBatch ), manager );
+    }
+    qDebug() << "Direct delete finished, took" << timer.elapsed() << "ms";
+
+    qDebug() << "Initiating plugin...";
+    timer.restart();
+
+    QMap<QString, QString> props;
+    ContactStorage storage("hcontacts");
+    QVERIFY(storage.init( props )) ;
+
+    qDebug() << "Plugin init finished, took" << timer.elapsed() << "ms";
+
+
+
+    QList<Buteo::StorageItem*> items;
+    for( int i = 0; i < numContacts; ++i )
+    {
+        Buteo::StorageItem* item = storage.newItem();
+        QVERIFY( item );
+        QVERIFY( item->write( 0, vcards[i].toAscii() ) );
+        items.append( item );
+    }
+
+
+
+    qDebug() << "Starting plugin add...";
+    timer.start();
+
+    for( int i = 0; i < numContacts; i += contactsPerBatch )
+    {
+        QList<Buteo::StoragePlugin::OperationStatus> status = storage.addItems( items.mid(i, contactsPerBatch ) );
+        QVERIFY( status.contains( Buteo::StoragePlugin::STATUS_OK ) == contactsPerBatch );
+    }
+
+    qDebug() << "Plugin add finished, took" << timer.elapsed() << "ms";
+
+
+
+    qDeleteAll( items );
+    items.clear();
+
+
+    qDebug() << "Starting plugin ids...";
+    timer.start();
+
+    QList<QString> ids;
+
+    QVERIFY( storage.getAllItemIds( ids) );
+
+    qDebug() << "Get  plugin ids finished, took" << timer.elapsed() << "ms";
+
+    qDebug() << "Starting plugin delete...";
+    timer.restart();
+
+    contactIDs = manager.contactIds();
+    for( int i = 0; i < contactIDs.count(); i += contactsPerBatch )
+    {
+        QList<Buteo::StoragePlugin::OperationStatus> status = storage.deleteItems( ids.mid( i, contactsPerBatch ) );
+                QVERIFY( status.contains( Buteo::StoragePlugin::STATUS_OK ) == contactsPerBatch );
+    }
+    qDebug() << "Plugin delete finished, took" << timer.elapsed() << "ms";
+
+
+    qDebug() << "Uninitiating plugin...";
+    timer.restart();
+
+    QVERIFY(storage.uninit()) ;
+
+    qDebug() << "Plugin uninit finished, took" << timer.elapsed() << "ms";
+
 }
 
+void ContactsTest::directAdd( const QStringList& aVCards, QContactManager& aManager )
+{
 
+    QByteArray byteArray;
+    //QVersitReader needs LF/CRLF/CR between successive vcard's in the list,
+    //CRLF didn't work though.
+    QString LF = "\n";
+
+    foreach ( QString vcard, aVCards )
+    {
+        byteArray.append(vcard.toUtf8());
+        byteArray.append(LF.toUtf8());
+    }
+
+    QBuffer readBuf(&byteArray);
+    readBuf.open(QIODevice::ReadOnly);
+    readBuf.seek(0);
+
+    QVersitReader versitReader;
+    versitReader.setDevice (&readBuf);
+
+    if (!versitReader.startReading())
+            LOG_WARNING ("Error while reading vcard");
+
+    if (!versitReader.waitForFinished())
+            LOG_WARNING ("Error while finishing reading vcard");
+
+    QList<QVersitDocument> versitDocList = versitReader.results ();
+    readBuf.close();
+
+    QVersitContactImporter contactImporter;
+    QList<QContact> contactList;
+    QVERIFY( contactImporter.importDocuments(versitDocList) );
+    contactList =  contactImporter.contacts();
+
+    QMap<int, QContactManager::Error>  errorMap;
+
+    QVERIFY( aManager.saveContacts(&contactList, &errorMap) );
+    QVERIFY( errorMap.isEmpty() );
+
+}
+
+void ContactsTest::directDelete( const QList<QContactLocalId>& aContactIds, QContactManager& manager )
+{
+
+    QMap<int , QContactManager::Error> errorMap;
+
+    QVERIFY( manager.removeContacts( aContactIds, &errorMap ) );
+    QVERIFY( errorMap.isEmpty() );
+}
+
+*/
