@@ -1,11 +1,7 @@
 usr/lib/lib*.so
 usr/lib/sync/lib*.so
-usr/bin/*
 etc/sync/xml/*
 etc/sync/profiles/client/*
-etc/sync/profiles/server/*
 etc/sync/profiles/service/*
 etc/sync/profiles/storage/*
 etc/sync/profiles/sync/*
-usr/share/accounts/services/*
-usr/lib/AccountsUI/*
