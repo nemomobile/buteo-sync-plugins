@@ -42,8 +42,18 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 
 #install
 target.path = /usr/lib/
+headers.path = /usr/include/syncmlcommon/
+headers.files = ItemAdapter.h \
+           ItemIdMapper.h \
+           SimpleItem.h \
+           StorageAdapter.h \
+           SyncMLCommon.h \
+           SyncMLConfig.h \
+           SyncMLStorageProvider.h \
+           FolderItemParser.h \
+           DeviceInfo.h
 
-INSTALLS += target
+INSTALLS += target headers
 
 # for compiling on meego
 linux-g++-maemo {
