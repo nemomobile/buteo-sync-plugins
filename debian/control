@@ -11,6 +11,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Plugins for synchronization
  This package includes plugins for Harmattan synchronization.
 
+Package: sync-app-dev
+Architecture: any
+Depends: debhelper (>= 5), sync-app(= ${binary:Version}), cdbs
+Description: Files required for synchronizer plugin development
+ Header file needed for making/compiling plugins.
+
 Package: sync-app-dbg
 Architecture: any
 Priority: extra
