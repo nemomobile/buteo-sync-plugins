@@ -1,9 +1,14 @@
 TEMPLATE = subdirs
 
+linux-g++-maemo {
+	message("Compiling for harmattan")
+	SUBDIRS += \
+	           hnotes  \
+        	   hnotes/unittest  \
+	           hcalendar \
+	           hcalendar/unittest
+}
+
 SUBDIRS += \
-#           hnotes  \
-#           hnotes/unittest  \
-#           hcalendar \
-#           hcalendar/unittest \
            hcontacts \
            hcontacts/unittest
