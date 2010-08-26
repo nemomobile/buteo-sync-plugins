@@ -72,25 +72,22 @@ public:
     QString value( const QString& aKey );
 
 protected:
-
-    /**
-     * \brief Adds a new mapping for aKey
-     * @param aKey An item ID that need mapped value
-     * @return Mapping for aKey
+    /*! \brief Adds a new key
+     *
+     * @param aKey Key
+     * @return Mapped value
      */
-    QString add(const QString& aKey);
+    QString add( const QString &aKey );
 
 private:
 
     QSqlDatabase    iDb;
     QString         iConnectionName;
     QString         iStorageId;
+    QMap<QString, quint32> iKeyToValueMap;
+    QMap<quint32, QString> iValueToKeyMap;
+    quint32 iNextValue;
 
-    // Because value() may use add(), and add() recursively uses values(),
-    // a recursion guard is used to prevent infinite loop. Although is should
-    // never happen, this is an easy way to eliminate even the possibility of it.
-    bool            iRecursionGuard;
-    
     friend class ItemIdMapperTest;
 
 };

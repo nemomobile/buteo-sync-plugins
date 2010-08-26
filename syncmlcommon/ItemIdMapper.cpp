@@ -28,7 +28,7 @@
 const QString CONNECTIONNAME( "idmapper" );
 
 ItemIdMapper::ItemIdMapper() :
-    iRecursionGuard(false)
+    iNextValue(1)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -50,40 +50,45 @@ bool ItemIdMapper::init( const QString& aDbFile, const QString& aStorageId )
         iConnectionName = CONNECTIONNAME + QString::number( connectionNumber++ );
         iDb = QSqlDatabase::addDatabase( "QSQLITE", iConnectionName );
         iDb.setDatabaseName( aDbFile );
-        if(!iDb.open()) //CID 29154
-        	LOG_CRITICAL( "Cannot open database" );
-    }
-
-
-    if( !iDb.isOpen() ) {
-        LOG_CRITICAL( "Could open ID database file:" << aDbFile );
-        return false;
-    }
-
-    QString queryString;
-    queryString.append( "CREATE TABLE if not exists " );
-    queryString.append( aStorageId );
-
-    // The value of primary key starts from 1 (in SQLite).
-    queryString.append(" (value integer primary key autoincrement, key varchar(512))" );
-
-    QSqlQuery query( iDb );
-
-    query.prepare( queryString );
-    query.exec();
-
-    if( query.lastError().isValid() ) {
-        LOG_WARNING("Query failed: " << query.lastError());
-        return false;
-    }
-    else {
-        LOG_DEBUG( "Ensured database table:" << aStorageId );
+        if(!iDb.open()) { //CID 29154
+            LOG_CRITICAL( "Could open ID database file:" << aDbFile );
+            return false;
+        }
     }
 
     iStorageId = aStorageId;
 
-    LOG_DEBUG( "ID mapper initiated" );
+    QString queryString;
+    QSqlQuery query;
 
+    queryString.append( "CREATE TABLE if not exists " );
+    queryString.append( iStorageId );
+    queryString.append(" (value integer primary key, key varchar(512))" );
+
+    query = QSqlQuery( queryString, iDb );
+    if( !query.exec() ) {
+        LOG_CRITICAL("Create Query failed: " << query.lastError());
+        return false;
+    }
+
+
+    // Load the key,value pairs in memory
+    queryString.clear();
+    queryString.append( "SELECT key, value FROM " );
+    queryString.append( iStorageId );
+    query = QSqlQuery( queryString, iDb );
+    if( query.exec() )
+    {
+        while( query.next() )
+        {
+            iKeyToValueMap[query.value(0).toString()] = query.value(1).toUInt();
+            iValueToKeyMap[query.value(1).toUInt()] = query.value(0).toString();
+            LOG_DEBUG("Mapped key " << query.value(0).toString() << " and value " << query.value(1).toString());
+        }
+        iNextValue = iKeyToValueMap.count() + 1;
+    }
+
+    LOG_DEBUG( "ID mapper initiated" );
     return true;
 
 }
@@ -95,9 +100,54 @@ void ItemIdMapper::uninit()
 
     LOG_DEBUG( "Uninitiating ID mapper..." );
 
+    QString queryString;
+    QSqlQuery query;
+
+    bool supportsTransaction = iDb.transaction();
+    if( !supportsTransaction )
+    {
+        LOG_DEBUG("Db doesn't support transactions");
+    }
+
+    queryString.append( "DELETE FROM " );
+    queryString.append( iStorageId );
+    query = QSqlQuery( queryString, iDb );
+    if( !query.exec() )
+    {
+        LOG_WARNING("Delete Query failed: " << query.lastError());
+    }
+
+    queryString.clear();
+    queryString.append( "INSERT INTO " );
+    queryString.append( iStorageId );
+    queryString.append( " (value, key) values(:values, :key)" );
+    query = QSqlQuery( queryString, iDb );
+    QVariantList keys, values;
+    for( int i = 0; i < iValueToKeyMap.count(); ++i )
+    {
+        values << (i + 1);
+        keys << iValueToKeyMap[i+1];
+    }
+    query.addBindValue( values );
+    query.addBindValue( keys );
+    if( !query.execBatch() )
+    {
+        LOG_CRITICAL("Save Query failed: " << query.lastError());
+    }
+
+    if( supportsTransaction )
+    {
+        if( !iDb.commit() )
+        {
+            LOG_CRITICAL("Commit failed");
+        }
+    }
+
     iDb.close();
     iDb = QSqlDatabase();
     QSqlDatabase::removeDatabase( iConnectionName );
+
+    iNextValue = 1;
 
     LOG_DEBUG( "ID mapper uninitiated" );
 
@@ -111,35 +161,14 @@ QString ItemIdMapper::key( const QString& aValue )
     // NB#153991:In case SyncML stack asks for empty key, we shouldn't treat
     // it as an error situation, rather just not do mapping in that case.
 
-    if( aValue.isEmpty() ) {
-        LOG_DEBUG("Value is empty, mapping not done");
-        return aValue;
-    }
-
     QString key = aValue;
 
-    QString queryString;
-    queryString.append( "SELECT key FROM " );
-    queryString.append( iStorageId );
-    queryString.append( " WHERE value = :value" );
-
-    QSqlQuery query( iDb );
-
-    query.prepare( queryString );
-    query.bindValue( ":value", aValue );
-    query.exec();
-
-    if( query.lastError().isValid() ) {
-        LOG_WARNING("Query failed: " << query.lastError());
-    }
-    else if( !query.next() ) {
-        LOG_DEBUG( "Could not find key for value" << aValue );
+    if( !iValueToKeyMap.contains( aValue.toUInt() ) ) {
+        LOG_DEBUG("Value is empty, mapping not done");
     }
     else {
-        key = query.value(0).toString();
+        key = iValueToKeyMap.value( aValue.toUInt() );
     }
-
-    LOG_DEBUG( "Value" << aValue << "mapped to key" << key );
 
     return key;
 }
@@ -149,11 +178,6 @@ QString ItemIdMapper::value( const QString& aKey )
 {
     FUNCTION_CALL_TRACE;
 
-    if (aKey.isEmpty()) {
-        LOG_WARNING("Key is empty. Not trying to do mapping");
-        return aKey;
-    }
-
     QString value = aKey;
 
     // If the key is already an integer, no mapping is needed.
@@ -161,74 +185,26 @@ QString ItemIdMapper::value( const QString& aKey )
     int id = aKey.toInt(&keyIsInt);
     Q_UNUSED(id);
 
-    if (!keyIsInt)
-    {
-        QString queryString;
-        queryString.append( "SELECT value FROM " );
-        queryString.append( iStorageId );
-        queryString.append( " WHERE key = :key" );
-
-        QSqlQuery query( iDb );
-
-        query.prepare( queryString );
-        query.bindValue( ":key", aKey );
-        query.exec();
-
-        if( query.lastError().isValid() ) {
-            LOG_WARNING("Query failed: " << query.lastError());
+    if (aKey.isEmpty()) {
+        LOG_WARNING("Key is empty. Not trying to do mapping");
+    }
+    else if( !keyIsInt ) {
+        if( !iKeyToValueMap.contains( aKey ) )
+        {
+           value = add( aKey );
         }
-        else if( !query.next() ) {
-
-            if (iRecursionGuard) {
-                LOG_WARNING("Infinite recursion hazard detected!. Safely exiting. No mapping done.");
-            }
-            else{
-                LOG_DEBUG( "Mapping for key" << aKey << "not found, generating..." );
-                value = add(aKey);
-            }
-
-        }
-        else {
-            value = query.value(0).toString();
+        else
+        {
+            value = QString::number( iKeyToValueMap.value( aKey ) );
         }
     }
-
-    LOG_DEBUG( "Key" << aKey << "mapped to value" << value );
 
     return value;
 }
 
-
-
-/*!
-    \fn ItemIdMapper::add(const QString& aKey)
- */
-QString ItemIdMapper::add(const QString& aKey)
+QString ItemIdMapper::add( const QString &aKey )
 {
-    FUNCTION_CALL_TRACE;
-
-    QString queryString;
-
-    queryString.append( "INSERT INTO ");
-    queryString.append( iStorageId );
-    queryString.append( " (key) values(:key)" );
-
-    QSqlQuery query( iDb );
-    query.prepare( queryString );
-    query.bindValue( ":key", aKey );
-    query.exec();
-
-    QString mappedKey = aKey;
-    
-    if( query.lastError().isValid() ) {
-        LOG_WARNING("Query failed: " << query.lastError());
-    }
-    else {
-        iRecursionGuard = true;
-        mappedKey = value(aKey);
-    }
-
-    iRecursionGuard = false;
-    
-    return mappedKey;
+   iKeyToValueMap[aKey] = iNextValue;
+   iValueToKeyMap[iNextValue] = aKey;
+   return QString::number( iNextValue++ );
 }
