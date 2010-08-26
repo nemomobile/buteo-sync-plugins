@@ -4,6 +4,8 @@ sync-app (0.5.6-35) unstable; urgency=low
     the sync session.
   * Fixes: NB#186181 -  It took ~25 min to sync 1000 calendar entries to device
   * Fixes: NB#177715 -  Synchronizing 900 contacts from N95 to device takes ~18 mins
+  * Fixes: NB#187736 - msyncd crashed when modify and delete notes at
+    both dut and n95
 
  -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 26 Aug 2010 16:00:28 +0530
 

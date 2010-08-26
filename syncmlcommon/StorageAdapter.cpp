@@ -278,8 +278,7 @@ QList<DataSync::SyncItem*> StorageAdapter::getSyncItems( const QList<DataSync::S
 
     QStringList idList;
     QList<DataSync::SyncItemKey>::const_iterator i;
-    QList<Buteo::StorageItem*>::const_iterator j;
-    for( i = aKeyList.constBegin(); i != aKeyList.constEnd(); ++i)
+        for( i = aKeyList.constBegin(); i != aKeyList.constEnd(); ++i)
     {
         idList.append( iIdMapper.key( *i ) );
     }
@@ -287,15 +286,24 @@ QList<DataSync::SyncItem*> StorageAdapter::getSyncItems( const QList<DataSync::S
     QList<Buteo::StorageItem*> items = iPlugin->getItems( idList );
     QList<DataSync::SyncItem*> adapters;
 
+    QList<Buteo::StorageItem*>::const_iterator j;
     for( j = items.constBegin(); j != items.constEnd(); ++j)
     {
-        ItemAdapter* adapter = new ItemAdapter( *j );
-        adapter->setKey( iIdMapper.value( (*j)->getId() ) );
-        adapter->setType( (*j)->getType() );
-        if( !(*j)->getParentId().isEmpty() ) {
-            adapter->setParentKey( iIdMapper.value( (*j)->getParentId() ) );
+        if( *j )
+        {
+            ItemAdapter* adapter = new ItemAdapter( *j );
+            adapter->setKey( iIdMapper.value( (*j)->getId() ) );
+            adapter->setType( (*j)->getType() );
+            if( !(*j)->getParentId().isEmpty() )
+            {
+                adapter->setParentKey( iIdMapper.value( (*j)->getParentId() ) );
+            }
+            adapters.append( adapter );
         }
-        adapters.append( adapter );
+        else
+        {
+            adapters.append( NULL );
+        }
     }
 
     return adapters;
