@@ -148,6 +148,7 @@ private:
 
     NotesBackend    iBackend;
 
+    bool            iCommitNow;
 };
 
 /*! \brief Creates notes storage plugin

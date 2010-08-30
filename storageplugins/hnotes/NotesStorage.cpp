@@ -57,7 +57,7 @@ extern "C" void destroyPlugin( Buteo::StoragePlugin* aStorage )
 }
 
 
-NotesStorage::NotesStorage( const QString& aPluginName ) : Buteo::StoragePlugin( aPluginName )
+NotesStorage::NotesStorage( const QString& aPluginName ) : Buteo::StoragePlugin( aPluginName ), iCommitNow( true )
 {
     FUNCTION_CALL_TRACE;
 }
@@ -169,7 +169,7 @@ Buteo::StoragePlugin::OperationStatus NotesStorage::addItem( Buteo::StorageItem&
 {
     FUNCTION_CALL_TRACE;
 
-    if( iBackend.addNote( aItem ) ) {
+    if( iBackend.addNote( aItem, iCommitNow ) ) {
         return STATUS_OK;
     }
     else {
@@ -184,9 +184,16 @@ QList<Buteo::StoragePlugin::OperationStatus> NotesStorage::addItems( const QList
 
     QList<OperationStatus> results;
 
+    //Commit once at the end of the batch update
+    iCommitNow = false;
+
     for( int i = 0; i < aItems.count(); ++i ) {
         results.append( addItem( *aItems[i] ) );
     }
+
+    iCommitNow = true;
+    bool saved = iBackend.commitChanges();
+    Q_UNUSED( saved );
 
     return results;
 }
@@ -195,7 +202,7 @@ Buteo::StoragePlugin::OperationStatus NotesStorage::modifyItem( Buteo::StorageIt
 {
     FUNCTION_CALL_TRACE;
 
-    if( iBackend.modifyNote( aItem ) ) {
+    if( iBackend.modifyNote( aItem, iCommitNow ) ) {
         return STATUS_OK;
     }
     else {
@@ -210,9 +217,16 @@ QList<Buteo::StoragePlugin::OperationStatus> NotesStorage::modifyItems( const QL
 
     QList<OperationStatus> results;
 
+    //Commit once at the end of the batch update
+    iCommitNow = false;
+
     for( int i = 0; i < aItems.count(); ++i ) {
         results.append( modifyItem( *aItems[i] ) );
     }
+
+    iCommitNow = true;
+    bool saved = iBackend.commitChanges();
+    Q_UNUSED( saved );
 
     return results;
 }
@@ -221,7 +235,7 @@ Buteo::StoragePlugin::OperationStatus NotesStorage::deleteItem( const QString& a
 {
     FUNCTION_CALL_TRACE;
 
-    if( iBackend.deleteNote( aItemId ) ) {
+    if( iBackend.deleteNote( aItemId, iCommitNow ) ) {
         return STATUS_OK;
     }
     else {
@@ -236,9 +250,16 @@ QList<Buteo::StoragePlugin::OperationStatus> NotesStorage::deleteItems( const QL
 
     QList<OperationStatus> results;
 
+    //Commit once at the end of the batch update
+    iCommitNow = false;
+
     for( int i = 0; i < aItemIds.count(); ++i ) {
         results.append( deleteItem( aItemIds[i] ) );
     }
+
+    iCommitNow = true;
+    bool saved = iBackend.commitChanges();
+    Q_UNUSED( saved );
 
     return results;
 }

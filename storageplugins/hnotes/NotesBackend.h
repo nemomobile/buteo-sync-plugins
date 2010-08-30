@@ -136,21 +136,32 @@ public:
     /*! \brief Uninitializes backend
      *
      * @param aItem - item to add
+     * @param aCommitNow - if true persist db changes, if false do this later
      * @return True on success, otherwise false
      */
-    bool addNote( Buteo::StorageItem& aItem );
+    bool addNote( Buteo::StorageItem& aItem, bool commitNow );
 
     /*! \brief Uninitializes backend
      *
+     * @param aItem - item to modify
+     * @param aCommitNow - if true persist db changes, if false do this later
      * @return True on success, otherwise false
      */
-    bool modifyNote( Buteo::StorageItem& aItem );
+    bool modifyNote( Buteo::StorageItem& aItem, bool commitNow );
 
     /*! \brief Uninitializes backend
      *
+     * @param aId - id of item to delete
+     * @param aCommitNow - if true persist db changes, if false do this later
      * @return True on success, otherwise false
      */
-    bool deleteNote( const QString& aId );
+    bool deleteNote( const QString& aId, bool commitNow );
+
+    /*! \brief Persist notes db
+     *
+     * @return True on success, otherwise false
+     */
+    bool commitChanges();
 
 protected:
 

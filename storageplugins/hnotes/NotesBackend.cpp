@@ -285,7 +285,7 @@ Buteo::StorageItem* NotesBackend::getItem( const QString& aItemId )
     return storageItem;
 }
 
-bool NotesBackend::addNote( Buteo::StorageItem& aItem )
+bool NotesBackend::addNote( Buteo::StorageItem& aItem, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
@@ -314,10 +314,6 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem )
     }
 
     iCalendar->setNotebook( journal, iNotebookName );
-    if( !iStorage->save() )  {
-        LOG_WARNING( "Could not save note to storage" );
-        return false;
-    }
 
     QString id = journal->uid();
 
@@ -325,11 +321,19 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem )
 
     aItem.setId( id );
 
+    if( aCommitNow )
+    {
+        if( !commitChanges() )
+        {
+            return false;
+        }
+    }
+
     return true;
 
 }
 
-bool NotesBackend::modifyNote( Buteo::StorageItem& aItem )
+bool NotesBackend::modifyNote( Buteo::StorageItem& aItem, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
@@ -353,9 +357,12 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem )
     // line feeds at the end.
     item->setDescription( description.trimmed() );
 
-    if( !iStorage->save() )  {
-        LOG_WARNING( "Could not save modification to storage" );
-        return false;
+    if( aCommitNow )
+    {
+        if( !commitChanges() )
+        {
+            return false;
+        }
     }
 
     LOG_DEBUG( "Note modified, id:" << aItem.getId() );
@@ -363,7 +370,7 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem )
     return true;
 }
 
-bool NotesBackend::deleteNote( const QString& aId )
+bool NotesBackend::deleteNote( const QString& aId, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
@@ -379,14 +386,32 @@ bool NotesBackend::deleteNote( const QString& aId )
         return false;
     }
 
-    if( !iStorage->save() ) {
-        LOG_WARNING( "Could not commit deleting of note:" << aId );
-        return false;
+    if( aCommitNow )
+    {
+        if( !commitChanges() )
+        {
+            return false;
+        }
     }
 
     return true;
 }
 
+
+bool NotesBackend::commitChanges()
+{
+    bool saved = false;
+
+    if( iStorage && iStorage->save() )
+    {
+        saved = true;
+    }
+    else
+    {
+        LOG_CRITICAL("Couldn't save to storage");
+    }
+    return saved;
+}
 
 void NotesBackend::retrieveNoteItems( KCal::Incidence::List& aIncidences, QList<Buteo::StorageItem*>& aItems )
 {
