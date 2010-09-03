@@ -1,3 +1,9 @@
+sync-app (0.5.6-37) unstable; urgency=low
+
+  * Fixes: NB#174584
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 03 Sep 2010 12:34:51 +0530
+
 sync-app (0.5.6-36) unstable; urgency=low
 
   * Fixes: NB#188405 -  Syncing 1000 notes from N95 to device takes ~14mins
