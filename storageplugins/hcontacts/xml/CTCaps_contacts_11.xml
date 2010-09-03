@@ -33,4 +33,12 @@
 	<PropName>PHOTO</PropName> 
 	<PropName>BDAY</PropName> 
 	<PropName>LABEL</PropName> 
+        <PropName>X-ASSISTANT</PropName>
+        <PropName>X-SPOUSE</PropName>
+        <PropName>X-CHILDREN</PropName>
+        <PropName>X-ASSISTANT-TEL</PropName>
+        <PropName>X-ANNIVERSARY</PropName>
+        <PropName>X-GENDER</PropName>
+        <PropName>X-JABBER</PropName>
+        <PropName>X-SIP</PropName>
 </CTCap>

@@ -115,4 +115,50 @@
       <DataType />
       <MaxSize>256</MaxSize>
     </Property>
+    <Property>
+      <PropName>X-ASSISTANT</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-ASSISTANT-TEL</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-SPOUSE</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-CHILDREN</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-ANNIVERSARY</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-GENDER</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-JABBER</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+    </Property>
+    <Property>
+      <PropName>X-SIP</PropName>
+      <DataType />
+      <MaxSize>256</MaxSize>
+      <PropParam>
+        <ParamName>TYPE</ParamName> 
+        <DataType />
+        <ValEnum>SWIS</ValEnum>
+        <ValEnum>VOIP</ValEnum>
+      </PropParam>
+    </Property>
 </CTCap>
