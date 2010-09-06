@@ -1,3 +1,11 @@
+sync-app (0.5.6-39) unstable; urgency=low
+
+  * TODO : PR
+  * Fixes: NB#189977 -  Development package sync-app-dev does not contain .pc
+    files 
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 06 Sep 2010 16:22:55 +0530
+
 sync-app (0.5.6-38) unstable; urgency=low
 
   * Integrated latest buteo-syncml changes

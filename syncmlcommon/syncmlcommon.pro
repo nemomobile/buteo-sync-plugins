@@ -6,7 +6,7 @@ INCLUDEPATH += . \
                
 LIBS += -lsyncpluginmgr -lmeegosyncml -lsyncprofile
 
-CONFIG += debug plugin silent
+CONFIG += debug silent create_pc create_prl
 
 QT += sql xml
 QT -= gui
@@ -38,7 +38,7 @@ QMAKE_CXXFLAGS = -Wall \
 
 #clean
 QMAKE_CLEAN += $(TARGET)
-QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
+QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_* lib$${TARGET}.prl pkgconfig/*
 
 #install
 target.path = /usr/lib/
@@ -54,6 +54,11 @@ headers.files = ItemAdapter.h \
            DeviceInfo.h
 
 INSTALLS += target headers
+
+QMAKE_PKGCONFIG_DESTDIR = pkgconfig
+QMAKE_PKGCONFIG_LIBDIR  = $$target.path
+QMAKE_PKGCONFIG_INCDIR  = $$headers.path
+pkgconfig.files = $${TARGET}.pc
 
 # for compiling on meego
 linux-g++-maemo {
