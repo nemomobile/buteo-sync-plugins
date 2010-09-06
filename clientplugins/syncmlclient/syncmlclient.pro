@@ -14,9 +14,9 @@ QT += dbus sql network
 QT -= gui
 
 #input
-HEADERS += SyncMLClient.h
+HEADERS += SyncMLClient.h BTConnection.h
 
-SOURCES += SyncMLClient.cpp
+SOURCES += SyncMLClient.cpp BTConnection.cpp
 
 QMAKE_CXXFLAGS = -Wall \
     -g \

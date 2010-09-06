@@ -24,6 +24,7 @@
 #ifndef SYNCMLCLIENT_H
 #define SYNCMLCLIENT_H
 
+#include "BTConnection.h"
 #include "SyncMLStorageProvider.h"
 #include <libsyncpluginmgr/ClientPlugin.h>
 #include <libsyncprofile/SyncResults.h>
@@ -172,6 +173,7 @@ private:
 
     DataSync::SyncAgent*        iAgent;
 
+    BTConnection                iBTConnection;
     DataSync::Transport*        iTransport;
 
     DataSync::SyncAgentConfig*  iConfig;

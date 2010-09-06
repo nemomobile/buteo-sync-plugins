@@ -71,7 +71,7 @@ bool SyncMLClient::init() {
 
 	iProperties = iProfile.allNonStorageKeys();
 
-	if (initAgent() && initTransport() && initConfig()) {
+    if (initAgent() && initTransport() && initConfig()) {
 		return true;
 	} else {
 		// Uninitialize everything that was initialized before failure.
@@ -82,7 +82,8 @@ bool SyncMLClient::init() {
 
 }
 
-bool SyncMLClient::uninit() {
+bool SyncMLClient::uninit()
+{
 	FUNCTION_CALL_TRACE;
 
 	closeAgent();
@@ -94,25 +95,28 @@ bool SyncMLClient::uninit() {
 	return true;
 }
 
-bool SyncMLClient::startSync() {
-        if (iAgent == 0 || iConfig == 0 || iTransport == 0)
+bool SyncMLClient::startSync()
+{
+    FUNCTION_CALL_TRACE;
+
+    if (iAgent == 0 || iConfig == 0 || iTransport == 0)
+    {
 		return false;
+    }
 
-	FUNCTION_CALL_TRACE;
+    connect(iAgent, SIGNAL(stateChanged(DataSync::SyncState)),
+            this, SLOT(syncStateChanged(DataSync::SyncState)));
 
-	connect(iAgent, SIGNAL(stateChanged(DataSync::SyncState)), this, SLOT(
-			syncStateChanged(DataSync::SyncState)));
-
-	connect(iAgent, SIGNAL(syncFinished(DataSync::SyncState)), this, SLOT(
-			syncFinished(DataSync::SyncState)));
+    connect(iAgent, SIGNAL(syncFinished(DataSync::SyncState)),
+            this, SLOT(syncFinished(DataSync::SyncState)));
 
 	connect(iAgent, SIGNAL(itemProcessed(DataSync::ModificationType,
-			DataSync::ModifiedDatabase, QString, QString,int)), this, SLOT(
-			receiveItemProcessed(DataSync::ModificationType,
-					DataSync::ModifiedDatabase, QString, QString,int)));
+            DataSync::ModifiedDatabase, QString, QString,int)),
+            this, SLOT(receiveItemProcessed(DataSync::ModificationType,
+            DataSync::ModifiedDatabase, QString, QString,int)));
 
-	connect(iAgent, SIGNAL(storageAccquired(QString)), this, SLOT(
-			storageAccquired(QString)));
+    connect(iAgent, SIGNAL(storageAccquired(QString)),
+            this, SLOT(storageAccquired(QString)));
 
 	iConfig->setTransport(iTransport);
 
@@ -403,10 +407,10 @@ void SyncMLClient::closeTransport() {
 
 	LOG_DEBUG("Closing transport...");
 
-	delete iTransport;
-	iTransport = NULL;
+    delete iTransport;
+    iTransport = NULL;
 
-	LOG_DEBUG("Transport closed");
+    LOG_DEBUG("Transport closed");
 
 }
 
@@ -640,6 +644,12 @@ QString SyncMLClient::toText(const DataSync::SyncState& aState) {
 	case DataSync::INVALID_SYNCML_MESSAGE:
 		return "INVALID SYNCML MESSAGE";
 
+    case DataSync::UNSUPPORTED_SYNC_TYPE:
+        return "UNSUPPORTED SYNC TYPE";
+
+    case DataSync::UNSUPPORTED_STORAGE_TYPE:
+        return "UNSUPPORTED STORAGE TYPE";
+
 	default:
 		return "UNKNOWN";
 		break;
@@ -647,39 +657,51 @@ QString SyncMLClient::toText(const DataSync::SyncState& aState) {
 
 }
 #endif //#ifndef QT_NO_DEBUG
-bool SyncMLClient::initObexTransport() {
+
+bool SyncMLClient::initObexTransport()
+{
 	FUNCTION_CALL_TRACE;
 
 	LOG_DEBUG("Creating OBEX transport");
 
 	QString btAddress = iProperties[PROF_BT_ADDRESS];
-	bool success = false;
 
-	if (!btAddress.isEmpty()) {
+    if( btAddress.isEmpty() )
+    {
+        LOG_CRITICAL( "Could not find mandatory property:" << PROF_BT_ADDRESS );
+        return false;
+    }
 
-		QString btService = iProperties[PROF_BT_UUID];
+    QString btService = iProperties[PROF_BT_UUID];
 
-		LOG_DEBUG("Setting BT address:" << btAddress);
-		LOG_DEBUG("Setting BT service UUID:" << btService);
+    if( btService.isEmpty() )
+    {
+        LOG_CRITICAL( "Could not find mandatory property:" << PROF_BT_UUID );
+        return false;
+    }
 
-		DataSync::OBEXTransport* transport = new DataSync::OBEXTransport(
-				btAddress, btService, OBEXTIMEOUT);
+    LOG_DEBUG("Using BT address:" << btAddress);
+    LOG_DEBUG("Using BT service UUID:" << btService);
 
-		if (iProperties[PROF_USE_WBXML] == PROPS_TRUE) {
-			LOG_DEBUG("Using wbXML");
-			transport->setWbXml(true);
-		} else {
-			LOG_DEBUG("Not using wbXML");
-			transport->setWbXml(false);
-		}
+    iBTConnection.setConnectionInfo( btAddress, btService );
 
-		iTransport = transport;
-		success = true;
-	} else {
-		LOG_DEBUG("Could not find 'bt_address' property");
-	}
+    DataSync::OBEXTransport* transport = new DataSync::OBEXTransport( iBTConnection,
+                                                                      DataSync::OBEXTransport::MODE_OBEX_CLIENT,
+                                                                      OBEXTIMEOUT,
+                                                                      DataSync::OBEXTransport::TYPEHINT_BT );
 
-	return success;
+    if (iProperties[PROF_USE_WBXML] == PROPS_TRUE) {
+        LOG_DEBUG("Using wbXML");
+        transport->setWbXml(true);
+    } else {
+        LOG_DEBUG("Not using wbXML");
+        transport->setWbXml(false);
+    }
+
+    iTransport = transport;
+
+    return true;
+
 }
 
 bool SyncMLClient::initHttpTransport() {
@@ -732,7 +754,6 @@ bool SyncMLClient::initHttpTransport() {
 			transport->addXheader(fname, fvalue);
 		}
 
-		transport->init();
 		iTransport = transport;
 		success = true;
 	} else {
