@@ -1,5 +1,6 @@
 sync-app (0.5.6-38) unstable; urgency=low
 
+  * Integrated latest buteo-syncml changes
   * Fixes: NB#190215
 
  -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 06 Sep 2010 12:34:51 +0530
