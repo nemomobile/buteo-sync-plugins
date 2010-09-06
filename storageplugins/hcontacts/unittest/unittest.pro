@@ -2,6 +2,7 @@ TEMPLATE = app
 TARGET = hcontacts-tests 
  
 QT += core testlib sql
+CONFIG += silent qtestlib mobility
 
 DEPENDPATH += . \
               ../ \
@@ -9,10 +10,6 @@ DEPENDPATH += . \
 
 linux-g++-maemo {
   message("Compiling for maemo")
-  INCLUDEPATH += \
-    /usr/include/qt4/QtMobility/ \
-    /usr/include/qt4/QtMobility/QtContacts \
-    /usr/include/qt4/QtMobility/QtVersit \
 } else {
   message("Compiling for non-maemo")
   INCLUDEPATH += \
@@ -28,6 +25,8 @@ INCLUDEPATH += . \
     /usr/include/sync \
     ../../../syncmlcommon
 
+MOBILITY += contacts versit    
+
 HEADERS += ContactsTest.h SyncMLConfig.h
 
 SOURCES += main.cpp \
@@ -38,9 +37,8 @@ SOURCES += main.cpp \
 	   SyncMLConfig.cpp
 
 LIBS += -L ../
-LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile -lQtContacts -lQtVersit
+LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile
 
-CONFIG += silent qtestlib
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
