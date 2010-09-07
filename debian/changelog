@@ -1,6 +1,5 @@
 sync-app (0.5.6-39) unstable; urgency=low
 
-  * TODO : PR
   * Fixes: NB#189977 -  Development package sync-app-dev does not contain .pc
     files 
 
