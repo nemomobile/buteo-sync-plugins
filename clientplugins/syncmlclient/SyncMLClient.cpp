@@ -41,9 +41,6 @@
 
 const QString CONFIGFILE("/etc/sync/nokia-syncml-conf.xml");
 
-// Timeout in seconds for OBEX transport
-const int OBEXTIMEOUT = 120;
-
 extern "C" SyncMLClient* createPlugin(const QString& aPluginName,
 		const Buteo::SyncProfile& aProfile,
 		Buteo::PluginCbInterface *aCbInterface) {
@@ -687,7 +684,6 @@ bool SyncMLClient::initObexTransport()
 
     DataSync::OBEXTransport* transport = new DataSync::OBEXTransport( iBTConnection,
                                                                       DataSync::OBEXTransport::MODE_OBEX_CLIENT,
-                                                                      OBEXTIMEOUT,
                                                                       DataSync::OBEXTransport::TYPEHINT_BT );
 
     if (iProperties[PROF_USE_WBXML] == PROPS_TRUE) {
