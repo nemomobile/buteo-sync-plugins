@@ -112,11 +112,13 @@ namespace Buteo {
         Source iSource;
         QStringList iProperties;
         QString iDeviceInfoFile;
-        QString iDeviceIMEI;
+
+        QString iManufacturer;
+        QString iModel;
         QString iSwVersion;
         QString iHwVersion;
         QString iFwVersion;
-        QString iModel;
+        QString iDeviceIMEI;
         QString iDeviceType;
 
         /* @brief common method that queries the sysinfo client for a specific key
@@ -126,12 +128,12 @@ namespace Buteo {
          * @return - value corresponding to the key */
         QString getSysInfo(const QString &key);
 
-
-        QString getDeviceIMEI();
+        QString getManufacturer();
+        QString getModel();
         QString getSwVersion();
         QString getHwVersion();
         QString getFwVersion();
-        QString getModel();
+        QString getDeviceIMEI();
         QString getDeviceType();
 
 #ifdef SYNC_APP_UNITTESTS

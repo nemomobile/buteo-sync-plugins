@@ -40,29 +40,27 @@ const QString SYSINFO_KEY_HW_VER("/device/hw-version");
 
 const QString SYSINFO_KEY_SW_VER("/device/sw-release-ver");
 
-const QString XML_KEY_ID("Id");
 
+
+const QString XML_KEY_MANUFACTURER("Manufacturer");
 const QString XML_KEY_MODEL("Model");
-
+const QString XML_KEY_OEM("OEM");
 const QString XML_KEY_HW_VER("HwVersion");
-
 const QString XML_KEY_SW_VER("SwVersion");
-
 const QString XML_KEY_FW_VER("FwVersion");
-
+const QString XML_KEY_ID("Id");
 const QString XML_KEY_DEV_TYPE("DeviceType");
 
+
 const QString IMEI("IMEI:");
-
 const QString DUMMY_IMEI("000000000000000");
-
 const QString DEVINFO_DEVTYPE("phone");
 
 DeviceInfo::DeviceInfo()
 {
 	FUNCTION_CALL_TRACE;
 
-    iProperties << XML_KEY_ID << XML_KEY_MODEL << XML_KEY_HW_VER << XML_KEY_SW_VER << XML_KEY_FW_VER << XML_KEY_DEV_TYPE;
+    iProperties << XML_KEY_MANUFACTURER << XML_KEY_MODEL << XML_KEY_HW_VER << XML_KEY_SW_VER << XML_KEY_FW_VER  << XML_KEY_ID << XML_KEY_DEV_TYPE;
 
     iSource = ReadFromSystem;
 }
@@ -70,22 +68,6 @@ DeviceInfo::DeviceInfo()
 DeviceInfo::~DeviceInfo()
 {
 	FUNCTION_CALL_TRACE;
-}
-
-QString DeviceInfo::getDeviceIMEI()
-{
-	FUNCTION_CALL_TRACE;
-
-
-	if( iDeviceIMEI.isEmpty() || iDeviceIMEI == DUMMY_IMEI) {
-        iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
-        if(iDeviceIMEI.isEmpty()) {
-            LOG_CRITICAL("Failed retrieving the IMEI. HARDCODING THE IMEI ");
-            iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
-		}
-	}
-
-	return iDeviceIMEI;
 }
 
 QString DeviceInfo::getSysInfo(const QString &key)
@@ -114,6 +96,19 @@ QString DeviceInfo::getSysInfo(const QString &key)
     LOG_DEBUG("Key is  " << key << "it's Value is " << value);
 #endif
     return value;
+}
+
+QString DeviceInfo::getManufacturer()
+{
+    FUNCTION_CALL_TRACE;
+
+    if( iManufacturer.isEmpty() )
+    {
+        // @todo: get me from HAL or from QSystemDeviceInfo
+        iManufacturer = "Nokia";
+    }
+
+    return iManufacturer;
 }
 
 QString DeviceInfo::getModel()
@@ -167,6 +162,21 @@ QString DeviceInfo::getFwVersion()
     return getHwVersion();
 }
 
+QString DeviceInfo::getDeviceIMEI()
+{
+    FUNCTION_CALL_TRACE;
+
+
+    if( iDeviceIMEI.isEmpty() || iDeviceIMEI == DUMMY_IMEI) {
+        iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
+        if(iDeviceIMEI.isEmpty()) {
+            LOG_CRITICAL("Failed retrieving the IMEI. HARDCODING THE IMEI ");
+            iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
+        }
+    }
+
+    return iDeviceIMEI;
+}
 
 QString DeviceInfo::getDeviceType()
 {
@@ -226,9 +236,9 @@ QMap<QString,QString> DeviceInfo::getDeviceInformation()
     switch(iSource) {
 
     case ReadFromSystem:
-        foreach(QString property,iProperties) {
-            if(property == XML_KEY_ID) {
-                deviceMap.insert(property,getDeviceIMEI());
+        foreach(const QString& property,iProperties) {
+            if(property == XML_KEY_MANUFACTURER) {
+                deviceMap.insert(property,getManufacturer());
             }else if (property == XML_KEY_MODEL) {
                 deviceMap.insert(property,getModel());
             }else if (property == XML_KEY_SW_VER){
@@ -237,10 +247,12 @@ QMap<QString,QString> DeviceInfo::getDeviceInformation()
                 deviceMap.insert(property,getHwVersion());
             } else if (property == XML_KEY_FW_VER) {
                 deviceMap.insert(property,getFwVersion());
+            }else if(property == XML_KEY_ID) {
+                deviceMap.insert(property,getDeviceIMEI());
             } else if (property == XML_KEY_DEV_TYPE){
                 deviceMap.insert(property,getDeviceType());
             } else {
-                LOG_DEBUG("Unknown Property");
+                LOG_DEBUG("Unknown Property:" << property);
             }
         }
         break;
@@ -293,7 +305,7 @@ void DeviceInfo::saveDevInfoToFile(QMap<QString,QString> &aDevInfo , QString &aF
     QMapIterator<QString, QString> i(aDevInfo);
     while (i.hasNext()) {
         i.next();
-        LOG_DEBUG(i.key() << ": " << i.value() << endl);
+        LOG_DEBUG(i.key() << ": " << i.value());
         writer.writeTextElement(i.key(),i.value());
     }
 
