@@ -3,12 +3,11 @@ TARGET = hnotes-storage
 DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon \
     /usr/include/libsynccommon \
-    /usr/include/sync \
-    /usr/include/kcal
+    /usr/include/sync 
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr -lextendedkcal -lQtTest
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
 
-CONFIG += debug plugin silent
+CONFIG += debug plugin silent kcalcoren mkcal
 
 QT -= gui
 

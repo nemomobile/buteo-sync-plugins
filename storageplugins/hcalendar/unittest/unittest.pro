@@ -13,32 +13,27 @@ INCLUDEPATH += . \
     /usr/include/libsynccommon \
     /usr/include/libsyncpluginmgr \
     /usr/include/sync \
-    /usr/include/kcal \
     ../../../syncmlcommon
         
 		
 LIBS += -lsyncpluginmgr \
-#       -lsynccommon \
-        -lsyncprofile \
-        -lextendedkcal \
-        -lQtTest \
-        -luuid
+        -lQtTest
 
 # Input
 HEADERS += CalendarTest.h \
            CalendarStorage.h \
            CalendarBackend.h \
            SimpleItem.h \
-	   	   SyncMLConfig.h
+   	   SyncMLConfig.h
 
 SOURCES += main.cpp \
            CalendarTest.cpp \
            CalendarStorage.cpp \
            CalendarBackend.cpp \
            SimpleItem.cpp \
-	   	   SyncMLConfig.cpp
+   	   SyncMLConfig.cpp
 
-CONFIG += debug silent qtestlib
+CONFIG += debug silent qtestlib kcalcoren mkcal
 
 QT += testlib \
     core \

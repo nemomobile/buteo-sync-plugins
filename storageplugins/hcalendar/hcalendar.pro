@@ -6,23 +6,21 @@ INCLUDEPATH += . \
     /usr/include/libsyncpluginmgr \
     /usr/include/libsynccommon \
     /usr/include/sync \
-    /usr/include/kcal \
     ../../syncmlcommon
 		
 		
-CONFIG += debug plugin silent
+CONFIG += debug plugin silent kcalcoren mkcal
 
 QT -= gui
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr -lextendedkcal
-LIBS +=  -lQtTest
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
 
 HEADERS += CalendarStorage.h \
            definitions.h \
 	   CalendarBackend.h \ 
 
 SOURCES += CalendarStorage.cpp \
-           CalendarBackend.cpp \
+           CalendarBackend.cpp
 
 
 QMAKE_CXXFLAGS = -Wall \

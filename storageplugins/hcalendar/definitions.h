@@ -36,7 +36,7 @@ const QString NOTEBOOKNAME = "Notebook Name";
 
 //The storage expect this property from outside. If no format is specified
 // the storage will use CALENDAR_FORMAT_VCAL.
-const QString CALENDAR_FORMAT = "Calendar Format";
+const QString CALENDAR_FORMAT        = "Calendar Format";
 
 //Possible values of calendar format are CALENDAR_FORMAT_VCAL
 // and CALENDAR_FORMAT_ICAL

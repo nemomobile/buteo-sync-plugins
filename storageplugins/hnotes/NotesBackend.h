@@ -25,16 +25,13 @@
 
 #include <QString>
 #include <incidence.h>
+#include <extendedcalendar.h>
+#include <extendedstorage.h>
 
 class QDateTime;
 
 namespace Buteo {
     class StorageItem;
-}
-
-namespace KCal {
-    class ExtendedCalendar;
-    class ExtendedStorage;
 }
 
 /*! \brief Notes Calendar backend proxy
@@ -167,18 +164,18 @@ protected:
 
 private:
 
-    void retrieveNoteItems( KCal::Incidence::List& aIncidences, QList<Buteo::StorageItem*>& aItems );
+    void retrieveNoteItems( KCalCore::Incidence::List& aIncidences, QList<Buteo::StorageItem*>& aItems );
 
-    void retrieveNoteIds( KCal::Incidence::List& aIncidences, QList<QString>& aIds );
+    void retrieveNoteIds( KCalCore::Incidence::List& aIncidences, QList<QString>& aIds );
 
-    void filterIncidences( KCal::Incidence::List& aIncidences );
+    void filterIncidences( KCalCore::Incidence::List& aIncidences );
 
 
     QString                 iNotebookName;
     QString                 iMimeType;
 
-    KCal::ExtendedCalendar*    iCalendar;
-    KCal::ExtendedStorage*    iStorage;
+    mKCal::ExtendedCalendar::Ptr    iCalendar;
+    mKCal::ExtendedStorage::Ptr    iStorage;
 
 };
 

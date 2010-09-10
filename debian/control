@@ -1,7 +1,7 @@
 Source: sync-app
 Section: utils
 Priority: optional
-Build-Depends: debhelper (>= 5), doxygen, sync-fw-dev( >= 0.5.0), cdbs, libextendedkcal-dev(>= 4.3.0-1),libmeegosyncml-dev( >= 0.4.9),libqt4-dev,libqttracker-dev, libqtcontacts-tracker( >= 0.3.19), libglib2.0-dev, libcommhistory-dev, libmsgsyncif, libmsgsyncif-dev, libvmsgparser-dev, libopenobex1-dev, libsignon-qt-dev, libaccounts-qt-dev, cp-nokia-account-service-dev, sync-ui-dev, libaccounts-ui-dev, libmeegotouch-dev, libsysinfo-dev, libqtm-versit-dev, libqtm-contacts-dev
+Build-Depends: debhelper (>= 5), doxygen, sync-fw-dev( >= 0.5.0), cdbs, libmeegosyncml-dev( >= 0.4.9),libqt4-dev,libqttracker-dev, libqtcontacts-tracker( >= 0.3.19), libglib2.0-dev, libcommhistory-dev, libmsgsyncif, libmsgsyncif-dev, libvmsgparser-dev, libopenobex1-dev, libsignon-qt-dev, libaccounts-qt-dev, cp-nokia-account-service-dev, sync-ui-dev, libaccounts-ui-dev, libmeegotouch-dev, libsysinfo-dev, libqtm-versit-dev, libqtm-contacts-dev, libkcalcoren-dev, libmkcal-dev
 Maintainer: Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>
 Standards-Version: 3.7.2
 

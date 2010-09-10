@@ -31,10 +31,10 @@ INCLUDEPATH += . \
     ../ \
     ../../../syncmlcommon \
     /usr/include/libsynccommon \
-    /usr/include/sync \
-    /usr/include/kcal
+    /usr/include/mkcal
 
-LIBS += -lsyncpluginmgr -lsyncprofile -lextendedkcal -lQtTest \
+LIBS += -lsyncpluginmgr -lsyncprofile -lQtTest \
+
 #   -lsynccommon
                
 HEADERS += NotesTest.h \
@@ -54,7 +54,7 @@ SOURCES += main.cpp \
 
 QT += testlib
 QT -= gui
-CONFIG += debug silent qtestlib
+CONFIG += debug silent qtestlib kcalcoren mkcal
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

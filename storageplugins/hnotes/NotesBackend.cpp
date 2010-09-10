@@ -58,10 +58,10 @@ bool NotesBackend::init( const QString& aNotebookName,
     iNotebookName = aNotebookName;
     iMimeType = aMimeType;
 
-    iCalendar = new KCal::ExtendedCalendar( QLatin1String( "UTC" ) );
+    iCalendar = mKCal::ExtendedCalendar::Ptr( new mKCal::ExtendedCalendar( KDateTime::Spec::LocalZone( ) ));
 
     LOG_DEBUG("Creating Default Maemo Storage for Notes");
-    iStorage = iCalendar->defaultStorage();
+    iStorage = iCalendar->defaultStorage( iCalendar );
 
     bool opened = iStorage->open();
 
@@ -81,7 +81,7 @@ bool NotesBackend::init( const QString& aNotebookName,
     // Use default notebook to sync , we use calendar id now instead of name
     // This functionality is temporary
     bool hasdefNb = false;
-    KCal::Notebook *defaultNb = iStorage->defaultNotebook();
+    mKCal::Notebook::Ptr defaultNb = iStorage->defaultNotebook();
     if (defaultNb){
 	    iNotebookName = defaultNb->uid();
 	    LOG_TRACE ("Default NoteBook UID" << iNotebookName);
@@ -97,13 +97,11 @@ bool NotesBackend::init( const QString& aNotebookName,
     {
         LOG_WARNING("Not able to initialize calendar");
 
-        delete iStorage;
-        iStorage = 0;
+        iStorage.clear();
 
         LOG_TRACE("Storage deleted");
 
-        delete iCalendar;
-        iCalendar = 0;
+        iCalendar.clear();
 
         LOG_TRACE("Calendar deleted");
 
@@ -119,14 +117,12 @@ bool NotesBackend::uninit()
 
     if( iStorage ) {
         iStorage->close();
-        delete iStorage;
-        iStorage = NULL;
+        iStorage.clear();
     }
 
     if( iCalendar ) {
         iCalendar->close();
-        delete iCalendar;
-        iCalendar = NULL;
+        iCalendar.clear();
     }
 
     return true;
@@ -137,8 +133,7 @@ bool NotesBackend::getAllNotes( QList<Buteo::StorageItem*>& aItems )
 
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
 
     if( !iStorage->allIncidences( &incidences, iNotebookName ) ) {
         LOG_WARNING( "Could not retrieve all notes" );
@@ -155,8 +150,7 @@ bool NotesBackend::getAllNoteIds( QList<QString>& aItemIds )
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
 
     if( !iStorage->allIncidences( &incidences, iNotebookName ) ) {
         LOG_WARNING( "Could not retrieve all notes" );
@@ -172,8 +166,7 @@ bool NotesBackend::getNewNotes( QList<Buteo::StorageItem*>& aNewItems, const QDa
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
     KDateTime kdt( aTime );
 
     if( !iStorage->insertedIncidences( &incidences, kdt, iNotebookName ) ) {
@@ -190,8 +183,7 @@ bool NotesBackend::getNewNoteIds( QList<QString>& aNewItemIds, const QDateTime& 
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
     KDateTime kdt( aTime );
 
     if( !iStorage->insertedIncidences( &incidences, kdt, iNotebookName ) ) {
@@ -208,8 +200,7 @@ bool NotesBackend::getModifiedNotes( QList<Buteo::StorageItem*>& aModifiedItems,
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
     KDateTime kdt( aTime );
 
     if( !iStorage->modifiedIncidences( &incidences, kdt, iNotebookName ) ) {
@@ -226,8 +217,7 @@ bool NotesBackend::getModifiedNoteIds( QList<QString>& aModifiedItemIds, const Q
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
     KDateTime kdt( aTime );
 
     if( !iStorage->modifiedIncidences( &incidences, kdt, iNotebookName ) ) {
@@ -244,8 +234,7 @@ bool NotesBackend::getDeletedNoteIds( QList<QString>& aDeletedItemIds, const QDa
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence::List incidences;
-    incidences.setAutoDelete(true);
+    KCalCore::Incidence::List incidences;
     KDateTime kdt( aTime );
 
     if( !iStorage->deletedIncidences( &incidences, kdt, iNotebookName ) ) {
@@ -270,7 +259,7 @@ Buteo::StorageItem* NotesBackend::getItem( const QString& aItemId )
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence* item = iCalendar->incidence( aItemId );
+    KCalCore::Incidence::Ptr item = iCalendar->incidence( aItemId );
 
     if( !item ) {
         LOG_WARNING( "Could not find item:" << aItemId );
@@ -296,7 +285,8 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem, bool aCommitNow )
         return false;
     }
 
-    KCal::Journal* journal = new KCal::Journal();
+    KCalCore::Journal::Ptr journal ;
+    journal = KCalCore::Journal::Ptr( new KCalCore::Journal() );
 
     QString description = QString::fromUtf8( data.constData() );
 
@@ -308,8 +298,7 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem, bool aCommitNow )
 
     if( !iCalendar->addIncidence( journal ) ) {
         LOG_WARNING( "Could not add note to calendar" );
-        delete journal;
-        journal = 0;
+        journal.clear();
         return false;
     }
 
@@ -337,7 +326,7 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence* item = iCalendar->incidence( aItem.getId() );
+    KCalCore::Incidence::Ptr item = iCalendar->incidence( aItem.getId() );
 
     if( !item ) {
         LOG_WARNING( "Could not find item to be modified:" << aItem.getId() );
@@ -374,7 +363,7 @@ bool NotesBackend::deleteNote( const QString& aId, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
-    KCal::Incidence* journal = iCalendar->incidence( aId );
+    KCalCore::Incidence::Ptr journal = iCalendar->incidence( aId );
 
     if( !journal ) {
         LOG_WARNING( "Could not find item to be deleted:" << aId );
@@ -413,7 +402,7 @@ bool NotesBackend::commitChanges()
     return saved;
 }
 
-void NotesBackend::retrieveNoteItems( KCal::Incidence::List& aIncidences, QList<Buteo::StorageItem*>& aItems )
+void NotesBackend::retrieveNoteItems( KCalCore::Incidence::List& aIncidences, QList<Buteo::StorageItem*>& aItems )
 {
     FUNCTION_CALL_TRACE;
 
@@ -429,7 +418,7 @@ void NotesBackend::retrieveNoteItems( KCal::Incidence::List& aIncidences, QList<
 
 }
 
-void NotesBackend::retrieveNoteIds( KCal::Incidence::List& aIncidences, QList<QString>& aIds )
+void NotesBackend::retrieveNoteIds( KCalCore::Incidence::List& aIncidences, QList<QString>& aIds )
 {
     FUNCTION_CALL_TRACE;
 
@@ -441,7 +430,7 @@ void NotesBackend::retrieveNoteIds( KCal::Incidence::List& aIncidences, QList<QS
 
 }
 
-void NotesBackend::filterIncidences( KCal::Incidence::List& aIncidences )
+void NotesBackend::filterIncidences( KCalCore::Incidence::List& aIncidences )
 {
     FUNCTION_CALL_TRACE;
 
@@ -449,12 +438,11 @@ void NotesBackend::filterIncidences( KCal::Incidence::List& aIncidences )
 
     int i = 0;
     while( i < aIncidences.count() ) {
-        KCal::Incidence* incidence = aIncidences[i];
+        KCalCore::Incidence::Ptr incidence = aIncidences[i];
 
-        if( incidence->type() != journal ) {
-            aIncidences.removeRef( incidence );
-            // Removed incidences are deleted by the list that is in
-            // auto delete mode.
+        if( incidence->type() != KCalCore::Incidence::TypeJournal ) {
+            aIncidences.remove( i, 1 );
+	    incidence.clear();
         }
         else {
             ++i;
