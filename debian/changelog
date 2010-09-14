@@ -1,3 +1,9 @@
+sync-app (0.5.6-41) unstable; urgency=low
+
+  * Corrected build dependencies.  
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 14 Sep 2010 11:22:55 +0530
+
 sync-app (0.5.6-40) unstable; urgency=low
 
   * Fixes: NB#189159  sync-app and sync-app-test depend on libextendedkcal 
