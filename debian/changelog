@@ -1,3 +1,9 @@
+sync-app (0.5.6-42) unstable; urgency=low
+
+  * OBEX timeout now read from conf file instead of hardcoding
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 15 Sep 2010 15:00:00 +0300
+
 sync-app (0.5.6-41) unstable; urgency=low
 
   * Corrected build dependencies.  
