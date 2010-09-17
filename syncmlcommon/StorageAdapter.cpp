@@ -83,10 +83,14 @@ bool StorageAdapter::init()
         return false;
     }
 
-    DataSync::StoragePlugin::ContentFormat format;
+    // Currently we support only one format per storage
+    DataSync::ContentFormat format;
     format.iType = preferredFormat;
     format.iVersion = preferredVersion;
-    iFormats.append( format );
+    iFormats.setPreferredRx( format );
+    iFormats.setPreferredTx( format );
+    iFormats.rx().append( format );
+    iFormats.tx().append( format );
 
     // Source URI
 
@@ -135,31 +139,19 @@ const QString& StorageAdapter::getSourceURI() const
     return iSourceDB;
 }
 
-qint64 StorageAdapter::getMaxObjSize() const
-{
-    FUNCTION_CALL_TRACE;
-
-    // Max object size not supported at the moment
-    return 0;
-}
-
-const QList<DataSync::StoragePlugin::ContentFormat>& StorageAdapter::getSupportedFormats() const
+const DataSync::StorageContentFormatInfo& StorageAdapter::getFormatInfo() const
 {
     FUNCTION_CALL_TRACE;
 
     return iFormats;
 }
 
-const DataSync::StoragePlugin::ContentFormat& StorageAdapter::getPreferredFormat() const
+qint64 StorageAdapter::getMaxObjSize() const
 {
     FUNCTION_CALL_TRACE;
 
-    // Current only preferred format is supported. Initialization fails
-    // if it's not found.
-    Q_ASSERT( iFormats.count() > 0 );
-
-    return iFormats[0];
-
+    // Max object size not supported at the moment
+    return 0;
 }
 
 QByteArray StorageAdapter::getPluginCTCaps( DataSync::ProtocolVersion aVersion ) const

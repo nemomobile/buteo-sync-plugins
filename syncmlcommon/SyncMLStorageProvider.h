@@ -73,6 +73,12 @@ public:
      */
     bool uninit();
 
+    /*! \see DataSync::StorageProvider::getStorageContentFormatInfo
+     *
+     */
+    virtual bool getStorageContentFormatInfo( const QString& aURI,
+                                               DataSync::StorageContentFormatInfo& aInfo );
+
     /*! \see DataSync::StorageProvider::acquireStorageByURI()
      *
      */

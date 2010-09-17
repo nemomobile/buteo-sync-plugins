@@ -83,6 +83,35 @@ QString SyncMLStorageProvider::getPreferredURINames( const QString &aURI )
    return QString();
 }
 
+bool SyncMLStorageProvider::getStorageContentFormatInfo( const QString& aURI,
+                                                         DataSync::StorageContentFormatInfo& aInfo )
+{
+    FUNCTION_CALL_TRACE;
+
+    const Buteo::Profile* storageProfile =
+            iProfile->subProfileByKeyValue( STORAGE_SOURCE_URI, aURI,
+                                            Buteo::Profile::TYPE_STORAGE, true );
+
+    if( !storageProfile ) {
+        LOG_DEBUG( "Could not find storage for URI" << aURI );
+        return false;
+    }
+
+    QString preferredFormat = storageProfile->key( STORAGE_DEFAULT_MIME_PROP );
+    QString preferredVersion = storageProfile->key( STORAGE_DEFAULT_MIME_VERSION_PROP );
+
+    // Currently we support only one format per storage
+    DataSync::ContentFormat format;
+    format.iType = preferredFormat;
+    format.iVersion = preferredVersion;
+    aInfo.setPreferredRx( format );
+    aInfo.setPreferredTx( format );
+    aInfo.rx().append( format );
+    aInfo.tx().append( format );
+
+    return true;
+}
+
 DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorageByURI( const QString& aURI )
 {
     FUNCTION_CALL_TRACE;

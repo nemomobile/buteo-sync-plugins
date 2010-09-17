@@ -29,6 +29,7 @@
 
 #include <libsyncpluginmgr/StoragePlugin.h>
 #include <libmeegosyncml/StoragePlugin.h>
+#include <libmeegosyncml/DataStore.h>
 #include <libmeegosyncml/SyncItemKey.h>
 
 #include "ItemIdMapper.h"
@@ -89,20 +90,15 @@ public:
      */
     virtual const QString& getSourceURI() const;
 
+    /*! \see DataSync::StoragePlugin::getSourceURI()
+     *
+     */
+    virtual const DataSync::StorageContentFormatInfo& getFormatInfo() const;
+
     /*! \see DataSync::StoragePlugin::getMaxObjSize()
      *
      */
     virtual qint64 getMaxObjSize() const;
-
-    /*! \see DataSync::StoragePlugin::getSupportedFormats()
-     *
-     */
-    virtual const QList<ContentFormat>& getSupportedFormats() const;
-
-    /*! \see DataSync::StoragePlugin::getPreferredFormat()
-     *
-     */
-    virtual const ContentFormat& getPreferredFormat() const;
 
     /*! \see DataSync::StoragePlugin::getPluginCTCaps()
      *
@@ -160,15 +156,16 @@ private:
 
     Buteo::StorageItem* toStorageItem( const DataSync::SyncItem* aSyncItem ) const;
 
-    Buteo::StoragePlugin*       iPlugin;
 
-    QString                     iType;
+    Buteo::StoragePlugin*               iPlugin;
 
-    QList<ContentFormat>        iFormats;
-    QString                     iSourceDB;
-    QString                     iTargetDB;
+    QString                             iType;
 
-    ItemIdMapper                iIdMapper;
+    DataSync::StorageContentFormatInfo  iFormats;
+    QString                             iSourceDB;
+    QString                             iTargetDB;
+
+    ItemIdMapper                        iIdMapper;
 
 };
 
