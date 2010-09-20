@@ -1,3 +1,9 @@
+sync-app (0.5.6-43) unstable; urgency=low
+
+  * Fixed handling of SyncML config file
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 20 Sep 2010 14:30:00 +0300
+
 sync-app (0.5.6-42) unstable; urgency=low
 
   * OBEX timeout now read from conf file instead of hardcoding
