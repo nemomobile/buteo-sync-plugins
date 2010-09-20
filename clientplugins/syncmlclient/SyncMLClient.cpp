@@ -39,7 +39,8 @@
 
 #include <LogMacros.h>
 
-const QString CONFIGFILE("/etc/sync/nokia-syncml-conf.xml");
+const QString DEFAULTCONFIGFILE("/etc/sync/meego-syncml-conf.xml");
+const QString EXTCONFIGFILE("/etc/sync/ext-syncml-conf.xml");
 
 extern "C" SyncMLClient* createPlugin(const QString& aPluginName,
 		const Buteo::SyncProfile& aProfile,
@@ -432,12 +433,27 @@ bool SyncMLClient::initConfig() {
 
 	iConfig = new DataSync::SyncAgentConfig;
 
-	// ** Read basic configuration
+    // ** Read configuration
 
-	if (!iConfig->fromFile(CONFIGFILE)) {
-		LOG_CRITICAL("Could not read SyncML config file:" << CONFIGFILE);
-		return false;
-	}
+    // Two configuration files are being read: first the Meego default config file,
+    // and then possible external config file, which can be used to add additional
+    // configuration, or replace some of the configuration of Meego default config.
+
+    // Default configuration file should always exist
+    if( !iConfig->fromFile( DEFAULTCONFIGFILE ) )
+    {
+        LOG_CRITICAL( "Could not read default SyncML configuration file:" << DEFAULTCONFIGFILE );
+        return false;
+    }
+
+    if( iConfig->fromFile( EXTCONFIGFILE ) )
+    {
+        LOG_DEBUG( "Found & read external configuration file:" << EXTCONFIGFILE );
+    }
+    else
+    {
+        LOG_DEBUG( "Could not find external configuration file" << EXTCONFIGFILE <<", skipping" );
+    }
 
 	// ** Set up storage provider
 
