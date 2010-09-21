@@ -1,3 +1,9 @@
+sync-app (0.5.6-45) unstable; urgency=low
+
+  * Fetching imei, sw version and model from qsysteminfo instead of libsysinfo.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 21 Sep 2010 16:43:17 +0530
+
 sync-app (0.5.6-44) unstable; urgency=low
 
   * Support Manufacturer field in DevInf (currently hardcoded to "Nokia")

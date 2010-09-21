@@ -32,15 +32,7 @@
 
 using namespace Buteo;
 
-const QString SYSINFO_KEY_IMEI("/certs/npc/esn/gsm");
-
-const QString SYSINFO_KEY_MODEL("/component/product-name");
-
 const QString SYSINFO_KEY_HW_VER("/device/hw-version");
-
-const QString SYSINFO_KEY_SW_VER("/device/sw-release-ver");
-
-
 
 const QString XML_KEY_MANUFACTURER("Manufacturer");
 const QString XML_KEY_MODEL("Model");
@@ -68,6 +60,13 @@ DeviceInfo::DeviceInfo()
 DeviceInfo::~DeviceInfo()
 {
 	FUNCTION_CALL_TRACE;
+}
+
+QString DeviceInfo::getDeviceIMEI()
+{
+	FUNCTION_CALL_TRACE;
+
+	return deviceInfo.imei();
 }
 
 QString DeviceInfo::getSysInfo(const QString &key)
@@ -102,27 +101,14 @@ QString DeviceInfo::getManufacturer()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iManufacturer.isEmpty() )
-    {
-        // @todo: get me from HAL or from QSystemDeviceInfo
-        iManufacturer = "Nokia";
-    }
-
-    return iManufacturer;
+    return deviceInfo.manufacturer();
 }
 
 QString DeviceInfo::getModel()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iModel.isEmpty()) {
-        iModel = getSysInfo(SYSINFO_KEY_MODEL);
-        if(iModel.isEmpty()) {
-            LOG_DEBUG("Failed retrieving the Model");
-        }
-    }
-
-    return iModel;
+    return deviceInfo.model();
 }
 
 
@@ -130,14 +116,7 @@ QString DeviceInfo::getSwVersion()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iSwVersion.isEmpty()) {
-        iSwVersion = getSysInfo(SYSINFO_KEY_SW_VER);
-        if(iSwVersion.isEmpty()) {
-            LOG_DEBUG("Failed retrieving the software version");
-        }
-    }
-
-    return iSwVersion;
+    return systemInfo.version(QtMobility::QSystemInfo::Firmware);
 }
 
 
@@ -160,22 +139,6 @@ QString DeviceInfo::getFwVersion()
     FUNCTION_CALL_TRACE;
 
     return getHwVersion();
-}
-
-QString DeviceInfo::getDeviceIMEI()
-{
-    FUNCTION_CALL_TRACE;
-
-
-    if( iDeviceIMEI.isEmpty() || iDeviceIMEI == DUMMY_IMEI) {
-        iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
-        if(iDeviceIMEI.isEmpty()) {
-            LOG_CRITICAL("Failed retrieving the IMEI. HARDCODING THE IMEI ");
-            iDeviceIMEI = IMEI + getSysInfo(SYSINFO_KEY_IMEI);
-        }
-    }
-
-    return iDeviceIMEI;
 }
 
 QString DeviceInfo::getDeviceType()

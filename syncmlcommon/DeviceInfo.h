@@ -28,7 +28,8 @@
 #include <QStringList>
 #include <QMutex>
 #include <QMap>
-#include "DeviceInfo.h"
+#include <QtSystemInfo/QSystemInfo>
+#include <QtSystemInfo/QSystemDeviceInfo>
 
 namespace Buteo {
 
@@ -135,6 +136,9 @@ namespace Buteo {
         QString getFwVersion();
         QString getDeviceIMEI();
         QString getDeviceType();
+
+	QtMobility::QSystemDeviceInfo deviceInfo;
+	QtMobility::QSystemInfo systemInfo;
 
 #ifdef SYNC_APP_UNITTESTS
        friend class DeviceInfoTest;
