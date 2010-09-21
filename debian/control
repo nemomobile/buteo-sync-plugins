@@ -1,7 +1,7 @@
 Source: sync-app
 Section: utils
 Priority: optional
-Build-Depends: debhelper (>= 5), doxygen, sync-fw-dev( >= 0.5.0), cdbs, libmeegosyncml-dev( >= 0.4.9), libqt4-dev, libsysinfo-dev, libopenobex1-dev, libqtm-versit-dev, libqtm-contacts-dev, libkcalcoren-dev, libmkcal-dev
+Build-Depends: debhelper (>= 5), doxygen, sync-fw-dev( >= 0.5.0), cdbs, libmeegosyncml-dev( >= 0.4.9), libqt4-dev, libopenobex1-dev, libqtm-versit-dev, libqtm-contacts-dev, libkcalcoren-dev, libmkcal-dev, libqtm-systeminfo-dev, libsysinfo-dev
 Maintainer: Duggirala Karthik <karthik.2.duggirala@nokia.com>
 Standards-Version: 3.7.2
 
