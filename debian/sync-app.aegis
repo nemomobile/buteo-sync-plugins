@@ -1,0 +1,7 @@
+<aegis>
+     <request>
+         <credential name="tracker::TrackerReadAccess"/>
+         <credential name="tracker::TrackerWriteAccess"/>
+         <for path="sync-fw::/usr/bin/msyncd"/>
+     </request>
+</aegis>

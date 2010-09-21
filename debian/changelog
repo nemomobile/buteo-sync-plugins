@@ -1,6 +1,7 @@
 sync-app (0.5.6-44) unstable; urgency=low
 
   * Support Manufacturer field in DevInf (currently hardcoded to "Nokia")
+  * Fixes: NB#193270 - Sync/Switch/MTP does not work in security build.
 
  -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 21 Sep 2010 09:00:00 +0300
 
