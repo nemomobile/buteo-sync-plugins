@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile name="mobical.com" type="service">
+	<key name="Remote database" value="http://www.mobical.net/sync/server" />
+
+	<key name="Username" value="your_user_name" />
+	<key name="Password" value="your_password" />
+
+
+	<key name="destinationtype" value="online"/>
+
+	<profile name="syncml" type="client" >
+		<key name="use_wbxml" value="false" />
+		<key name="Sync Transport" value="HTTP" />
+		<key name="Sync Direction" value="two-way" />
+		<key name="Sync Protocol" value="SyncML12" />
+	</profile>
+
+	<profile name="hcontacts" type="storage" >
+		<key name="Local URI" value="./contacts" />
+		<key name="Target URI" value="./con" />
+	</profile>
+
+	<profile name="hcalendar" type="storage" >
+		<key name="Local URI" value="./calendar" />
+		<key name="Target URI" value="./caltask" />
+		<key name="Calendar Format" value="vcalendar" />
+	</profile>
+
+	<profile name="hnotes" type="storage" >    
+		<key name="Local URI" value="./Notepad" />
+		<key name="Target URI" value="./vnote" />
+	</profile>
+
+</profile>
