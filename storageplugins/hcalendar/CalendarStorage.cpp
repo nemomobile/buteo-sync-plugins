@@ -318,7 +318,12 @@ CalendarStorage::OperationStatus CalendarStorage::addItem( Buteo::StorageItem& a
         return STATUS_ERROR;
     }
 
-    aItem.setId( item->uid() );
+    if (item->recurrenceId().isValid()) {  
+	QString reccurId = QString(ID_SEPARATOR).append(item->recurrenceId().toString());    
+       	aItem.setId( item->uid().append(reccurId) );
+     } else {
+        aItem.setId( item->uid() );
+    }
 
     LOG_DEBUG( "Item successfully added:" << aItem.getId() );
 
@@ -359,7 +364,7 @@ CalendarStorage::OperationStatus CalendarStorage::modifyItem( Buteo::StorageItem
         LOG_WARNING( "Item has invalid format" );
         return STATUS_INVALID_FORMAT;
     }
-
+    
     if( !iCalendar.modifyIncidence( item, aItem.getId(), iCommitNow ) ) {
         LOG_WARNING( "Could not replace item:" << aItem.getId() );
         // no need to delete item as item is owned by backend
@@ -474,7 +479,12 @@ Buteo::StorageItem* CalendarStorage::retrieveItem( KCalCore::Incidence::Ptr& aIn
     }
 
     Buteo::StorageItem* item = newItem();
-    item->setId( aIncidence->uid() );
+    QString iId = aIncidence->uid();
+    if (aIncidence->recurrenceId().isValid()) {  
+	QString reccurId = QString(ID_SEPARATOR).append(aIncidence->recurrenceId().toString());    
+       	iId.append(reccurId);
+    }  
+    item->setId(iId);
     item->write( 0, data.toUtf8() );
     item->setType(iProperties[STORAGE_DEFAULT_MIME_PROP]);
 
@@ -487,7 +497,12 @@ void CalendarStorage::retrieveIds( KCalCore::Incidence::List& aIncidences, QList
     FUNCTION_CALL_TRACE;
 
     for( int i = 0; i < aIncidences.count(); ++i ) {
-        aIds.append( aIncidences[i]->uid() );
+        QString iID = aIncidences[i]->uid();
+	if (aIncidences[i]->recurrenceId().isValid()) {  
+	    QString reccurId = QString(ID_SEPARATOR).append(aIncidences[i]->recurrenceId().toString());    
+            iID = iID.append(reccurId);
+	}  
+	aIds.append( iID );
     }
 
 }

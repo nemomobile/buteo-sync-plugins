@@ -215,7 +215,16 @@ KCalCore::Incidence::Ptr CalendarBackend::getIncidence( const QString& aUID )
 {
     FUNCTION_CALL_TRACE;
 
-    return iCalendar->incidence( aUID );
+    QStringList iDs = aUID.split(ID_SEPARATOR);
+    KCalCore::Incidence::Ptr incidence;
+    if (iDs.size() == 2) {
+	   iStorage->load ( iDs.at(0), KDateTime::fromString(iDs.at(1)) );
+	   incidence = iCalendar->incidence(iDs.at(0), KDateTime::fromString(iDs.at(1)));
+    } else {
+	   iStorage->load ( aUID );
+	   incidence = iCalendar->incidence( aUID );
+    }
+    return incidence;
 }
 
 QString CalendarBackend::getVCalString(KCalCore::Incidence::Ptr aInci)
@@ -329,7 +338,7 @@ bool CalendarBackend::addIncidence( KCalCore::Incidence::Ptr aInci, bool commitN
         LOG_DEBUG( "Single incidence committed");
     }
 
-    LOG_DEBUG("Added an item with UID ***\n" << aInci->uid());
+    LOG_DEBUG("Added an item with UID : " << aInci->uid() << "Recurrence Id :" << aInci->recurrenceId().toString());
 
     return true;
 }
@@ -362,7 +371,7 @@ bool CalendarBackend::modifyIncidence( KCalCore::Incidence::Ptr aInci, const QSt
         return false;
     }
 
-    KCalCore::Incidence::Ptr origInci = iCalendar->incidence( aUID );
+    KCalCore::Incidence::Ptr origInci = getIncidence ( aUID );
 
     if( !origInci ) {
         LOG_WARNING("Item with UID" << aUID << "does not exist. Cannot modify");
@@ -394,8 +403,8 @@ bool CalendarBackend::deleteIncidence( const QString& aUID )
         return false;
     }
 
-    KCalCore::Incidence::Ptr incidence = iCalendar->incidence( aUID );
-
+    KCalCore::Incidence::Ptr incidence = getIncidence( aUID );
+    
     if( !incidence ) {
         LOG_WARNING( "Could not find incidence to delete with UID" << aUID );
         return false;
@@ -415,37 +424,27 @@ bool CalendarBackend::deleteIncidence( const QString& aUID )
     return true;
 }
 
-bool CalendarBackend::modifyIncidence( KCalCore::Incidence::Ptr& aIncidence, KCalCore::Incidence::Ptr& aIncidenceData )
+bool CalendarBackend::modifyIncidence( KCalCore::Incidence::Ptr aIncidence, KCalCore::Incidence::Ptr aIncidenceData )
 {
-	FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-	Q_ASSERT( aIncidence );
-	Q_ASSERT( aIncidenceData );
+    Q_ASSERT( aIncidence );
+    Q_ASSERT( aIncidenceData );
 
-	// Save critical data from original item
-	aIncidenceData->setUid( aIncidence->uid() );
-	aIncidenceData->setCreated( aIncidence->created() );
+    // Save critical data from original item
+    aIncidenceData->setUid( aIncidence->uid() );
+    aIncidenceData->setCreated( aIncidence->created() );
 
-	// This was needed previously for modify to work, but the function is not available anymore.
-	// @todo: verify if modify works with latest libmaemokcal
-	//aIncidenceData->setRowId( aIncidence->rowId() );
-
-	if( aIncidence->type() != aIncidenceData->type() ) {
-	    LOG_WARNING( "Expected incidence type" << aIncidence->typeStr() <<", got" << aIncidenceData->typeStr() );
-	    return false;
-	}
-
-    if( aIncidence->type() == KCalCore::Incidence::TypeEvent )
-    {
-        KCalCore::Event::Ptr inc = aIncidence.staticCast<KCalCore::Event>();
-        KCalCore::Event::Ptr data = aIncidenceData.staticCast<KCalCore::Event>();
-        inc = data;
+    if( aIncidence->type() != aIncidenceData->type() ) {
+        LOG_WARNING( "Expected incidence type" << aIncidence->typeStr() <<", got" << aIncidenceData->typeStr() );
+        return false;
     }
-    else if( aIncidence->type() == KCalCore::Incidence::TypeTodo )
+
+    if( aIncidence->type() == KCalCore::Incidence::TypeEvent || aIncidence->type() == KCalCore::Incidence::TypeTodo )
     {
-        KCalCore::Todo::Ptr inc = aIncidence.staticCast<KCalCore::Todo>();
-        KCalCore::Todo::Ptr data = aIncidenceData.staticCast<KCalCore::Todo>();
-        inc = data;
+	KCalCore::IncidenceBase::Ptr inc = aIncidence;
+	KCalCore::IncidenceBase::Ptr data = aIncidenceData;
+        *inc = *data;    
     }
     else {
         LOG_WARNING( "Unsupported incidence type:" << aIncidence->typeStr() );

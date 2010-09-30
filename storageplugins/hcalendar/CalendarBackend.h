@@ -37,6 +37,7 @@
 #include "vcalformat.h"
 #include "icalformat.h"
 
+static const QString ID_SEPARATOR("::");  
 //! \brief Calendar implementation for synchronization
 class CalendarBackend
 {
@@ -134,7 +135,7 @@ public:
     bool deleteIncidence( const QString& aUID );
 
 private:
-    bool modifyIncidence( KCalCore::Incidence::Ptr& aIncidence, KCalCore::Incidence::Ptr& aIncidenceData );
+    bool modifyIncidence( KCalCore::Incidence::Ptr aIncidence, KCalCore::Incidence::Ptr aIncidenceData );
 
     void filterIncidences( KCalCore::Incidence::List& aList );
 
