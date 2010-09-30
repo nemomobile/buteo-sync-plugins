@@ -259,6 +259,7 @@ Buteo::StorageItem* NotesBackend::getItem( const QString& aItemId )
 {
     FUNCTION_CALL_TRACE;
 
+    iStorage->load ( aItemId );
     KCalCore::Incidence::Ptr item = iCalendar->incidence( aItemId );
 
     if( !item ) {
@@ -326,6 +327,7 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
+    iStorage->load ( aItem.getId() );
     KCalCore::Incidence::Ptr item = iCalendar->incidence( aItem.getId() );
 
     if( !item ) {
@@ -363,6 +365,7 @@ bool NotesBackend::deleteNote( const QString& aId, bool aCommitNow )
 {
     FUNCTION_CALL_TRACE;
 
+    iStorage->load ( aId );
     KCalCore::Incidence::Ptr journal = iCalendar->incidence( aId );
 
     if( !journal ) {
