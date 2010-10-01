@@ -2,6 +2,7 @@ sync-app (0.5.6-47) unstable; urgency=low
 
   * Fix: NB#195367 Synchronization code doesn't handle recurrence exceptions 
   * Fix: NB#192782 Modified calendar event in N95 is not updated in device
+  * Fix: NB#195031 Calendar events and notes created in device are not syncd to any device
 
  -- Duggiraka Karthik <karthik.2.duggirala@nokia.com>  Fri, 01 Oct 2010 15:03:17 +0330
 
