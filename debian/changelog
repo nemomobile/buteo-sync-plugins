@@ -1,3 +1,9 @@
+sync-app (0.5.6-48) unstable; urgency=low
+
+  * Tests deb pkg dependency changes to testrunner->testrunner-line
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Thu, 07 Oct 2010 17:16:14 +0330
+
 sync-app (0.5.6-47) unstable; urgency=low
 
   * Fix: NB#195367 Synchronization code doesn't handle recurrence exceptions 
