@@ -160,10 +160,10 @@ QByteArray StorageAdapter::getPluginCTCaps( DataSync::ProtocolVersion aVersion )
 
     Q_ASSERT( iPlugin );
 
-    if( aVersion == DataSync::DS_1_1 ) {
+    if( aVersion == DataSync::SYNCML_1_1 ) {
         return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_11 ).toAscii();
     }
-    else if( aVersion == DataSync::DS_1_2 ) {
+    else if( aVersion == DataSync::SYNCML_1_2 ) {
         return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_12 ).toAscii();
     }
     else {

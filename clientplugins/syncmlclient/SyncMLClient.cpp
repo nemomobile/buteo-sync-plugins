@@ -508,14 +508,14 @@ bool SyncMLClient::initConfig() {
 	}
 
 	QString versionProp = iProperties[PROF_SYNC_PROTOCOL];
-	DataSync::ProtocolVersion version = DataSync::DS_1_2;
+    DataSync::ProtocolVersion version = DataSync::SYNCML_1_2;
 
 	if (versionProp == SYNCML11) {
 		LOG_DEBUG("Using SyncML DS 1.1 protocol");
-		version = DataSync::DS_1_1;
+        version = DataSync::SYNCML_1_1;
 	} else if (versionProp == SYNCML12) {
 		LOG_DEBUG("Using SyncML DS 1.2 protocol");
-		version = DataSync::DS_1_2;
+        version = DataSync::SYNCML_1_2;
 	}
 
 	DataSync::SyncInitiator initiator = DataSync::INIT_CLIENT;
@@ -534,7 +534,7 @@ bool SyncMLClient::initConfig() {
 
 	// ** Set up auth parameters
 
-	DataSync::AuthenticationType type = DataSync::AUTH_NONE;
+    DataSync::AuthType type = DataSync::AUTH_NONE;
 	QString username;
 	QString password;
 

@@ -223,7 +223,7 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     // so that storage plug-in knows which protocol version is in use.
     if (!keys.contains(PROF_SYNC_PROTOCOL) && iSessionHandler != 0)
     {
-        if (iSessionHandler->getProtocolVersion() == DataSync::DS_1_1)
+        if (iSessionHandler->getProtocolVersion() == DataSync::SYNCML_1_1)
         {
             keys[PROF_SYNC_PROTOCOL] = SYNCML11;
         }
