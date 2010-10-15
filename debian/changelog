@@ -1,3 +1,9 @@
+sync-app (0.5.6-50) unstable; urgency=low
+
+  * Added Test profiles  
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 15 Oct 2010 14:00:00 +0300
+
 sync-app (0.5.6-49) unstable; urgency=low
 
   * Integrated latest buteo-syncml interface changes
