@@ -1,3 +1,9 @@
+sync-app (0.5.6-51) unstable; urgency=low
+
+  * No need to resolve libmeegosyncml, we've linked to it.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Fri, 15 Oct 2010 16:10:56 +0530
+
 sync-app (0.5.6-50) unstable; urgency=low
 
   * Added Test profiles  

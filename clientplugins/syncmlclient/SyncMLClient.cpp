@@ -27,6 +27,7 @@
 #include <QtNetwork>
 
 #include <libsyncpluginmgr/PluginCbInterface.h>
+#include <libmeegosyncml/SyncAgent.h>
 #include <libmeegosyncml/SyncAgentConfig.h>
 #include <libmeegosyncml/SyncAgentConfigProperties.h>
 #include <libmeegosyncml/HTTPTransport.h>
@@ -331,29 +332,21 @@ void SyncMLClient::receiveItemProcessed(
 
 bool SyncMLClient::initAgent() {
 
-	FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-	LOG_DEBUG("Creating agent...");
+    LOG_DEBUG("Creating agent...");
 
-	bool success = false;
+    bool success = false;
 
-	createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve(
-			"libmeegosyncml.so", "createSyncAgent");
-	if (createSyncAgent) {
-
-		iAgent = createSyncAgent(0);
-		if (!iAgent) {
-			LOG_DEBUG("Agent creation failed");
-		} else {
-			success = true;
-			LOG_DEBUG("Agent created");
-		}
-	} else {
-		LOG_DEBUG("Could not find the library libmeegosyncml.so");
-	}
-
-	return success;
-
+    iAgent = new DataSync::SyncAgent();
+    if (!iAgent) {
+        LOG_DEBUG("Agent creation failed");
+    }
+    else {
+        success = true;
+        LOG_DEBUG("Agent created");
+    }
+    return success;
 }
 
 void SyncMLClient::closeAgent() {
@@ -363,19 +356,8 @@ void SyncMLClient::closeAgent() {
 	LOG_DEBUG("Destroying agent...");
 
 	if (iAgent) {
-
-		destroySyncAgent_t* destroySyncAgent =
-				(destroySyncAgent_t*) QLibrary::resolve("libmeegosyncml.so",
-						"destroySyncAgent");
-
-		if (destroySyncAgent) {
-			destroySyncAgent(iAgent);
-			iAgent = NULL;
-			LOG_DEBUG("Agent destroyed");
-		} else {
-			LOG_DEBUG("Could not find the library libmeegosyncml.so");
-		}
-
+            delete iAgent;
+            iAgent = 0;
 	}
 
 }
