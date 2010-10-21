@@ -1,3 +1,9 @@
+sync-app (0.5.6-52) unstable; urgency=low
+
+  * Added profiles for memotoo. 
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 21 Oct 2010 19:14:18 +0530
+
 sync-app (0.5.6-51) unstable; urgency=low
 
   * No need to resolve libmeegosyncml, we've linked to it.

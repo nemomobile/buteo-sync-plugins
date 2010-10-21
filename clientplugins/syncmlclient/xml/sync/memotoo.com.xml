@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile name="memotoo.com" type="sync" >
+
+<key name="displayname" value="Memotoo"/>
+    <key name="enabled" value="true" />
+    <key name="use_accounts" value="false" />
+    <key name="hidden" value="false" />
+
+    <profile type="service" name="memotoo.com" >
+    </profile>
+
+    <profile name="hcontacts" type="storage" >
+        <key name="enabled" value="true" />
+    </profile>
+
+    <profile name="hcalendar" type="storage" >
+        <key name="enabled" value="true" />
+        <key name="Notebook Name" value="Personal"/>
+    </profile>
+
+    <profile name="hnotes" type="storage" >
+        <key name="enabled" value="true" />
+    </profile>
+</profile>
+
+
