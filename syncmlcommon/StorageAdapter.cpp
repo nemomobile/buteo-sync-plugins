@@ -460,6 +460,7 @@ Buteo::StorageItem* StorageAdapter::toStorageItem( const DataSync::SyncItem* aSy
 
     item.setType( adapter->getType() );
     item.setParentId( *adapter->getParentKey() );
+    item.setVersion( adapter->getVersion() );
 
     return &item;
 }
