@@ -2,6 +2,7 @@ sync-app (0.5.6-53) unstable; urgency=low
 
   * Fixes: NB#180964 - SMS messages synced from N95 all have today's time
     stamp
+  * Added IMEI: prefix back to device IMEI
 
  -- Santosh Puranik <santosh.puranik@nokia.com>  Fri, 22 Oct 2010 20:47:18 +0530
 

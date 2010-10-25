@@ -66,7 +66,7 @@ QString DeviceInfo::getDeviceIMEI()
 {
 	FUNCTION_CALL_TRACE;
 
-	return deviceInfo.imei();
+	return IMEI + deviceInfo.imei();
 }
 
 QString DeviceInfo::getSysInfo(const QString &key)
