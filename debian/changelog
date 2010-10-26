@@ -1,3 +1,12 @@
+sync-app (0.5.6-54) unstable; urgency=low
+
+  * Not failing BT connection to device if RequestSession to the bluez adapter
+    interface fails : RequestSession is not mandatory, it's not implemented in
+    Meego for eg. This change "might" help solve current meego netbook to
+    device sync issues with BT connection.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 26 Oct 2010 19:03:30 +0530
+
 sync-app (0.5.6-53) unstable; urgency=low
 
   * Fixes: NB#180964 - SMS messages synced from N95 all have today's time

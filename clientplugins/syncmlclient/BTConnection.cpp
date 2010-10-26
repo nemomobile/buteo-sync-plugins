@@ -166,7 +166,6 @@ QString BTConnection::connectDevice( const QString& aBTAddress, const QString& a
     if( !voidReply.isValid() ) {
         LOG_CRITICAL( "Session request failed" );
         LOG_CRITICAL( "Reason:" <<  voidReply.error() );
-        return "";
     }
 
     LOG_DEBUG( "BT session created" );
