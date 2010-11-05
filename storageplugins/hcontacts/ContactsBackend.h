@@ -215,6 +215,15 @@ private: // functions
                                 const QDateTime &aTimeStamp,
                                 QList<QContactLocalId> &aIdList);
 
+    /*!
+     * \brief Constructs and returns the filter for accessing only contacts allowed to be synchronized
+     * Contacts not allowed to be synchronized are Instant messaging contacts and contacts with origin from other sync backends;
+     * those contacts have QContactSyncTarget::SyncTarget value different from address book or buteo sync clients.
+     * It is designed that buteo sync clients don't restrict access to contacts among themselves
+     * - value for QContactSyncTarget::SyncTarget written by this backend is "buteo".
+     */
+    QContactFilter getSyncTargetFilter() const;
+
 private: // data
     
     // if there is more than one Manager we need to have a list of Managers

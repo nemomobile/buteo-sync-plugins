@@ -28,9 +28,12 @@
 #include <QVersitWriter>
 #include <QContactTimestamp>
 #include <QContactLocalIdFilter>
+#include <QContactSyncTarget>
+#include <QContactDetailFilter>
 #include <QBuffer>
 #include <QSet>
 
+const QLatin1String ButeoSyncTarget("buteo");
 
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer) :
 iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
@@ -54,7 +57,6 @@ bool ContactsBackend::init()
 		// hardcode to tracker
 		LOG_DEBUG("connecting to storage tracker");
         iMgr = new QContactManager("tracker");
-        //iMgr = new QContactManager();
 
 		if(iMgr != NULL){
 			initStatus = true;
@@ -92,7 +94,7 @@ QList<QContactLocalId> ContactsBackend::getAllContactIds()
     QList<QContactLocalId> contactIDs;
 
     if (iMgr != NULL) {
-        contactIDs = iMgr->contactIds();
+        contactIDs = iMgr->contactIds(getSyncTargetFilter());
     }
     else {
         LOG_WARNING("Contacts backend not available");
@@ -158,9 +160,16 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
     ContactsStatus status;
     QMap<int, QContactManager::Error> errorMap;
 
+    // for all new contacts, set origin sync target
+    QContactSyncTarget syncTarget;
+    syncTarget.setSyncTarget(ButeoSyncTarget);
+    for (QList<QContact>::Iterator i = contactList.begin(); i != contactList.end(); ++i) {
+        i->saveDetail(&syncTarget);
+    }
+
     bool retVal = iMgr->saveContacts(&contactList, &errorMap);
 
-    if( !retVal )
+    if (!retVal)
     {
         LOG_WARNING( "Errors reported while saving contacts:" << iMgr->error() );
     }
@@ -171,12 +180,11 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
     for (int i = 0; i < contactList.size(); i++)
     {
         QContactLocalId contactId = contactList.at(i).id().localId();
-        if( !errorMap.contains(i) )
+        if (!errorMap.contains(i))
         {
             status.id = (int)contactId;
             status.errorCode = QContactManager::NoError;
             aStatusMap.insert(i, status);
-
         }
         else
         {
@@ -454,13 +462,13 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
 	QContactChangeLogFilter filter(aEventType);
 	filter.setSince(aTimeStamp);
 
-    aIdList = iMgr->contactIds(filter);
+    aIdList = iMgr->contactIds(filter & getSyncTargetFilter());
 
     // Filter out ids for items that were added after the specified time.
     if (aEventType != QContactChangeLogFilter::EventAdded)
     {
         filter.setEventType(QContactChangeLogFilter::EventAdded);
-        QList<QContactLocalId> addedList = iMgr->contactIds(filter);
+        QList<QContactLocalId> addedList = iMgr->contactIds(filter & getSyncTargetFilter());
         foreach (const QContactLocalId &id, addedList)
         {
             aIdList.removeAll(id);
@@ -636,4 +644,23 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
     }
 
     return creationTimes;
+}
+
+QContactFilter ContactsBackend::getSyncTargetFilter() const {
+    // contacts with origin from buteo
+    QContactDetailFilter detailFilterButeoSyncTarget;
+    detailFilterButeoSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
+                                         QContactSyncTarget::FieldSyncTarget);
+    detailFilterButeoSyncTarget.setValue(ButeoSyncTarget);
+
+    // user enterred contacts, i.e. all other contacts that are not sourcing
+    // from restricted backends or instant messaging service
+    QContactDetailFilter detailFilterDefaultSyncTarget;
+    detailFilterDefaultSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
+                                         QContactSyncTarget::FieldSyncTarget);
+    detailFilterDefaultSyncTarget.setValue(QLatin1String("addressbook"));
+    // "addressbook" - "magic" string from qtcontacts-tracker plugin
+
+    // return the union
+    return detailFilterButeoSyncTarget | detailFilterDefaultSyncTarget;
 }
