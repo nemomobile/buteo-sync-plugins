@@ -149,6 +149,8 @@ private:
 
     QByteArray getCtCaps( const QString& aFilename ) const;
 
+    CalendarStorage::OperationStatus mapErrorStatus(const CalendarBackend::ErrorStatus &aCalenderError) const;
+
     CalendarBackend iCalendar;
     STORAGE_TYPE    iStorageType;
 

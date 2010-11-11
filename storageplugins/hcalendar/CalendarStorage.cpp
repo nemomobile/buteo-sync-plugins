@@ -405,12 +405,9 @@ CalendarStorage::OperationStatus CalendarStorage::deleteItem( const QString& aIt
 {
     FUNCTION_CALL_TRACE;
 
-    if( iCalendar.deleteIncidence( aItemId ) ) {
-        return STATUS_OK;
-    }
-    else {
-        return STATUS_ERROR;
-    }
+    CalendarBackend::ErrorStatus error =  iCalendar.deleteIncidence( aItemId);
+    CalendarStorage::OperationStatus status = mapErrorStatus(error);
+    return status;
 }
 
 QList<CalendarStorage::OperationStatus> CalendarStorage::deleteItems( const QList<QString>& aItemIds )
@@ -539,4 +536,34 @@ QByteArray CalendarStorage::getCtCaps( const QString& aFilename ) const
 
     return ctCaps;
 
+}
+
+CalendarStorage::OperationStatus CalendarStorage::mapErrorStatus\
+        (const CalendarBackend::ErrorStatus &aCalenderError) const
+{
+    FUNCTION_CALL_TRACE;
+    CalendarStorage::OperationStatus iStorageStatus = STATUS_OK;
+
+    switch(aCalenderError) {
+    case CalendarBackend::STATUS_OK:
+            iStorageStatus = STATUS_OK;
+            break;
+
+    case CalendarBackend::STATUS_ITEM_DUPLICATE:
+            iStorageStatus = STATUS_DUPLICATE;
+            break;
+
+    case CalendarBackend::STATUS_ITEM_NOT_FOUND:
+            iStorageStatus = STATUS_NOT_FOUND;
+            break;
+
+    case CalendarBackend::STATUS_GENERIC_ERROR:
+            iStorageStatus = STATUS_ERROR;
+            break;
+
+    default:
+            iStorageStatus = STATUS_ERROR;
+            break;
+    }
+    return iStorageStatus;
 }

@@ -395,33 +395,34 @@ bool CalendarBackend::modifyIncidence( KCalCore::Incidence::Ptr aInci, const QSt
     return true;
 }
 
-bool CalendarBackend::deleteIncidence( const QString& aUID )
+CalendarBackend::ErrorStatus CalendarBackend::deleteIncidence( const QString& aUID )
 {
 	FUNCTION_CALL_TRACE;
+    CalendarBackend::ErrorStatus errorCode = CalendarBackend::STATUS_OK;
 
     if( !iCalendar || !iStorage ) {
-        return false;
+        errorCode = CalendarBackend::STATUS_GENERIC_ERROR;
     }
 
     KCalCore::Incidence::Ptr incidence = getIncidence( aUID );
     
     if( !incidence ) {
         LOG_WARNING( "Could not find incidence to delete with UID" << aUID );
-        return false;
+        errorCode = CalendarBackend::STATUS_ITEM_NOT_FOUND;
     }
 
     if( !iCalendar->deleteIncidence( incidence) )
     {
         LOG_WARNING( "Could not delete incidence with UID" << aUID );
-        return false;
+        errorCode = CalendarBackend::STATUS_GENERIC_ERROR;
     }
 
     if( !iStorage->save() ) {
         LOG_WARNING( "Could not commit changes to calendar");
-        return false;
+        errorCode =  CalendarBackend::STATUS_GENERIC_ERROR;
     }
 
-    return true;
+    return errorCode;
 }
 
 bool CalendarBackend::modifyIncidence( KCalCore::Incidence::Ptr aIncidence, KCalCore::Incidence::Ptr aIncidenceData )

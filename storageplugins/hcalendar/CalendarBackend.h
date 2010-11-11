@@ -43,6 +43,15 @@ class CalendarBackend
 {
 
 public:
+    //error status code return by calender backend.
+    enum ErrorStatus
+    {
+        STATUS_GENERIC_ERROR = -3,           /*!< General error occurred during operation*/
+        STATUS_ITEM_DUPLICATE = -2,       /*!< Operation was not performed as object was duplicate*/
+        STATUS_ITEM_NOT_FOUND = -1,       /*!< Operation failed as object was not found*/
+        STATUS_OK = 0                /*!< Operation was completed successfully*/
+    };
+
     //! \brief constructor
     CalendarBackend();
 
@@ -131,8 +140,8 @@ public:
 
     //! \brief delete the incidence
     // \param aUID id of the incidence to be deleted
-    // \return true if deletion is success, otherwise false
-    bool deleteIncidence( const QString& aUID );
+    // \return errorCode of the operation as status.
+    ErrorStatus deleteIncidence( const QString& aUID);
 
 private:
     bool modifyIncidence( KCalCore::Incidence::Ptr aIncidence, KCalCore::Incidence::Ptr aIncidenceData );
