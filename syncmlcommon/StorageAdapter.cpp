@@ -172,6 +172,15 @@ QByteArray StorageAdapter::getPluginCTCaps( DataSync::ProtocolVersion aVersion )
     }
 }
 
+QByteArray StorageAdapter::getPluginExts() const
+{
+    FUNCTION_CALL_TRACE;
+
+    Q_ASSERT( iPlugin );
+
+    return iPlugin->getProperty( STORAGE_SYNCML_EXTENSIONS ).toAscii();
+}
+
 bool StorageAdapter::getAll( QList<DataSync::SyncItemKey>& aKeys )
 {
     FUNCTION_CALL_TRACE;

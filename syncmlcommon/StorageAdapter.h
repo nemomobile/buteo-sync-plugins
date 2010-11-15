@@ -105,6 +105,11 @@ public:
      */
     virtual QByteArray getPluginCTCaps( DataSync::ProtocolVersion aVersion ) const;
 
+    /*! \see DataSync::StoragePlugin::getPluginExts()
+      *
+      */
+    virtual QByteArray getPluginExts() const;
+
     /*! \see DataSync::StoragePlugin::getAll()
      *
      */

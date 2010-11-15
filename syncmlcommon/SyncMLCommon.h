@@ -41,6 +41,9 @@ const QString STORAGE_DEFAULT_MIME_VERSION_PROP         = "Version";
 const QString STORAGE_SYNCML_CTCAPS_PROP_11             = "CTCaps_SyncML11";
 const QString STORAGE_SYNCML_CTCAPS_PROP_12             = "CTCaps_SyncML12";
 
+// Extensions supported by plugin
+const QString STORAGE_SYNCML_EXTENSIONS             = "Extensions";
+
 // Properties found from server/client plug-ins that can be used to configure storage
 // adapter
 

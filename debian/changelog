@@ -1,3 +1,9 @@
+sync-app (0.5.6-56) unstable; urgency=low
+
+  * Added support for Ext params in storage plugins.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Mon, 15 Nov 2010 15:15:00 +0530
+
 sync-app (0.5.6-55) unstable; urgency=low
 
   * Adding changes for error code as in case of deleteincidence we have to return
