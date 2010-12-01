@@ -6,7 +6,6 @@
     <set name="storageplugins" description="tests for storage plugins" feature="storage-plugins">
       <!-- Possibly some pre-steps to execute before running the test cases -->
       <pre_steps>
-        <step>meego-run</step>
         <step>source /tmp/session_bus_address.user;export DISPLAY=:1</step>
         <step>/usr/lib/tracker/tracker-store &amp; </step>
         <step>export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH</step>
@@ -20,11 +19,11 @@
       <case name="hcontacts-tests" type="Functional" description="Running Tests for Contacts Storage Plugin" timeout="1000" subfeature="">
         <step expected_result="0">/usr/share/sync-app-tests/./runstarget.sh /usr/share/sync-app-tests/hcontacts-tests </step>
       </case>
-
+      <!--
      <case name="hbookmarks-tests" type="Functional" description="Running Tests for Bookmarks Storage Plugin" timeout="1000" subfeature="">
-        <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
         <step expected_result="0">/usr/share/sync-app-tests/./runstarget.sh /usr/share/sync-app-tests/hbookmarks-tests </step>
-      </case>
+     </case>
+    -->
 
      <case name="hnotes-tests" type="Functional" description="Running Tests for Notes Storage Plugin" timeout="1000" subfeature="">
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->

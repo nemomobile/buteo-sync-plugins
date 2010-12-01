@@ -11,7 +11,7 @@ SUBDIRS += doc
 
 QT += QT_NO_EXCEPTIONS
 
-tests.path = /usr/share/buteo-sync-plugins-tests/
+tests.path = /usr/share/sync-app-tests/
 tests.files = bin/tests.xml \
               bin/runstarget.sh
 
