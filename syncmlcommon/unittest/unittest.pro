@@ -30,7 +30,7 @@ INCLUDEPATH += . \
                ../ \
                /usr/include/libsynccommon
 
-LIBS += -lsyncpluginmgr -lsynccommon -lmeegosyncml -lsyncprofile -lQtTest -lsysinfo
+LIBS += -lsyncpluginmgr -lsynccommon -lmeegosyncml -lsyncprofile -lQtTest
 
 DEFINES +=  SYNC_APP_UNITTESTS
 

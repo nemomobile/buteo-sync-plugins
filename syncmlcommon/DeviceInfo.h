@@ -122,13 +122,6 @@ namespace Buteo {
         QString iDeviceIMEI;
         QString iDeviceType;
 
-        /* @brief common method that queries the sysinfo client for a specific key
-         * the key is of the specfic format.
-         * on the device these keys can be obtained using the following command
-         * 'sysinfoclient --list'
-         * @return - value corresponding to the key */
-        QString getSysInfo(const QString &key);
-
         QString getManufacturer();
         QString getModel();
         QString getSwVersion();

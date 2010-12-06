@@ -23,16 +23,11 @@
 
 #include "DeviceInfo.h"
 #include "LogMacros.h"
-#if __SYSINFO__
-#include <sysinfo.h>
-#endif
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
 using namespace Buteo;
-
-const QString SYSINFO_KEY_HW_VER("/device/hw-version");
 
 const QString XML_KEY_MANUFACTURER("Manufacturer");
 const QString XML_KEY_MODEL("Model");
@@ -69,34 +64,6 @@ QString DeviceInfo::getDeviceIMEI()
 	return IMEI + deviceInfo.imei();
 }
 
-QString DeviceInfo::getSysInfo(const QString &key)
-{
-    QString value;
-#if __SYSINFO__
-    struct system_config *sc = 0;
-    if( sysinfo_init(&sc) == 0 )
-    {
-        uint8_t *data = 0;
-        unsigned long size = 0;
-        QByteArray ba = key.toLatin1();
-        const char * key = ba.data();
-        if( sysinfo_get_value(sc, key, &data, &size) == 0 )
-        {
-            unsigned long k;
-            for( k = 0; k < size; ++k )
-            {
-                int c = data[k];
-                value.append(c);
-            }
-        }
-        sysinfo_finish(sc);
-    }
-
-    LOG_DEBUG("Key is  " << key << "it's Value is " << value);
-#endif
-    return value;
-}
-
 QString DeviceInfo::getManufacturer()
 {
     FUNCTION_CALL_TRACE;
@@ -124,13 +91,7 @@ QString DeviceInfo::getHwVersion()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iHwVersion.isEmpty()) {
-        iHwVersion = getSysInfo(SYSINFO_KEY_HW_VER);
-        if(iHwVersion.isEmpty()) {
-            LOG_DEBUG("Failed retrieving the hardware version");
-        }
-    }
-
+    //Empty now
     return iHwVersion;
 }
 
@@ -138,7 +99,7 @@ QString DeviceInfo::getFwVersion()
 {
     FUNCTION_CALL_TRACE;
 
-    return getHwVersion();
+    return getSwVersion();
 }
 
 QString DeviceInfo::getDeviceType()
