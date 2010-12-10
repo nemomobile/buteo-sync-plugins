@@ -13,5 +13,13 @@
     <profile name="hcontacts" type="storage" >
 	<key name="enabled" value="true" />
     </profile>
-    
+
+    <profile name="hcalendar" type="storage" >
+	<key name="enabled" value="true" />
+    </profile>
+
+    <profile name="hnotes" type="storage" >
+	<key name="enabled" value="true" />
+    </profile>
+ 
 </profile>

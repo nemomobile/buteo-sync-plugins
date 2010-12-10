@@ -1,3 +1,9 @@
+sync-app (0.5.6-60) unstable; urgency=low
+
+  * Add calendar and notes storage to sw.com profile.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Fri, 10 Dec 2010 17:25:00 +0530
+
 sync-app (0.5.6-59) unstable; urgency=low
 
   * Removed dependency with libsysinfo. Hardware version provided is empty as
