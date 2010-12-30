@@ -1,3 +1,9 @@
+sync-app (0.5.6-61) unstable; urgency=low
+
+  * Add changes for version meta type.
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Thu, 30 Dec 2010 17:25:00 +0530
+
 sync-app (0.5.6-60) unstable; urgency=low
 
   * Add calendar and notes storage to sw.com profile.

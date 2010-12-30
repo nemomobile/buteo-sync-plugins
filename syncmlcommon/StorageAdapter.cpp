@@ -260,6 +260,11 @@ DataSync::SyncItem* StorageAdapter::getSyncItem( const DataSync::SyncItemKey& aK
         ItemAdapter* adapter = new ItemAdapter( item );
         adapter->setKey( aKey );
         adapter->setType( item->getType() );
+        QString version = item->getVersion();
+
+        if (!version.isEmpty()) {
+            adapter->setVersion(version);
+        }
 
         if( !item->getParentId().isEmpty() ) {
             adapter->setParentKey( iIdMapper.value( item->getParentId() ) );
@@ -295,6 +300,13 @@ QList<DataSync::SyncItem*> StorageAdapter::getSyncItems( const QList<DataSync::S
             ItemAdapter* adapter = new ItemAdapter( *j );
             adapter->setKey( iIdMapper.value( (*j)->getId() ) );
             adapter->setType( (*j)->getType() );
+
+            QString version = (*j)->getVersion();
+
+            if (!version.isEmpty()) {
+                adapter->setVersion(version);
+            }
+
             if( !(*j)->getParentId().isEmpty() )
             {
                 adapter->setParentKey( iIdMapper.value( (*j)->getParentId() ) );

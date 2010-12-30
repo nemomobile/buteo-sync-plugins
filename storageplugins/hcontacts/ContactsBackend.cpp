@@ -546,7 +546,6 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>& aContactIds,
     if (iMgr != NULL) {
         aContacts = iMgr->contacts(contactFilter);
     }
-    
 }
 
 void ContactsBackend::getContacts(const QList<QContactLocalId>&  aIdsList,
