@@ -2,6 +2,7 @@ sync-app (0.5.6-62) unstable; urgency=low
 
   * Adding changes to remove sync target buteo.
   * Fixes: NB#219377 Contacts synced from other Device to other server.
+  * Fixes: NB#218792 - Contacts added before MFE account configuration are not synced to the server after account creation.
 
  -- Amit <amit.5.aggarwal@nokia.com>  Wed, 19 Jan 2011 17:25:00 +0530
 
