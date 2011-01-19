@@ -33,8 +33,6 @@
 #include <QBuffer>
 #include <QSet>
 
-const QLatin1String ButeoSyncTarget("buteo");
-
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer) :
 iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
 {
@@ -159,13 +157,6 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
     QList<QContact> contactList = convertVCardListToQContactList(aContactDataList);
     ContactsStatus status;
     QMap<int, QContactManager::Error> errorMap;
-
-    // for all new contacts, set origin sync target
-    QContactSyncTarget syncTarget;
-    syncTarget.setSyncTarget(ButeoSyncTarget);
-    for (QList<QContact>::Iterator i = contactList.begin(); i != contactList.end(); ++i) {
-        i->saveDetail(&syncTarget);
-    }
 
     bool retVal = iMgr->saveContacts(&contactList, &errorMap);
 
@@ -646,12 +637,6 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
 }
 
 QContactFilter ContactsBackend::getSyncTargetFilter() const {
-    // contacts with origin from buteo
-    QContactDetailFilter detailFilterButeoSyncTarget;
-    detailFilterButeoSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
-                                         QContactSyncTarget::FieldSyncTarget);
-    detailFilterButeoSyncTarget.setValue(ButeoSyncTarget);
-
     // user enterred contacts, i.e. all other contacts that are not sourcing
     // from restricted backends or instant messaging service
     QContactDetailFilter detailFilterDefaultSyncTarget;
@@ -661,5 +646,5 @@ QContactFilter ContactsBackend::getSyncTargetFilter() const {
     // "addressbook" - "magic" string from qtcontacts-tracker plugin
 
     // return the union
-    return detailFilterButeoSyncTarget | detailFilterDefaultSyncTarget;
+    return detailFilterDefaultSyncTarget;
 }

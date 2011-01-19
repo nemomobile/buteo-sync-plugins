@@ -1,3 +1,10 @@
+sync-app (0.5.6-62) unstable; urgency=low
+
+  * Adding changes to remove sync target buteo.
+  * Fixes: NB#219377 Contacts synced from other Device to other server.
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Wed, 19 Jan 2011 17:25:00 +0530
+
 sync-app (0.5.6-61) unstable; urgency=low
 
   * Add changes for version meta type.
