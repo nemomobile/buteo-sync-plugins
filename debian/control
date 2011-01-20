@@ -35,7 +35,7 @@ Section: tests
 Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}, sync-app, testrunner-lite , meegotouch-dev-tools
-XB-Maemo-CI-Packages: hcalendar-tests ,hcontacts-tests , hbookmarks-tests, hnotes-tests 
+XB-Maemo-CI-Packages: hcalendar-tests ,hcontacts-tests , hnotes-tests
 XB-Maemo-CI-Stage: acceptance 
 Description: Module test package for sync-app.
  Module test package for sync-app

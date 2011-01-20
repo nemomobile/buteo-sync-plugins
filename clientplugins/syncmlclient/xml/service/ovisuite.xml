@@ -23,12 +23,13 @@
     	<key name="Local URI" value="./Contacts" />
 		<key name="Target URI" value="./Contacts" />
     </profile>
-    
+    <!-- Bookmark sync not supported in harmattan 1.0 -->
+    <!--
     <profile name="hbookmarks" type="storage" >    
     	<key name="Local URI" value="./Bookmarks" />
 		<key name="Target URI" value="./Bookmarks" />
     </profile>
-    
+    -->
     <profile name="hnotes" type="storage" >    
     	<key name="Local URI" value="./Notepad" />
 		<key name="Target URI" value="./Notes" />

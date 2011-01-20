@@ -1,3 +1,9 @@
+sync-app (0.5.6-63) unstable; urgency=low
+
+  * Fixes - bookmark sync support changes.
+
+ -- Mallikarjun Hunalli <mallikarjun.hunalli@nokia.com>  Thu, 20 Jan 2011 17:25:00 +0530
+
 sync-app (0.5.6-62) unstable; urgency=low
 
   * Adding changes to remove sync target buteo.

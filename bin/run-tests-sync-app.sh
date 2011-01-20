@@ -56,7 +56,8 @@ fi
 
 echo "if running inside scratchbox use export SBOX_USE_CCACHE=no and ccache -c commands for gcov to work"
 PLUGINS=(clientplugins storageplugins syncmlcommon)
-PLUGINTARGETS=(syncmlclient hcalendar hcontacts hbookmarks hnotes unittest)
+#PLUGINTARGETS=(syncmlclient hcalendar hcontacts hbookmarks hnotes unittest)
+PLUGINTARGETS=(syncmlclient hcalendar hcontacts hnotes unittest)
 TEMPFILE1=$WD/.temp_results
 
 if [ -f $TEMPFILE1 ]
