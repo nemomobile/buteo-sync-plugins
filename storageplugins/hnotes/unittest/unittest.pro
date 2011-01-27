@@ -54,7 +54,7 @@ SOURCES += main.cpp \
 
 QT += testlib
 QT -= gui
-CONFIG += debug silent qtestlib kcalcoren mkcal
+CONFIG += debug qtestlib kcalcoren mkcal
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

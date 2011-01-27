@@ -33,7 +33,7 @@ SOURCES += main.cpp \
            SimpleItem.cpp \
    	   SyncMLConfig.cpp
 
-CONFIG += debug silent qtestlib kcalcoren mkcal
+CONFIG += debug qtestlib kcalcoren mkcal
 
 QT += testlib \
     core \

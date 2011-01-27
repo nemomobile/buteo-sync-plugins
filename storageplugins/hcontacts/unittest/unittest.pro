@@ -2,7 +2,7 @@ TEMPLATE = app
 TARGET = hcontacts-tests 
  
 QT += core testlib sql
-CONFIG += silent qtestlib mobility
+CONFIG += qtestlib mobility
 
 DEPENDPATH += . \
               ../ \

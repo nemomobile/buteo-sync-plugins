@@ -2,7 +2,6 @@
 TEMPLATE = subdirs
 
 CONFIG += ordered \
-          silent
 
 SUBDIRS += syncmlcommon
 SUBDIRS += clientplugins

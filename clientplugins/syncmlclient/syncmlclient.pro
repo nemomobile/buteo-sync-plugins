@@ -8,7 +8,7 @@ INCLUDEPATH += . ../../syncmlcommon \
 
 LIBS += -L../../syncmlcommon -lsyncpluginmgr -lsyncprofile -lmeegosyncml -lsyncmlcommon
 
-CONFIG += debug plugin silent mobility
+CONFIG += debug plugin mobility
 
 MOBILITY += systeminfo
 QT += dbus sql network
