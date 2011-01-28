@@ -83,5 +83,6 @@ void ContactsChangeNotifier::onContactsChanged(const QList<QContactLocalId>& ids
 
 void ContactsChangeNotifier::disable()
 {
-    QObject::disconnect();
+    this->disconnect();
+    QObject::disconnect(iManager, 0, this, 0);
 }
