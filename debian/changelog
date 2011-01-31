@@ -1,6 +1,7 @@
 sync-app (0.5.6-64) unstable; urgency=low
 
   * Fixes - "silent" option removed from pro files.
+  * Fixes: NB#221094 - contact with a ringtone field is not synchronized to remote device
 
  -- Mallikarjun Hunalli <mallikarjun.hunalli@nokia.com>  Thu, 27 Jan 2011 17:25:00 +0530
 
