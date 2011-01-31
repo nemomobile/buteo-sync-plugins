@@ -26,10 +26,13 @@ MOBILITY += contacts versit
 QT += sql
 
 HEADERS += ContactsStorage.h \
-           ContactsBackend.h
+           ContactsBackend.h \
+           ContactDetailHandler.h
 
 SOURCES += ContactsStorage.cpp \
-           ContactsBackend.cpp
+           ContactsBackend.cpp \
+           ContactDetailHandler.cpp
+
 
 QMAKE_CXXFLAGS = -Wall \
     -g \

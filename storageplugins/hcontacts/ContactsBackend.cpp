@@ -33,6 +33,8 @@
 #include <QBuffer>
 #include <QSet>
 
+#include "ContactDetailHandler.h"
+
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer) :
 iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
 {
@@ -405,6 +407,9 @@ QString ContactsBackend::convertQContactToVCard(const QContact &aContact)
 	contactsList.append (aContact);
 	
 	QVersitContactExporter contactExporter;
+
+        ContactDetailHandler handler;
+        contactExporter.setDetailHandler(&handler);
 
 	QString vCard;
 	bool contactsExported = contactExporter.exportContacts(contactsList, iVCardVer);

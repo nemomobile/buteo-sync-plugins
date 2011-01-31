@@ -34,7 +34,8 @@ SOURCES += main.cpp \
 	   ContactsStorage.cpp \
 	   ContactsBackend.cpp \
        SimpleItem.cpp \
-	   SyncMLConfig.cpp
+           SyncMLConfig.cpp \
+           ContactDetailHandler.cpp
 
 LIBS += -L ../
 LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile
