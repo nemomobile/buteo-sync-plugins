@@ -1,4 +1,4 @@
-sync-app (0.1.0) unstable; urgency=low
+sync-app (0.5.7) unstable; urgency=low
 
   * 1. Please try to use 3 digits for the version x.y.z - 0.0.1
   * 2. When something significant happens (sprint, X-something review) increase second digit - 0.1.0
