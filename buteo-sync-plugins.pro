@@ -6,6 +6,7 @@ CONFIG += ordered \
 SUBDIRS += syncmlcommon
 SUBDIRS += clientplugins
 SUBDIRS += storageplugins
+SUBDIRS += storagechangenotifierplugins
 SUBDIRS += doc
 
 QT += QT_NO_EXCEPTIONS
