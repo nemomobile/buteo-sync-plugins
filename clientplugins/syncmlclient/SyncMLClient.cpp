@@ -123,16 +123,22 @@ bool SyncMLClient::startSync()
 
 }
 
-void SyncMLClient::abortSync()
+void SyncMLClient::abortSync(Sync::SyncStatus aStatus)
 {
     FUNCTION_CALL_TRACE;
+    DataSync::SyncState state = DataSync::ABORTED;
+
+    if (aStatus == Sync::SYNC_ERROR) {
+        state = DataSync::CONNECTION_ERROR;
+    }
 
     if( iAgent )
     {
-        if( !iAgent->abort() )
+        if( !iAgent->abort(state) )
         {
             LOG_DEBUG( "Agent not active, aborting immediately" );
             syncFinished(DataSync::ABORTED);
+
         }
         else
         {

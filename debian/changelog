@@ -1,3 +1,9 @@
+sync-app (0.5.8) unstable; urgency=low
+
+  * Added changes for abortSync API parameter.
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Thu, 03 Feb 2011 17:25:00 +0530
+
 sync-app (0.5.7) unstable; urgency=low
 
   * 1. Please try to use 3 digits for the version x.y.z - 0.0.1

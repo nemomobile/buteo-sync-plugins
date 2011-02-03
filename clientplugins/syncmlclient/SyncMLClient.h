@@ -71,7 +71,7 @@ public:
     virtual bool startSync();
 
     //! @see SyncPluginBase::abortSync
-    virtual void abortSync();
+    virtual void abortSync(Sync::SyncStatus aStatus = Sync::SYNC_ABORTED);
 
     //! @see SyncPluginBase::getSyncResults
     virtual Buteo::SyncResults getSyncResults() const;
