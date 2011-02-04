@@ -1,3 +1,10 @@
+sync-app (0.5.9) unstable; urgency=low
+
+  * Implemented contacts change notifier plug-in to aid sync on change
+    for contacts backend
+
+ -- Deepak <deepak.kodihalli@nokia.com>  Fri, 04 Feb 2011 12:23:18 +0530
+
 sync-app (0.5.8) unstable; urgency=low
 
   * Added changes for abortSync API parameter.
