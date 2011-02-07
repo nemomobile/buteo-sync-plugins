@@ -40,6 +40,7 @@ private Q_SLOTS:
 
 private:
     QContactManager* iManager;
+    bool iDisabled;
 };
 
 #endif

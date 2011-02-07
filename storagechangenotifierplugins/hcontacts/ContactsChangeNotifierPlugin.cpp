@@ -17,19 +17,19 @@ extern "C" void destroyPlugin(StorageChangeNotifierPlugin* plugin)
 
 ContactsChangeNotifierPlugin::ContactsChangeNotifierPlugin(const QString& aStorageName) :
 StorageChangeNotifierPlugin(aStorageName),
-m_hasChanges(false)
+ihasChanges(false),
+iDisableLater(false)
 {
     FUNCTION_CALL_TRACE;
-    m_contactsChangeNotifier = new ContactsChangeNotifier;
-    m_contactsChangeNotifier->enable();
-    QObject::connect(m_contactsChangeNotifier, SIGNAL(change()),
+    icontactsChangeNotifier = new ContactsChangeNotifier;
+    QObject::connect(icontactsChangeNotifier, SIGNAL(change()),
                      this, SLOT(onChange()));
 }
 
 ContactsChangeNotifierPlugin::~ContactsChangeNotifierPlugin()
 {
     FUNCTION_CALL_TRACE;
-    delete m_contactsChangeNotifier;
+    delete icontactsChangeNotifier;
 }
 
 QString ContactsChangeNotifierPlugin::name() const
@@ -41,19 +41,46 @@ QString ContactsChangeNotifierPlugin::name() const
 bool ContactsChangeNotifierPlugin::hasChanges() const
 {
     FUNCTION_CALL_TRACE;
-    return m_hasChanges;
+    return ihasChanges;
 }
 
 void ContactsChangeNotifierPlugin::changesReceived()
 {
     FUNCTION_CALL_TRACE;
-    m_hasChanges = false;
+    ihasChanges = false;
 }
 
 void ContactsChangeNotifierPlugin::onChange()
 {
     FUNCTION_CALL_TRACE;
     LOG_DEBUG("Change in contacts detected");
-    m_hasChanges = true;
-    emit storageChange();
+    ihasChanges = true;
+    if(iDisableLater)
+    {
+        icontactsChangeNotifier->disable();
+    }
+    else
+    {
+        emit storageChange();
+    }
+}
+
+void ContactsChangeNotifierPlugin::enable()
+{
+    FUNCTION_CALL_TRACE;
+    icontactsChangeNotifier->enable();
+    iDisableLater = false;
+}
+
+void ContactsChangeNotifierPlugin::disable(bool disableAfterNextChange)
+{
+    FUNCTION_CALL_TRACE;
+    if(disableAfterNextChange)
+    {
+        iDisableLater = true;
+    }
+    else
+    {
+        icontactsChangeNotifier->disable();
+    }
 }

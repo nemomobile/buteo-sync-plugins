@@ -4,7 +4,8 @@
 
 const QString DEFAULT_CONTACTS_MANAGER("tracker");
 
-ContactsChangeNotifier::ContactsChangeNotifier()
+ContactsChangeNotifier::ContactsChangeNotifier() :
+iDisabled(true)
 {
     FUNCTION_CALL_TRACE;
     iManager = 0;
@@ -27,7 +28,7 @@ ContactsChangeNotifier::~ContactsChangeNotifier()
 
 void ContactsChangeNotifier::enable()
 {
-    if(iManager)
+    if(iManager && iDisabled)
     {
         QObject::connect(iManager, SIGNAL(contactsAdded(const QList<QContactLocalId>&)),
                          this, SLOT(onContactsAdded(const QList<QContactLocalId>&)));
@@ -37,6 +38,7 @@ void ContactsChangeNotifier::enable()
 
         QObject::connect(iManager, SIGNAL(contactsChanged(const QList<QContactLocalId>&)),
                          this, SLOT(onContactsChanged(const QList<QContactLocalId>&)));
+        iDisabled = false;
     }
 }
 
@@ -83,6 +85,7 @@ void ContactsChangeNotifier::onContactsChanged(const QList<QContactLocalId>& ids
 
 void ContactsChangeNotifier::disable()
 {
-    this->disconnect();
+    FUNCTION_CALL_TRACE;
+    iDisabled = true;
     QObject::disconnect(iManager, 0, this, 0);
 }

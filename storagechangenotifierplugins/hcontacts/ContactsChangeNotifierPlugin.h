@@ -31,14 +31,23 @@ public:
      */
     void changesReceived();
 
+    /*! \brief see StorageChangeNotifierPlugin::enable
+     */
+    void enable();
+
+    /*! \brief see StorageChangeNotifierPlugin::disable
+     */
+    void disable(bool disableAfterNextChange = false);
+
 private Q_SLOTS:
     /*! \brief handles a change notification from contacts notifier
      */
     void onChange();
 
 private:
-    ContactsChangeNotifier* m_contactsChangeNotifier;
-    bool m_hasChanges;
+    ContactsChangeNotifier* icontactsChangeNotifier;
+    bool ihasChanges;
+    bool iDisableLater;
 };
 
 #endif
