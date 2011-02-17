@@ -38,7 +38,7 @@ CalendarBackend::~CalendarBackend()
 	FUNCTION_CALL_TRACE;
 }
 
-bool CalendarBackend::init( const QString& aNotebookName )
+bool CalendarBackend::init(const QString &aNotebookName, const QString& aUid)
 {
 	FUNCTION_CALL_TRACE;
 
@@ -69,18 +69,35 @@ bool CalendarBackend::init( const QString& aNotebookName )
     	LOG_TRACE("Calendar storage open failed");
     }
 
-    // Use default notebook to sync , we use calendar id now instead of name
-    // This functionality is temporary
-    bool hasdefNb = false;
-    mKCal::Notebook::Ptr defaultNb = iStorage->defaultNotebook();
-    if (defaultNb){
-	    iNotebookStr = defaultNb->uid();
-	    LOG_TRACE ("Default NoteBook UID" << iNotebookStr);
-	    hasdefNb = true;
+    mKCal::Notebook::Ptr openedNb;
+
+    // If we have an Uid, we try to get the corresponding Notebook
+    if (!aUid.isEmpty()) {
+        openedNb = iStorage->notebook(aUid);
+
+        // If we didn't get one, we create one and set its Uid
+        if (!openedNb) {
+            openedNb = mKCal::Notebook::Ptr(new mKCal::Notebook(aNotebookName,
+                                                                "Synchronization Created Notebook for " + aNotebookName));
+            if (!openedNb.isNull()) {
+                openedNb->setUid(aUid);
+                if (!iStorage->addNotebook(openedNb)) {
+                    LOG_WARNING("Failed to add notebook to storage");
+                }
+            }
+        }
     }
-    
-    if (opened && loaded && hasdefNb)
+
+    // If we didn't have an Uid or the creation above failed,
+    // we use the default notebook
+    if (openedNb.isNull()) {
+        openedNb = iStorage->defaultNotebook();
+    }
+
+    if (opened && loaded && !openedNb.isNull())
     {
+        iNotebookStr = openedNb->uid();
+
         LOG_DEBUG("Calendar initialized");
         return true;
     }

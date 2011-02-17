@@ -69,7 +69,12 @@ bool CalendarStorage::init( const QMap<QString, QString>& aProperties )
 
     iProperties = aProperties;
 
-    if( iProperties.value( NOTEBOOKNAME ).isEmpty() ) {
+    // Use remote name (e.g. bt name) as notebook name.
+    if (iProperties.contains(Buteo::KEY_REMOTE_NAME)) {
+        LOG_DEBUG("Using remote name as notebook name");
+        iProperties[NOTEBOOKNAME] = iProperties.value(Buteo::KEY_REMOTE_NAME);
+    }
+    else if( iProperties.value( NOTEBOOKNAME ).isEmpty() ) {
         LOG_WARNING( NOTEBOOKNAME << " property not found" <<
                 "for calendar storage, using default of" <<
                 DEFAULT_NOTEBOOK_NAME );
@@ -78,7 +83,7 @@ bool CalendarStorage::init( const QMap<QString, QString>& aProperties )
 
     LOG_DEBUG("Initializing calendar, notebook name:" <<  iProperties[NOTEBOOKNAME]); 
 
-    if( !iCalendar.init( iProperties[NOTEBOOKNAME] ) ) {
+    if( !iCalendar.init( iProperties[NOTEBOOKNAME], iProperties[Buteo::KEY_UUID] ) ) {
         return false;
     }
 

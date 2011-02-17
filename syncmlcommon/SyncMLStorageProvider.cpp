@@ -199,6 +199,8 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
 
     QString backend = aProfile->key( Buteo::KEY_BACKEND, aProfile->name() );
     QString pluginName = aProfile->key( Buteo::KEY_PLUGIN, aProfile->name() );
+    QString uuid = iProfile->key(Buteo::KEY_UUID);
+    QString remoteName = iProfile->key(Buteo::KEY_REMOTE_NAME);
 
     if( iRequestStorages && !iCbInterface->requestStorage( backend, iPlugin ) ) {
         LOG_CRITICAL( "Could not reserve storage backend:" << backend );
@@ -217,6 +219,8 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     // when the storage backend is released.
     QMap<QString, QString> keys = aProfile->allKeys();
     keys.insert( Buteo::KEY_BACKEND, backend );
+    keys.insert(Buteo::KEY_UUID, uuid);
+    keys.insert(Buteo::KEY_REMOTE_NAME, remoteName);
 
     // If protocol version is not defined in the keys read from profile, try to
     // read the version from the session handler and insert a corresponding key,

@@ -24,6 +24,7 @@
 #define CALENDARSTORAGE_H
 
 #include <libsyncpluginmgr/StoragePlugin.h>
+#include <libsyncprofile/ProfileEngineDefs.h>
 
 //sync backend related includes
 #include "definitions.h"

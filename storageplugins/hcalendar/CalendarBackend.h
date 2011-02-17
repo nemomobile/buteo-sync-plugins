@@ -60,7 +60,7 @@ public:
 
     //! \brief Initializes the CalendarBackend
     // \param strNotebookName Name of the notebook to use
-    bool init( const QString& aNotebookName );
+    bool init( const QString& aNotebookName, const QString& aUid = "" );
 
     //! \brief Uninitializes the storage
     bool uninit();
