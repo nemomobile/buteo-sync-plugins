@@ -2,6 +2,7 @@ sync-app (0.5.10) unstable; urgency=low
 
   * sync on change - incoroporated review comments and fixed some other
     potential issues
+  * Added support for uuid and remote name passing to storages.
 
  -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 07 Feb 2011 15:28:03 +0530
 
