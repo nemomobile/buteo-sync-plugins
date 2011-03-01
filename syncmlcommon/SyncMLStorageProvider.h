@@ -94,6 +94,9 @@ public:
      */
     virtual void releaseStorage( DataSync::StoragePlugin* aStorage );
 
+    void setRemoteName(const QString& aRemoteName);
+    void setUUID(const QString& aRemoteUUID);
+
 private:
 
     QString getPreferredURINames( const QString &aURI );
@@ -104,6 +107,8 @@ private:
     Buteo::SyncPluginBase*     iPlugin;
     Buteo::PluginCbInterface*  iCbInterface;
     bool                       iRequestStorages;
+    QString                    iRemoteName;
+    QString                    iUUID;
 
     friend class Buteo::SyncMLStorageProviderTest;
 

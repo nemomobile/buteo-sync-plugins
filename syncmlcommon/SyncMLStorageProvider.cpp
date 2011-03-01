@@ -201,6 +201,16 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     QString pluginName = aProfile->key( Buteo::KEY_PLUGIN, aProfile->name() );
     QString uuid = iProfile->key(Buteo::KEY_UUID);
     QString remoteName = iProfile->key(Buteo::KEY_REMOTE_NAME);
+    if(!uuid.isEmpty() && !remoteName.isEmpty())
+    {
+        LOG_DEBUG("DPK fetched from profile" << uuid << remoteName);
+    }
+    if(!iUUID.isEmpty() && !iRemoteName.isEmpty())
+    {
+        uuid = iUUID;
+        remoteName = iRemoteName;
+        LOG_DEBUG("DPK fetched locally" << uuid << remoteName);
+    }
 
     if( iRequestStorages && !iCbInterface->requestStorage( backend, iPlugin ) ) {
         LOG_CRITICAL( "Could not reserve storage backend:" << backend );
@@ -219,8 +229,14 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     // when the storage backend is released.
     QMap<QString, QString> keys = aProfile->allKeys();
     keys.insert( Buteo::KEY_BACKEND, backend );
-    keys.insert(Buteo::KEY_UUID, uuid);
-    keys.insert(Buteo::KEY_REMOTE_NAME, remoteName);
+    if(!uuid.isEmpty())
+    {
+        keys.insert(Buteo::KEY_UUID, uuid);
+    }
+    if(!remoteName.isEmpty())
+    {
+        keys.insert(Buteo::KEY_REMOTE_NAME, remoteName);
+    }
 
     // If protocol version is not defined in the keys read from profile, try to
     // read the version from the session handler and insert a corresponding key,
@@ -256,5 +272,16 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     }
 
     return adapter;
+}
 
+void SyncMLStorageProvider::setRemoteName(const QString& aRemoteName)
+{
+    iRemoteName = aRemoteName;
+    LOG_DEBUG("DPK remote name set to" << iRemoteName);
+}
+
+void SyncMLStorageProvider::setUUID(const QString& aUUID)
+{
+    iUUID = aUUID;
+    LOG_DEBUG("DPK uuid set to" << iUUID);
 }
