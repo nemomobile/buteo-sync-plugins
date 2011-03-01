@@ -94,7 +94,16 @@ public:
      */
     virtual void releaseStorage( DataSync::StoragePlugin* aStorage );
 
+    /*! \brief set the name of the remote party that initiated sync
+     *
+     * @param aRemoteName remote name
+     */
     void setRemoteName(const QString& aRemoteName);
+
+    /*! \brief set a UUID for the remote party that initiated sync
+     *
+     * @param aRemoteUUID remote name
+     */
     void setUUID(const QString& aRemoteUUID);
 
 private:

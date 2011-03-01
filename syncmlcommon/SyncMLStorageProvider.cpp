@@ -203,13 +203,13 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     QString remoteName = iProfile->key(Buteo::KEY_REMOTE_NAME);
     if(!uuid.isEmpty() && !remoteName.isEmpty())
     {
-        LOG_DEBUG("DPK fetched from profile" << uuid << remoteName);
+        LOG_DEBUG("uuid and remote name fetched from profile" << uuid << remoteName);
     }
     if(!iUUID.isEmpty() && !iRemoteName.isEmpty())
     {
         uuid = iUUID;
         remoteName = iRemoteName;
-        LOG_DEBUG("DPK fetched locally" << uuid << remoteName);
+        LOG_DEBUG("uuid and remote name created on the fly" << uuid << remoteName);
     }
 
     if( iRequestStorages && !iCbInterface->requestStorage( backend, iPlugin ) ) {
@@ -277,11 +277,9 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
 void SyncMLStorageProvider::setRemoteName(const QString& aRemoteName)
 {
     iRemoteName = aRemoteName;
-    LOG_DEBUG("DPK remote name set to" << iRemoteName);
 }
 
 void SyncMLStorageProvider::setUUID(const QString& aUUID)
 {
     iUUID = aUUID;
-    LOG_DEBUG("DPK uuid set to" << iUUID);
 }
