@@ -1,3 +1,9 @@
+sync-app (0.5.12) unstable; urgency=low
+
+  * Fixes: NB#230558 - Calendar sync fails with NOS via USB
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Wed, 02 Mar 2011 09:48:09 +0530
+
 sync-app (0.5.11) unstable; urgency=low
 
   * Fixes: NB#178342 - New calendar is not created in device after
