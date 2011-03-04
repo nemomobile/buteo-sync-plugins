@@ -25,6 +25,7 @@
 
 
 #include <libsyncpluginmgr/StoragePlugin.h>
+#include <libsyncprofile/ProfileEngineDefs.h>
 
 #include "NotesBackend.h"
 

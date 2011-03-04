@@ -45,6 +45,7 @@ const char* STORAGE_NOTEBOOK_PROP   = "Notebook Name";
 const char* DEFAULT_TYPE            = "text/plain";
 const char* DEFAULT_TYPE_VERSION    = "1.0";
 const char* DEFAULT_NOTEBOOK        = "Personal";
+const char* DEFAULT_NOTEBOOK_NAME   = "myNotebook";
 
 extern "C" Buteo::StoragePlugin* createPlugin( const QString& aPluginName )
 {
@@ -76,6 +77,20 @@ bool NotesStorage::init( const QMap<QString, QString>& aProperties )
     iProperties[STORAGE_SYNCML_CTCAPS_PROP_11] = getCTCaps( CTCAPSFILENAME11 );
     iProperties[STORAGE_SYNCML_CTCAPS_PROP_12] = getCTCaps( CTCAPSFILENAME12 );
 
+    // Use remote name (e.g. bt name) as notebook name.
+    if(iProperties.contains(Buteo::KEY_REMOTE_NAME)) {
+        LOG_DEBUG("Using remote name as notebook name");
+        iProperties[STORAGE_NOTEBOOK_PROP] = iProperties.value(Buteo::KEY_REMOTE_NAME);
+    }
+    else if( iProperties.value( STORAGE_NOTEBOOK_PROP ).isEmpty() ) {
+        LOG_WARNING( STORAGE_NOTEBOOK_PROP << " property not found" <<
+                     "for notes storage, using default of" <<
+                     DEFAULT_NOTEBOOK_NAME );
+        iProperties[STORAGE_NOTEBOOK_PROP] = DEFAULT_NOTEBOOK_NAME;
+    }
+    LOG_DEBUG("Initializing notes, notebook name:" <<  iProperties[STORAGE_NOTEBOOK_PROP]); 
+
+
     if( iProperties.value( STORAGE_DEFAULT_MIME_PROP ).isEmpty() ) {
         LOG_WARNING( STORAGE_DEFAULT_MIME_PROP << "property not found"
                      << "for notes storage, using default of" << DEFAULT_TYPE );
@@ -94,7 +109,7 @@ bool NotesStorage::init( const QMap<QString, QString>& aProperties )
         iProperties[STORAGE_NOTEBOOK_PROP] = DEFAULT_NOTEBOOK;
     }
 
-    return iBackend.init( iProperties[STORAGE_NOTEBOOK_PROP],
+    return iBackend.init( iProperties[STORAGE_NOTEBOOK_PROP], iProperties[Buteo::KEY_UUID],
         iProperties[STORAGE_DEFAULT_MIME_PROP] );
 }
 

@@ -48,12 +48,18 @@ NotesBackend::~NotesBackend()
     FUNCTION_CALL_TRACE;
 }
 
-bool NotesBackend::init( const QString& aNotebookName,
+bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
                          const QString &aMimeType )
 {
     FUNCTION_CALL_TRACE;
 
     LOG_DEBUG( "Notes backend using notebook" << aNotebookName );
+
+    if( aNotebookName.isEmpty() )
+    {
+        LOG_DEBUG("NoteBook Name to Sync is expected. It Cannot be Empty");
+        return false;
+    }
 
     iNotebookName = aNotebookName;
     iMimeType = aMimeType;
@@ -75,22 +81,38 @@ bool NotesBackend::init( const QString& aNotebookName,
             LOG_WARNING("Failed to load calendar");
         } // no else
     } else {
-    	LOG_TRACE("Calendar storage open failed");
-    }
-
-    // Use default notebook to sync , we use calendar id now instead of name
-    // This functionality is temporary
-    bool hasdefNb = false;
-    mKCal::Notebook::Ptr defaultNb = iStorage->defaultNotebook();
-    if (defaultNb){
-	    iNotebookName = defaultNb->uid();
-	    LOG_TRACE ("Default NoteBook UID" << iNotebookName);
-	    hasdefNb = true;
+        LOG_TRACE("Calendar storage open failed");
     }
     
-    if (opened && loaded && hasdefNb)
+    mKCal::Notebook::Ptr openedNb;
+
+    // If we have an Uid, we try to get the corresponding Notebook
+    if (!aUid.isEmpty()) {
+        openedNb = iStorage->notebook(aUid);
+
+        // If we didn't get one, we create one and set its Uid
+        if (!openedNb) {
+            openedNb = mKCal::Notebook::Ptr(new mKCal::Notebook(aNotebookName,
+                                                                "Synchronization Created Notebook for " + aNotebookName));
+            if (!openedNb.isNull()) {
+                openedNb->setUid(aUid);
+                if (!iStorage->addNotebook(openedNb)) {
+                    LOG_WARNING("Failed to add notebook to storage");
+                }
+            }
+        }
+    }
+    // If we didn't have an Uid or the creation above failed,
+    // we use the default notebook
+    if (openedNb.isNull()) {
+        LOG_DEBUG("Using default notebook");
+        openedNb = iStorage->defaultNotebook();
+    }
+    if (opened && loaded && !openedNb.isNull())
     {
-        LOG_DEBUG("Calendar initialized");
+        iNotebookName = openedNb->uid();
+
+        LOG_DEBUG("Calendar initialized for notes");
         return true;
     }
     else
@@ -107,7 +129,6 @@ bool NotesBackend::init( const QString& aNotebookName,
 
         return false;
     }
-
 }
 
 
@@ -445,7 +466,7 @@ void NotesBackend::filterIncidences( KCalCore::Incidence::List& aIncidences )
 
         if( incidence->type() != KCalCore::Incidence::TypeJournal ) {
             aIncidences.remove( i, 1 );
-	    incidence.clear();
+            incidence.clear();
         }
         else {
             ++i;

@@ -55,7 +55,7 @@ public:
      *
      * @return True on success, otherwise false
      */
-    bool init( const QString& aNotebookName, const QString &aMimeType );
+    bool init( const QString& aNotebookName, const QString& aUid, const QString &aMimeType );
 
     /*! \brief Uninitializes backend
      *

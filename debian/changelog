@@ -1,3 +1,10 @@
+sync-app (0.5.13) unstable; urgency=low
+
+  * Fixes: NB#233134 - Notes are synced to default personal calendar instead
+    of new calendar
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Fri, 04 Mar 2011 11:47:00 +0530
+
 sync-app (0.5.12) unstable; urgency=low
 
   * Fixes: NB#230558 - Calendar sync fails with NOS via USB
