@@ -312,9 +312,7 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem, bool aCommitNow )
 
     QString description = QString::fromUtf8( data.constData() );
 
-    // Trim the description to make sure that it does not include for example
-    // line feeds at the end.
-    journal->setDescription( description.trimmed() );
+    journal->setDescription( description );
 
     // addIncidence() takes ownership of journal -> we cannot delete it
 
@@ -365,9 +363,7 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem, bool aCommitNow )
 
     QString description = QString::fromAscii( data.constData() );
 
-    // Trim the description to make sure that it does not include for example
-    // line feeds at the end.
-    item->setDescription( description.trimmed() );
+    item->setDescription( description );
 
     if( aCommitNow )
     {
