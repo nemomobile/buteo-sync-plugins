@@ -1,13 +1,8 @@
-sync-app (0.5.15) unstable; urgency=low
-
-  * Fixes - Making online dummy profiles has hideen
-
- -- Mallikarjun Hunalli <mallikarjun.hunalli@nokia.com>  Thu, 10 Mar 2011 18:25:19 +0530
-
 sync-app (0.5.14) unstable; urgency=low
 
   * Fixes: NB#233334 - Notes having spaces at the beginning in N900 is
     truncated in dali after synchronization.
+  * Fixes - Making online dummy profiles has hideen
 
  -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 08 Mar 2011 18:25:19 +0530
 
