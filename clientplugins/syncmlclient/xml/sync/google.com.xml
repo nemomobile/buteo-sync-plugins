@@ -4,6 +4,7 @@
 
     <key name="enabled" value="true" />
     <key name="displayname" value="Google" />
+    <key name="hidden" value="true" />
 
     <profile type="service" name="google.com" >
     </profile>

@@ -5,7 +5,7 @@
 <key name="displayname" value="Mobical"/>
     <key name="enabled" value="true" />
     <key name="use_accounts" value="false" />
-    <key name="hidden" value="false" />
+    <key name="hidden" value="true" />
 
     <profile type="service" name="mobical.com" >
     </profile>
