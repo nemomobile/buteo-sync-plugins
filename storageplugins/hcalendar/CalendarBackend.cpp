@@ -92,6 +92,11 @@ bool CalendarBackend::init(const QString &aNotebookName, const QString& aUid)
     // we use the default notebook
     if (openedNb.isNull()) {
         openedNb = iStorage->defaultNotebook();
+        if(openedNb.isNull())
+        {
+            LOG_DEBUG("No default notebook exists, creating one");
+            openedNb = iStorage->createDefaultNotebook();
+        }
     }
 
     if (opened && loaded && !openedNb.isNull())
@@ -336,16 +341,37 @@ bool CalendarBackend::addIncidence( KCalCore::Incidence::Ptr aInci, bool commitN
         return false;
     }
 
-    if( !iCalendar->addIncidence( aInci ) ) {
-        LOG_WARNING( "Could not add incidence to calendar");
-        return false;
+    switch(aInci->type())
+    {
+        case KCalCore::Incidence::TypeEvent:
+            {
+                KCalCore::Event::Ptr event = aInci.staticCast<KCalCore::Event>();
+                if(!iCalendar->addEvent(event, iNotebookStr))
+                {
+                    LOG_WARNING("Could not add event");
+                    return false;
+                }
+            }
+            break;
+        case KCalCore::Incidence::TypeTodo:
+            {
+                KCalCore::Todo::Ptr todo = aInci.staticCast<KCalCore::Todo>();
+                if(!iCalendar->addTodo(todo, iNotebookStr))
+                {
+                    LOG_WARNING("Could not add todo");
+                    return false;
+                }
+            }
+            break;
+        default:
+            LOG_WARNING("Could not add incidence, wrong type" << aInci->type());
+            return false;
     }
-
+    
     // if you add an incidence, that incidence will be owned by calendar
     // so no need to delete it. Committing for each modification, can cause performance
     // problems.
 
-    iCalendar->setNotebook( aInci, iNotebookStr );
     if( commitNow )  {
         if( !iStorage->save() )
         {

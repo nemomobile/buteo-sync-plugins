@@ -107,6 +107,11 @@ bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
     if (openedNb.isNull()) {
         LOG_DEBUG("Using default notebook");
         openedNb = iStorage->defaultNotebook();
+        if(openedNb.isNull())
+        {
+            LOG_DEBUG("No default notebook exists, creating one");
+            openedNb = iStorage->createDefaultNotebook();
+        }
     }
     if (opened && loaded && !openedNb.isNull())
     {
@@ -314,15 +319,13 @@ bool NotesBackend::addNote( Buteo::StorageItem& aItem, bool aCommitNow )
 
     journal->setDescription( description );
 
-    // addIncidence() takes ownership of journal -> we cannot delete it
+    // addJournal() takes ownership of journal -> we cannot delete it
 
-    if( !iCalendar->addIncidence( journal ) ) {
+    if( !iCalendar->addJournal( journal, iNotebookName ) ) {
         LOG_WARNING( "Could not add note to calendar" );
         journal.clear();
         return false;
     }
-
-    iCalendar->setNotebook( journal, iNotebookName );
 
     QString id = journal->uid();
 
