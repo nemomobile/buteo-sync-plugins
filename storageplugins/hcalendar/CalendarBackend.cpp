@@ -293,6 +293,42 @@ QString CalendarBackend::getICalString(KCalCore::Incidence::Ptr aInci)
     return ical;
 }
 
+void CalendarBackend::addIncidenceTimeZones(const KCalCore::Calendar::Ptr &aCalendar, const KCalCore::Incidence::Ptr &pInci)
+{
+    FUNCTION_CALL_TRACE;
+
+    // adding possible timezone to iCalendar
+    KCalCore::ICalTimeZones *tzlist = aCalendar->timeZones();
+    if ( tzlist->count() > 0 ) {
+        QString tz;
+        if (pInci->dtStart().isValid()) {
+            tz = pInci->dtStart().timeZone().name();
+        }
+        else {
+            if ( pInci->type() == KCalCore::Incidence::TypeEvent ) {
+                KCalCore::Event::Ptr event = pInci.staticCast<KCalCore::Event>();
+                if (event->dtEnd().isValid()) {
+                    tz = event->dtEnd().timeZone().name();
+                }
+            } else if( pInci->type() == KCalCore::Incidence::TypeTodo ) {
+                KCalCore::Todo::Ptr todo = pInci.staticCast<KCalCore::Todo>();
+                if ( todo->hasDueDate() ) {
+                    tz = todo->dtDue( true ).timeZone().name();
+                }
+            } else {
+                LOG_WARNING("Wrong incidence type" << pInci->type());
+            }
+        }
+        if (!tz.isEmpty()) {
+            KCalCore::ICalTimeZone zone = tzlist->zone(tz);
+            if ( zone.isValid() ) {
+                KCalCore::ICalTimeZones *zones = iCalendar->timeZones();
+                zones->add( zone );
+            }
+        }
+    }
+}
+
 KCalCore::Incidence::Ptr CalendarBackend::getIncidenceFromVcal( const QString& aVString )
 {
     FUNCTION_CALL_TRACE;
@@ -305,7 +341,8 @@ KCalCore::Incidence::Ptr CalendarBackend::getIncidenceFromVcal( const QString& a
     KCalCore::Incidence::List lst = tempCalendar->rawIncidences();
 
     if(!lst.isEmpty()) {
-	pInci = KCalCore::Incidence::Ptr ( lst[0]->clone() );
+        pInci = KCalCore::Incidence::Ptr ( lst[0]->clone() );
+        addIncidenceTimeZones(tempCalendar, pInci);
     }
     else {
     	LOG_WARNING("VCal to Incidence Conversion Failed ");
@@ -325,7 +362,8 @@ KCalCore::Incidence::Ptr CalendarBackend::getIncidenceFromIcal( const QString& a
     KCalCore::Incidence::List lst = tempCalendar->rawIncidences();
 
     if(!lst.isEmpty()) {
-	pInci = KCalCore::Incidence::Ptr ( lst[0]->clone() );
+        pInci = KCalCore::Incidence::Ptr ( lst[0]->clone() );
+        addIncidenceTimeZones(tempCalendar, pInci);
     } else {
     	LOG_WARNING("ICal to Incidence Conversion Failed ");
     }

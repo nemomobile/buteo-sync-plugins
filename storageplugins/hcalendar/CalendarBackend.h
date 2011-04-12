@@ -148,6 +148,8 @@ private:
 
     void filterIncidences( KCalCore::Incidence::List& aList );
 
+    void addIncidenceTimeZones(const KCalCore::Calendar::Ptr &aCalendar, const KCalCore::Incidence::Ptr &pInci);
+
     QString                 iNotebookStr;
     mKCal::ExtendedCalendar::Ptr  iCalendar;
     mKCal::ExtendedStorage::Ptr   iStorage;
