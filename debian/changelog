@@ -1,4 +1,4 @@
-sync-app (0.5.16) unstable; urgency=low
+sync-app (0.6.0) unstable; urgency=low
 
   * Fixes: NB#246555 - contacts sync never ends from swtich/sync application.
 
