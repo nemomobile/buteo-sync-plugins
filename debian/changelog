@@ -1,3 +1,9 @@
+sync-app (0.5.16) unstable; urgency=low
+
+  * Fixes: NB#246555 - contacts sync never ends from swtich/sync application.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Wed, 13 Apr 2011 15:57:00 +0530
+
 sync-app (0.5.15) unstable; urgency=low
 
   * Fixes: NB#245983 - Sync is using an API which can fail (Calendar events
