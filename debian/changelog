@@ -1,6 +1,10 @@
 sync-app (0.6.0) unstable; urgency=low
 
   * Fixes: NB#246555 - contacts sync never ends from swtich/sync application.
+  * Fixes: NB#245983 - Sync is using an API which can fail (Calendar events
+    are not synchronized to device).
+  * Fixes: NB#237707 - Recurring events spanning across DST is not
+    synchronized with correct time.
 
  -- Santosh Puranik <santosh.puranik@nokia.com>  Wed, 13 Apr 2011 15:57:00 +0530
 
