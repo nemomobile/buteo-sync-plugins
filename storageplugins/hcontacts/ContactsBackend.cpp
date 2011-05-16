@@ -56,7 +56,9 @@ bool ContactsBackend::init()
 	if(availableManagers.contains("tracker")) {
 		// hardcode to tracker
 		LOG_DEBUG("connecting to storage tracker");
-        iMgr = new QContactManager("tracker");
+        QMap<QString,QString> params;
+        params.insert("contact-types", QContactType::TypeContact);
+        iMgr = new QContactManager("tracker", params);
 
 		if(iMgr != NULL){
 			initStatus = true;
