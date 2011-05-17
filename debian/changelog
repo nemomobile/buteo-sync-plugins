@@ -1,5 +1,7 @@
 sync-app (0.6.1) unstable; urgency=low
 
+  * Fixes: NB#249807 - Notes created in Lankku not synchronized to other
+    devices
   * Fixes: NB#252051 - Importing contacts from RM-696 results in empty group
     card
 
