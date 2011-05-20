@@ -100,49 +100,50 @@ void ItemIdMapper::uninit()
 
     LOG_DEBUG( "Uninitiating ID mapper..." );
 
-    QString queryString;
-    QSqlQuery query;
+    {
+        QString queryString;
+        QSqlQuery query;
 
-    bool supportsTransaction = iDb.transaction();
-    if( !supportsTransaction )
-    {
-        LOG_DEBUG("Db doesn't support transactions");
-    }
-
-    queryString.append( "DELETE FROM " );
-    queryString.append( iStorageId );
-    query = QSqlQuery( queryString, iDb );
-    if( !query.exec() )
-    {
-        LOG_WARNING("Delete Query failed: " << query.lastError());
-    }
-
-    queryString.clear();
-    queryString.append( "INSERT INTO " );
-    queryString.append( iStorageId );
-    queryString.append( " (value, key) values(:values, :key)" );
-    query = QSqlQuery( queryString, iDb );
-    QVariantList keys, values;
-    for( int i = 0; i < iValueToKeyMap.count(); ++i )
-    {
-        values << (i + 1);
-        keys << iValueToKeyMap[i+1];
-    }
-    query.addBindValue( values );
-    query.addBindValue( keys );
-    if( !query.execBatch() )
-    {
-        LOG_CRITICAL("Save Query failed: " << query.lastError());
-    }
-
-    if( supportsTransaction )
-    {
-        if( !iDb.commit() )
+        bool supportsTransaction = iDb.transaction();
+        if( !supportsTransaction )
         {
-            LOG_CRITICAL("Commit failed");
+            LOG_DEBUG("Db doesn't support transactions");
+        }
+
+        queryString.append( "DELETE FROM " );
+        queryString.append( iStorageId );
+        query = QSqlQuery( queryString, iDb );
+        if( !query.exec() )
+        {
+            LOG_WARNING("Delete Query failed: " << query.lastError());
+        }
+
+        queryString.clear();
+        queryString.append( "INSERT INTO " );
+        queryString.append( iStorageId );
+        queryString.append( " (value, key) values(:values, :key)" );
+        query = QSqlQuery( queryString, iDb );
+        QVariantList keys, values;
+        for( int i = 0; i < iValueToKeyMap.count(); ++i )
+        {
+            values << (i + 1);
+            keys << iValueToKeyMap[i+1];
+        }
+        query.addBindValue( values );
+        query.addBindValue( keys );
+        if( !query.execBatch() )
+        {
+            LOG_CRITICAL("Save Query failed: " << query.lastError());
+        }
+
+        if( supportsTransaction )
+        {
+            if( !iDb.commit() )
+            {
+                LOG_CRITICAL("Commit failed");
+            }
         }
     }
-
     iDb.close();
     iDb = QSqlDatabase();
     QSqlDatabase::removeDatabase( iConnectionName );

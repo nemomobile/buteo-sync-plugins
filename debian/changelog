@@ -1,3 +1,10 @@
+sync-app (0.6.2) unstable; urgency=low
+
+  * Fixes: NB#237356 - <MemLeak> memory leak reported by mem-cpu tool in
+    Device synchronisation with ovi.com.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Fri, 20 May 2011 18:12:00 +0530
+
 sync-app (0.6.1) unstable; urgency=low
 
   * Fixes: NB#252051 - Importing contacts from RM-696 results in empty group
