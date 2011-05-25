@@ -53,7 +53,7 @@ bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
 {
     FUNCTION_CALL_TRACE;
 
-    LOG_DEBUG( "Notes backend using notebook" << aNotebookName );
+    LOG_DEBUG( "Notes backend using notebook" << aNotebookName << "And uuid" << aUid);
 
     if( aNotebookName.isEmpty() )
     {

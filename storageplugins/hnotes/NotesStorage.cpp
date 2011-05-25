@@ -109,7 +109,7 @@ bool NotesStorage::init( const QMap<QString, QString>& aProperties )
         iProperties[STORAGE_NOTEBOOK_PROP] = DEFAULT_NOTEBOOK;
     }
 
-    return iBackend.init( iProperties[STORAGE_NOTEBOOK_PROP], iProperties[Buteo::KEY_UUID],
+    return iBackend.init( iProperties[STORAGE_NOTEBOOK_PROP], iProperties[Buteo::KEY_NOTES_UUID],
         iProperties[STORAGE_DEFAULT_MIME_PROP] );
 }
 
