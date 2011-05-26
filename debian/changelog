@@ -1,6 +1,6 @@
 sync-app (0.6.3) unstable; urgency=low
 
-  * Fixes: NB#249807 - Notes created in Device not synchronized to other devices.
+  * Fixes: Notes created in Device not synchronized to other devices.
 
  -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 25 May 2011 18:12:00 +0330
 
