@@ -72,7 +72,7 @@ SOURCES += main.cpp \
 
 QT += testlib sql xml
 QT -= gui
-CONFIG += debug qtestlib
+CONFIG += qtestlib
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

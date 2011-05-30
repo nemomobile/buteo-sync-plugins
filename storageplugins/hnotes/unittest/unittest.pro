@@ -33,7 +33,7 @@ INCLUDEPATH += . \
     /usr/include/libsynccommon \
     /usr/include/mkcal
 
-LIBS += -lsyncpluginmgr -lsyncprofile -lQtTest \
+LIBS += -lsyncpluginmgr -lsyncprofile -lQtTest -lsynccommon \
 
 #   -lsynccommon
                
@@ -54,7 +54,7 @@ SOURCES += main.cpp \
 
 QT += testlib
 QT -= gui
-CONFIG += debug qtestlib kcalcoren mkcal
+CONFIG += qtestlib kcalcoren mkcal
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

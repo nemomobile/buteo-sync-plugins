@@ -17,6 +17,7 @@ INCLUDEPATH += . \
         
 		
 LIBS += -lsyncpluginmgr \
+        -lsynccommon \
         -lQtTest
 
 # Input
@@ -33,7 +34,7 @@ SOURCES += main.cpp \
            SimpleItem.cpp \
    	   SyncMLConfig.cpp
 
-CONFIG += debug qtestlib kcalcoren mkcal
+CONFIG += qtestlib kcalcoren mkcal
 
 QT += testlib \
     core \

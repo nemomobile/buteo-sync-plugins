@@ -3,11 +3,11 @@ TARGET = hcontacts-changenotifier
 
 DEPENDPATH += .
 INCLUDEPATH += . \
-               /usr/include/libsyncpluginmgr \
-               /usr/include/libsynccommon
+               /usr/include/libsyncpluginmgr
 
-CONFIG += debug plugin mobility 
+CONFIG += plugin mobility link_pkgconfig
 MOBILITY += contacts
+PKGCONFIG = synccommon
  
 QT -= GUI
 

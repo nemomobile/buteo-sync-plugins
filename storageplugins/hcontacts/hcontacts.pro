@@ -18,7 +18,7 @@ INCLUDEPATH += .  \
     /usr/include/sync/ \
     ../../syncmlcommon
 
-CONFIG += debug plugin mobility
+CONFIG += plugin mobility
 MOBILITY += contacts versit   
  
 #the contacts library is using QPixmap, so has to comment below line

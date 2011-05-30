@@ -6,7 +6,7 @@ INCLUDEPATH += . \
                
 LIBS += -lsyncpluginmgr -lmeegosyncml -lsyncprofile
 
-CONFIG += debug create_pc create_prl mobility
+CONFIG += create_pc create_prl mobility
 
 MOBILITY += systeminfo
 QT += sql xml

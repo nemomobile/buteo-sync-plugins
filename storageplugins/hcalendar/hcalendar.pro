@@ -9,7 +9,7 @@ INCLUDEPATH += . \
     ../../syncmlcommon
 		
 		
-CONFIG += debug plugin kcalcoren mkcal
+CONFIG += plugin kcalcoren mkcal
 
 QT -= gui
 
