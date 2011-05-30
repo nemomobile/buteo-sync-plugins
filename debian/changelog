@@ -1,3 +1,9 @@
+sync-app (0.6.4) unstable; urgency=low
+
+  * Fixes: NB#238013 - reduce amount of logging and logging impact in sync-fw
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 30 May 2011 11:51:00 +0530
+
 sync-app (0.6.3) unstable; urgency=low
 
   * Fixes: Notes created in Device not synchronized to other devices.
