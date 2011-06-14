@@ -71,16 +71,8 @@ bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
 
     bool opened = iStorage->open();
 
-    bool loaded = false;
-    if (opened)
+    if (!opened)
     {
-        LOG_TRACE("Calendar storage opened");
-        loaded = iStorage->load();
-        if (!loaded)
-        {
-            LOG_WARNING("Failed to load calendar");
-        } // no else
-    } else {
         LOG_TRACE("Calendar storage open failed");
     }
     
@@ -113,6 +105,18 @@ bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
             openedNb = iStorage->createDefaultNotebook();
         }
     }
+
+    bool loaded = false;
+    if(opened)
+    {
+        LOG_DEBUG("Loading all incidences from::" << openedNb->uid());
+        loaded = iStorage->loadNotebookIncidences(openedNb->uid());
+        if(!loaded)
+        {
+            LOG_WARNING("Failed to load calendar");
+        }
+    }
+
     if (opened && loaded && !openedNb.isNull())
     {
         iNotebookName = openedNb->uid();
