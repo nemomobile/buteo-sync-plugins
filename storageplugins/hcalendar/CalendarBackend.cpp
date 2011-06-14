@@ -56,16 +56,8 @@ bool CalendarBackend::init(const QString &aNotebookName, const QString& aUid)
     iStorage = iCalendar->defaultStorage( iCalendar );
 
     bool opened = iStorage->open();
-    bool loaded = false;
-    if (opened)
+    if(!opened)
     {
-        LOG_TRACE("Calendar storage opened");
-        loaded = iStorage->load();
-        if (!loaded)
-        {
-            LOG_WARNING("Failed to load calendar");
-        } // no else
-    } else {
     	LOG_TRACE("Calendar storage open failed");
     }
 
@@ -97,6 +89,18 @@ bool CalendarBackend::init(const QString &aNotebookName, const QString& aUid)
             LOG_DEBUG("No default notebook exists, creating one");
             openedNb = iStorage->createDefaultNotebook();
         }
+    }
+
+    bool loaded = false;
+    if(opened)
+    {
+        LOG_DEBUG("Loading all incidences from::" << openedNb->uid());
+        loaded = iStorage->loadNotebookIncidences(openedNb->uid());
+    }
+
+    if(!loaded)
+    {
+        LOG_WARNING("Failed to load calendar!");
     }
 
     if (opened && loaded && !openedNb.isNull())
