@@ -49,7 +49,7 @@ QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
 
 #install
 tests.files = hcalendar-tests.ref
-tests.path = /usr/share/sync-app-tests/
-target.path = /usr/share/sync-app-tests/
+tests.path = /opt/tests/buteo-sync-plugins/
+target.path = /opt/tests/buteo-sync-plugins/
 INSTALLS += target \
             tests

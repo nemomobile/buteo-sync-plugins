@@ -21,7 +21,7 @@ QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
 QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
 	
 #install
-target.path = /usr/share/sync-app-tests/
+target.path = /opt/tests/buteo-sync-plugins/
 INSTALLS += target 
 
     

@@ -4,7 +4,7 @@ echo "running ${1}..."
 
 FILE=${1##*/}  
 
-cd /usr/share/sync-app-tests
+cd /opt/tests/buteo-sync-plugins
 if [ -f /tmp/session_bus_address.user ]; 
 then 
 source /tmp/session_bus_address.user;
