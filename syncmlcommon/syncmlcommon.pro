@@ -1,16 +1,17 @@
 TEMPLATE = lib
 TARGET = syncmlcommon
 DEPENDPATH += .
-INCLUDEPATH += . \
-               /usr/include/libsynccommon
-               
-LIBS += -lsyncpluginmgr -lmeegosyncml -lsyncprofile
 
-CONFIG += create_pc create_prl mobility
+CONFIG += link_pkgconfig create_pc create_prl mobility
+PKGCONFIG = buteosyncfw buteosyncml
 
 MOBILITY += systeminfo
 QT += sql xml
 QT -= gui
+
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
 
 #input
 HEADERS += ItemAdapter.h \

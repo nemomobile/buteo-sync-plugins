@@ -22,7 +22,7 @@
  */
 
 #include "SyncMLStorageProviderTest.h"
-#include <libmeegosyncml/StoragePlugin.h>
+#include <buteosyncml/StoragePlugin.h>
 #include <QDomDocument>
 
 #include <QtTest/QtTest>
@@ -117,7 +117,7 @@ StoragePlugin* TempPluginCbInterface ::createStorage(const QString& aStorage)
     QString path = dir.absolutePath();
 
     // need to replace the library path with dummy library path
-    if (dir.cd("/usr/lib/sync"))
+    if (dir.cd("/usr/lib"))
     {
         path = dir.absolutePath();
     }

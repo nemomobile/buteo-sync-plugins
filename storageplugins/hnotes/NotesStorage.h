@@ -24,8 +24,8 @@
 #define NOTESSTORAGE_H
 
 
-#include <libsyncpluginmgr/StoragePlugin.h>
-#include <libsyncprofile/ProfileEngineDefs.h>
+#include <buteosyncfw/StoragePlugin.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
 
 #include "NotesBackend.h"
 

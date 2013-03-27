@@ -36,11 +36,11 @@ void SyncMLConfigTest::cleanupTestCase()
 void SyncMLConfigTest::testXmldatabasePath()
 {
 	//testing the function getDatabasePath()
-	QString DBDIR1 = "/.sync/sync-app/";
+	QString DBDIR1 = Sync::syncDir();
 	QString home = QDir::homePath();
 	QString path = home + DBDIR1;
 	QVERIFY(iConfig->getDatabasePath().contains(path));
 	
 	//testing the function getXmlDataPath()
-	QVERIFY(iConfig->getXmlDataPath().contains("/etc/sync/xml/"));
+	QVERIFY(iConfig->getXmlDataPath().contains("/etc/buteo/xml/"));
 }

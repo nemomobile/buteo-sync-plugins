@@ -2,7 +2,8 @@ TEMPLATE = app
 TARGET = hcontacts-tests 
  
 QT += core testlib sql
-CONFIG += qtestlib mobility
+CONFIG += link_pkgconfig qtestlib mobility
+PKGCONFIG = buteosyncfw
 
 DEPENDPATH += . \
               ../ \
@@ -20,9 +21,6 @@ linux-g++-maemo {
               
 INCLUDEPATH += . \
     ../ \
-    /usr/include/libsynccommon \
-    /usr/include/libsyncpluginmgr \
-    /usr/include/sync \
     ../../../syncmlcommon
 
 MOBILITY += contacts versit    
@@ -38,7 +36,7 @@ SOURCES += main.cpp \
            ContactDetailHandler.cpp
 
 LIBS += -L ../
-LIBS += -lQtTest -lsynccommon -lsyncpluginmgr -lsyncprofile
+LIBS += -lQtTest
 
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno

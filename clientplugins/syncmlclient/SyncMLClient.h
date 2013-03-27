@@ -26,9 +26,9 @@
 
 #include "BTConnection.h"
 #include "SyncMLStorageProvider.h"
-#include <libsyncpluginmgr/ClientPlugin.h>
-#include <libsyncprofile/SyncResults.h>
-#include <libmeegosyncml/SyncAgent.h>
+#include <ClientPlugin.h>
+#include <SyncResults.h>
+#include <buteosyncml/SyncAgent.h>
 
 namespace DataSync {
 
