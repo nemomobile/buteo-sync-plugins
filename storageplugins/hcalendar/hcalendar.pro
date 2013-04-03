@@ -3,9 +3,7 @@ TARGET = hcalendar-storage
 DEPENDPATH += . \
               
 INCLUDEPATH += . \
-    /usr/include/libsyncpluginmgr \
-    /usr/include/libsynccommon \
-    /usr/include/sync \
+    /usr/include/buteosyncfw \
     ../../syncmlcommon
 		
 		
@@ -13,7 +11,7 @@ CONFIG += plugin kcalcore mkcal
 
 QT -= gui
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lbuteosyncfw
 
 HEADERS += CalendarStorage.h \
            definitions.h \
@@ -30,9 +28,9 @@ QMAKE_CXXFLAGS = -Wall \
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 
-target.path = /usr/lib/sync/
+target.path = /usr/lib/
 
-ctcaps.path =/etc/sync/xml/
+ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_calendar_11.xml xml/CTCaps_calendar_12.xml
 
 INSTALLS += target ctcaps

@@ -23,8 +23,8 @@
 #ifndef CALENDARSTORAGE_H
 #define CALENDARSTORAGE_H
 
-#include <libsyncpluginmgr/StoragePlugin.h>
-#include <libsyncprofile/ProfileEngineDefs.h>
+#include <buteosyncfw/StoragePlugin.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
 
 //sync backend related includes
 #include "definitions.h"

@@ -28,7 +28,7 @@
 #include <LogMacros.h>
 #include "SyncCommonDefs.h"
 
-const QString XMLDIR( "/etc/sync/xml/");
+const QString XMLDIR( "/etc/buteo/xml/");
 const QString DBDIR( "/sync-app/" );
 const QString DEVINFO_FILE_NAME("devInfo.xml");
 

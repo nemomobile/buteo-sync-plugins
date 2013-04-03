@@ -24,7 +24,7 @@
 #ifndef ITEMADAPTER_H
 #define ITEMADAPTER_H
 
-#include <libmeegosyncml/SyncItem.h>
+#include <buteosyncml/SyncItem.h>
 
 namespace Buteo {
     class StorageItem;
