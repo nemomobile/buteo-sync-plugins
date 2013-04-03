@@ -13,9 +13,8 @@ linux-g++-maemo {
 
 DEPENDPATH += .
 INCLUDEPATH += .  \
-    /usr/include/libsynccommon \
-    /usr/include/libsyncpluginmgr \
-    /usr/include/sync/ \
+    /usr/include/buteosyncfw \
+    /usr/include/buteo/ \
     ../../syncmlcommon
 
 CONFIG += plugin mobility
@@ -39,12 +38,12 @@ QMAKE_CXXFLAGS = -Wall \
     -Wno-cast-align \
     -O2 -finline-functions
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
+LIBS += -L../../syncmlcommon -lsyncmlcommon -lbuteosyncfw
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
-target.path = /usr/lib/sync/
+target.path = /usr/lib/buteosyncfw/
 
-ctcaps.path =/etc/sync/xml/
+ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_contacts_11.xml xml/CTCaps_contacts_12.xml
 
 INSTALLS += target ctcaps

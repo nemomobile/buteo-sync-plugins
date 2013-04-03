@@ -27,10 +27,10 @@
 #include <QMap>
 #include <QVector>
 
-#include <libsyncpluginmgr/StoragePlugin.h>
-#include <libmeegosyncml/StoragePlugin.h>
-#include <libmeegosyncml/DataStore.h>
-#include <libmeegosyncml/SyncItemKey.h>
+#include <buteosyncfw/StoragePlugin.h>
+#include <buteosyncml/StoragePlugin.h>
+#include <buteosyncml/DataStore.h>
+#include <buteosyncml/SyncItemKey.h>
 
 #include "ItemIdMapper.h"
 

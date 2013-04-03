@@ -28,7 +28,7 @@
 
 #include "StoragePlugin.h"
 #include "ContactsBackend.h"
-#include "libsyncpluginmgr/DeletedItemsIdStorage.h"
+#include "buteosyncfw/DeletedItemsIdStorage.h"
 
 class SimpleItem;
 

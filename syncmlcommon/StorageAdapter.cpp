@@ -23,8 +23,8 @@
 
 #include "StorageAdapter.h"
 
-#include <libsyncpluginmgr/StoragePlugin.h>
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StoragePlugin.h>
+#include <buteosyncfw/StorageItem.h>
 
 #include "SyncMLCommon.h"
 #include "ItemAdapter.h"

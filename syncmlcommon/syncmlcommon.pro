@@ -2,9 +2,9 @@ TEMPLATE = lib
 TARGET = syncmlcommon
 DEPENDPATH += .
 INCLUDEPATH += . \
-               /usr/include/libsynccommon
+               /usr/include/buteosyncfw
                
-LIBS += -lsyncpluginmgr -lmeegosyncml -lsyncprofile
+LIBS += -lbuteosyncfw -lbuteosyncml
 
 CONFIG += create_pc create_prl mobility
 
