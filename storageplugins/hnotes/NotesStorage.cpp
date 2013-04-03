@@ -26,7 +26,7 @@
 #include <QFile>
 #include <QStringListIterator>
 
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StorageItem.h>
 
 #include <LogMacros.h>
 

@@ -24,7 +24,7 @@
 #ifndef SIMPLEITEM_H
 #define SIMPLEITEM_H
 
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StorageItem.h>
 
 /*! \brief Simple implementation for storage item
  *

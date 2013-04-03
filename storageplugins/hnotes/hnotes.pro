@@ -1,13 +1,16 @@
 TEMPLATE = lib
 TARGET = hnotes-storage
 DEPENDPATH += .
-INCLUDEPATH += . ../../syncmlcommon \
-    /usr/include/libsynccommon \
-    /usr/include/sync 
+INCLUDEPATH += . ../../syncmlcommon
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
+LIBS += -L../../syncmlcommon -lsyncmlcommon
 
-CONFIG += plugin kcalcoren mkcal
+CONFIG += link_pkgconfig plugin kcalcoren mkcal
+PKGCONFIG += buteosyncfw
+
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
 
 QT -= gui
 
@@ -29,9 +32,9 @@ QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
 
 #install
-target.path = /usr/lib/sync/
+target.path = /usr/lib/buteo/
 
-ctcaps.path =/etc/sync/xml/
+ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_notes_11.xml xml/CTCaps_notes_12.xml
 
 INSTALLS += target ctcaps
