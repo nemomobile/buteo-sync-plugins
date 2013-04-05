@@ -22,7 +22,7 @@
  */
 
 #include "SyncMLStorageProviderTest.h"
-#include <libmeegosyncml/StoragePlugin.h>
+#include <buteosyncml/StoragePlugin.h>
 #include <QDomDocument>
 
 #include <QtTest/QtTest>

@@ -27,5 +27,5 @@ QMAKE_CXXFLAGS = -Wall \
 
 QMAKE_CLEAN += $(TARGET)
 
-target.path = /usr/lib/
+target.path = /usr/lib/buteo-plugins
 INSTALLS += target

@@ -45,7 +45,7 @@ QMAKE_CXXFLAGS = -Wall \
 LIBS += -L../../syncmlcommon -lsyncmlcommon
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
-target.path = /usr/lib/
+target.path = /usr/lib/buteo-plugins
 
 ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_contacts_11.xml xml/CTCaps_contacts_12.xml

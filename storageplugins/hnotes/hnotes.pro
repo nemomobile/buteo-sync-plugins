@@ -32,7 +32,7 @@ QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
 
 #install
-target.path = /usr/lib/buteo/
+target.path = /usr/lib/buteo-plugins
 
 ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_notes_11.xml xml/CTCaps_notes_12.xml
