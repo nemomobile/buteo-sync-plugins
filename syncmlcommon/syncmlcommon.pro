@@ -3,7 +3,7 @@ TARGET = syncmlcommon
 DEPENDPATH += .
 
 CONFIG += link_pkgconfig create_pc create_prl mobility
-PKGCONFIG += buteosyncfw buteosyncml
+PKGCONFIG = buteosyncfw buteosyncml
 
 MOBILITY += systeminfo
 QT += sql xml

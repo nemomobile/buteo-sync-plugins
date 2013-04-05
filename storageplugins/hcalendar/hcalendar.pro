@@ -32,7 +32,7 @@ QMAKE_CXXFLAGS = -Wall \
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 
-target.path = /usr/lib/
+target.path = /usr/lib/buteo-plugins
 
 ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_calendar_11.xml xml/CTCaps_calendar_12.xml
