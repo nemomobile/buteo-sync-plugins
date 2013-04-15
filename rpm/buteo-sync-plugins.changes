@@ -1,2 +1,36 @@
+* Mon Sep 24 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.7.0
+- Update to nemo upstream, contributing to JB#2310
+
+* Sun Sep 09 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.6.5
+- Update to latest upstream
+- Move tests to /opt/tests
+
+* Mon Jan 31 2011 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.64
+- Update version, fixing BMC#13137
+
+* Wed Jan 05 2011 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.61
+- Update version, fixing BMC#11997
+
+* Fri Dec 17 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.60
+- Update version, fixing BMC#4945
+
+* Wed Nov 24 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.57
+- Update version, fixes: BME#3869
+
+* Sun Oct 17 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.48
+- Update to latest version
+
+* Thu Sep 23 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.46
+- Update version, fixing BMC#3869, BMC#3888, BMC#4945
+
+* Tue Aug 24 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6.34
+- Update to latest version
+
+* Fri Aug 13 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6
+- Change build requires to pkgconfig
+
+* Wed Aug 11 2010 Kaitlin Rupert <kaitlin.rupert@intel.com> - 0.5.6
+- Replace qt4-devel with QtCore and QtNetwork
+
 * Tue Jun 29 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.5.6
 - Initial RPM version

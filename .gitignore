@@ -1,0 +1,8 @@
+Makefile
+*.so*
+*.list
+*.prl
+*.tag
+doc/html
+storageplugins/hcontacts/unittest/hcontacts-tests
+syncmlcommon/pkgconfig/

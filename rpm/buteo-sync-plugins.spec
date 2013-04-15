@@ -1,28 +1,48 @@
 Name: buteo-sync-plugins
-Version: 0.5.6
+Version: 0.7.0
 Release: 1
 Summary: Synchronization plugins
 Group: System/Libraries
-URL: http://meego.gitorious.com/meego-middleware/buteo-sync-plugins
+URL: https://github.com/nemomobile/buteo-sync-plugins
 License: LGPLv2.1
 Source0: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(QtCore)
+BuildRequires: pkgconfig(QtNetwork)
+BuildRequires: pkgconfig(qttracker)
+BuildRequires: pkgconfig(QtContacts)
+BuildRequires: pkgconfig(openobex)
+BuildRequires: pkgconfig(accounts-qt)
+BuildRequires: pkgconfig(buteosyncml)
+BuildRequires: pkgconfig(buteosyncfw)
 BuildRequires: doxygen
-BuildRequires: buteo-syncfw-devel, buteo-syncml-devel
-BuildRequires: qt4-devel, libqttracker-devel,
-BuildRequires: libqtcontacts-devel, qtcontacts-tracker-devel
-BuildRequires: openobex-devel,
-BuildRequires: libaccounts-qt-devel
-BuildRequires: libmeegotouch-devel
 
 %description
 %{summary}.
 
 %files
 %defattr(-,root,root,-)
-%config %{_sysconfdir}/sync
-%{_libdir}/sync/*.so
+%config %{_sysconfdir}/buteo/xml/*.xml
+%config %{_sysconfdir}/buteo/profiles/client/*.xml
+%config %{_sysconfdir}/buteo/profiles/storage/*.xml
+%config %{_sysconfdir}/buteo/profiles/sync/bt_template.xml
+%{_libdir}/buteo-plugins/*.so
+%{_libdir}/*.so.*
+
+%package devel
+Requires: %{name} = %{version}-%{release}
+Summary: Development files for %{name}
+Group: Development/Libraries
+
+%description devel
+%{summary}.
+
+%files devel
+%defattr(-,root,root,-)
+%{_includedir}/*
+%{_libdir}/*.so
+%{_libdir}/*.prl
+%{_libdir}/pkgconfig/*.pc
 
 %package doc
 Summary: Documentation for %{name}
@@ -46,10 +66,20 @@ Requires: %{name} = %{version}-%{release}
 
 %files tests
 %defattr(-,root,root,-)
-%{_bindir}/*-tests
-%{_datadir}/sync-app-tests
-%{_datadir}/%{name}-tests
+/opt/tests/buteo-sync-plugins
 
+
+%package -n buteo-service-memotoo
+Summary: Memotoo service description for Buteo SyncML
+Group: System/Libraries
+Requires: %{name} = %{version}
+
+%description -n buteo-service-memotoo
+%{summary}.
+
+%files -n buteo-service-memotoo
+%defattr(-,root,root,-)
+%config %{_sysconfdir}/buteo/profiles/sync/memotoo.com.xml
 
 %prep
 %setup -q
@@ -61,10 +91,9 @@ make %{?_smp_mflags}
 
 
 %install
-rm -rf %{buildroot}
-
 make INSTALL_ROOT=%{buildroot} install
+rm -f %{buildroot}/%{_sysconfdir}/buteo/profiles/sync/switch.xml
 
 
-%clean
-rm -rf %{buildroot}
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
