@@ -23,7 +23,7 @@
 
 #include "ItemAdapter.h"
 
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StorageItem.h>
 
 ItemAdapter::ItemAdapter( Buteo::StorageItem* aItem ) : iItem( aItem )
 {

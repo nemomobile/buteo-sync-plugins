@@ -72,7 +72,8 @@ SOURCES += main.cpp \
 
 QT += testlib sql xml
 QT -= gui
-CONFIG += qtestlib
+CONFIG += link_pkgconfig qtestlib
+PKGCONFIG = buteosyncfw
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
