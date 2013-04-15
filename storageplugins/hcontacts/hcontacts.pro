@@ -13,12 +13,15 @@ linux-g++-maemo {
 
 DEPENDPATH += .
 INCLUDEPATH += .  \
-    /usr/include/libsynccommon \
-    /usr/include/libsyncpluginmgr \
-    /usr/include/sync/ \
     ../../syncmlcommon
 
-CONFIG += plugin mobility
+CONFIG += link_pkgconfig plugin mobility
+PKGCONFIG += buteosyncfw
+
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
+
 MOBILITY += contacts versit   
  
 #the contacts library is using QPixmap, so has to comment below line
@@ -39,12 +42,12 @@ QMAKE_CXXFLAGS = -Wall \
     -Wno-cast-align \
     -O2 -finline-functions
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon -lsyncpluginmgr
+LIBS += -L../../syncmlcommon -lsyncmlcommon
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
-target.path = /usr/lib/sync/
+target.path = /usr/lib/buteo-plugins
 
-ctcaps.path =/etc/sync/xml/
+ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_contacts_11.xml xml/CTCaps_contacts_12.xml
 
 INSTALLS += target ctcaps

@@ -1,18 +1,20 @@
 TEMPLATE = lib
 TARGET = syncml-client
 DEPENDPATH += . 
-INCLUDEPATH += . ../../syncmlcommon \
-    /usr/include/libsynccommon \
-    /usr/include/libsyncprofile \
-    /usr/include/sync \
+INCLUDEPATH += . ../../syncmlcommon
 
-LIBS += -L../../syncmlcommon -lsyncpluginmgr -lsyncprofile -lmeegosyncml -lsyncmlcommon
+LIBS += -L../../syncmlcommon -lsyncmlcommon
 
-CONFIG += plugin mobility
+CONFIG += link_pkgconfig plugin mobility
+PKGCONFIG += buteosyncfw buteosyncml
 
 MOBILITY += systeminfo
 QT += dbus sql network
 QT -= gui
+
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
 
 #input
 HEADERS += SyncMLClient.h BTConnection.h
@@ -33,20 +35,20 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 
 
 #install
-target.path = /usr/lib/sync/
+target.path = /usr/lib/buteo-plugins
 
-client.path = /etc/sync/profiles/client 
+client.path = /etc/buteo/profiles/client 
 client.files = xml/syncml.xml
 
 ####To Remove Later After Accounts Integration
 
-sync.path = /etc/sync/profiles/sync
+sync.path = /etc/buteo/profiles/sync
 sync.files = xml/sync/*
 
-service.path = /etc/sync/profiles/service
-service.files = xml/service/*
+#service.path = /etc/buteo/profiles/service
+#service.files = xml/service/*
 
-storage.path = /etc/sync/profiles/storage
+storage.path = /etc/buteo/profiles/storage
 storage.files = xml/storage/*
 
 INSTALLS += target client sync service storage 
