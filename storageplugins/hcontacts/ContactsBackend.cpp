@@ -53,12 +53,12 @@ bool ContactsBackend::init()
 	bool initStatus = false;
 	QStringList availableManagers = QContactManager::availableManagers();
 
-	if(availableManagers.contains("tracker")) {
+    if(availableManagers.contains(QLatin1String("tracker"))) {
 		// hardcode to tracker
 		LOG_DEBUG("connecting to storage tracker");
         QMap<QString,QString> params;
-        params.insert("contact-types", QContactType::TypeContact);
-        iMgr = new QContactManager("tracker", params);
+        params.insert(QLatin1String("contact-types"), QContactType::TypeContact);
+        iMgr = new QContactManager(QLatin1String("tracker"), params);
 
 		if(iMgr != NULL){
 			initStatus = true;
@@ -97,8 +97,7 @@ QList<QContactLocalId> ContactsBackend::getAllContactIds()
 
     if (iMgr != NULL) {
         contactIDs = iMgr->contactIds(getSyncTargetFilter());
-    }
-    else {
+    } else {
         LOG_WARNING("Contacts backend not available");
     }
     

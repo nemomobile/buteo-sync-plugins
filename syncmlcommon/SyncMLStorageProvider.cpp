@@ -23,14 +23,14 @@
 
 #include "SyncMLStorageProvider.h"
 
-#include <libsyncprofile/Profile.h>
-#include <libsyncprofile/ProfileEngineDefs.h>
+#include <buteosyncfw/Profile.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
 
-#include <libsyncpluginmgr/PluginCbInterface.h>
-#include <libsyncpluginmgr/StoragePlugin.h>
+#include <buteosyncfw/PluginCbInterface.h>
+#include <buteosyncfw/StoragePlugin.h>
 
-#include <libmeegosyncml/StoragePlugin.h>
-#include <libmeegosyncml/SessionHandler.h>
+#include <buteosyncml/StoragePlugin.h>
+#include <buteosyncml/SessionHandler.h>
 
 #include "SyncMLCommon.h"
 #include "StorageAdapter.h"
