@@ -24,7 +24,7 @@
 #ifndef SYNCMLSTORAGEPROVIDER_H
 #define SYNCMLSTORAGEPROVIDER_H
 
-#include <libmeegosyncml/StorageProvider.h>
+#include <buteosyncml/StorageProvider.h>
 
 namespace Buteo {
     class Profile;

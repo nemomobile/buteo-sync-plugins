@@ -38,9 +38,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termios.h>
-#include <libsynccommon/SyncDBusConnection.h>
-
-#include "LogMacros.h"
+#include <buteosyncfw/SyncDBusConnection.h>
+#include <buteosyncfw/LogMacros.h>
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_MANAGER_INTERFACE "org.bluez.Manager"

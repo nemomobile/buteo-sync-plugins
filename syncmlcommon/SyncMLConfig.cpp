@@ -26,9 +26,10 @@
 #include <QDir>
 
 #include <LogMacros.h>
+#include "SyncCommonDefs.h"
 
-const QString XMLDIR( "/etc/sync/xml/");
-const QString DBDIR( "/.sync/sync-app/" );
+const QString XMLDIR( "/etc/buteo/xml/");
+const QString DBDIR( "/sync-app/" );
 const QString DEVINFO_FILE_NAME("devInfo.xml");
 
 SyncMLConfig::SyncMLConfig()
@@ -44,17 +45,14 @@ SyncMLConfig::~SyncMLConfig()
 
 QString SyncMLConfig::getDatabasePath()
 {
-	FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-	QString home = QDir::homePath();
-	QString path = home + DBDIR;
+    QString path = Sync::syncCacheDir() + DBDIR;
 
-	QDir dir( path );
-	if( !dir.exists() ) {
-		dir.mkpath( path );
-	}
+    QDir dir( path );
+    dir.mkpath( path );
 
-	return path;
+    return path;
 
 }
 

@@ -26,22 +26,22 @@
 #include <QLibrary>
 #include <QtNetwork>
 
-#include <libsyncpluginmgr/PluginCbInterface.h>
-#include <libmeegosyncml/SyncAgent.h>
-#include <libmeegosyncml/SyncAgentConfig.h>
-#include <libmeegosyncml/SyncAgentConfigProperties.h>
-#include <libmeegosyncml/HTTPTransport.h>
-#include <libmeegosyncml/OBEXTransport.h>
-#include <libmeegosyncml/DeviceInfo.h>
+#include <buteosyncfw/PluginCbInterface.h>
+#include <buteosyncml/SyncAgent.h>
+#include <buteosyncml/SyncAgentConfig.h>
+#include <buteosyncml/SyncAgentConfigProperties.h>
+#include <buteosyncml/HTTPTransport.h>
+#include <buteosyncml/OBEXTransport.h>
+#include <buteosyncml/DeviceInfo.h>
 
 #include "SyncMLConfig.h"
 #include "SyncMLCommon.h"
 #include "DeviceInfo.h"
 
-#include <LogMacros.h>
+#include <buteosyncfw/LogMacros.h>
 
-const QString DEFAULTCONFIGFILE("/etc/sync/meego-syncml-conf.xml");
-const QString EXTCONFIGFILE("/etc/sync/ext-syncml-conf.xml");
+const QString DEFAULTCONFIGFILE("/etc/buteo/meego-syncml-conf.xml");
+const QString EXTCONFIGFILE("/etc/buteo/ext-syncml-conf.xml");
 
 extern "C" SyncMLClient* createPlugin(const QString& aPluginName,
 		const Buteo::SyncProfile& aProfile,

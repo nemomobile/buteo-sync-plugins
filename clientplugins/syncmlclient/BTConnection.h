@@ -35,7 +35,7 @@
 
 #include <QString>
 
-#include <libmeegosyncml/OBEXConnection.h>
+#include <buteosyncml/OBEXConnection.h>
 
 /*! \brief Class for creating a connection to another device over
  *         Bluetooth for libmeegosyncml

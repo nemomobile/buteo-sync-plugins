@@ -2,12 +2,15 @@ TEMPLATE = lib
 TARGET = hcontacts-changenotifier
 
 DEPENDPATH += .
-INCLUDEPATH += . \
-               /usr/include/libsyncpluginmgr
 
-CONFIG += plugin mobility link_pkgconfig
+CONFIG += link_pkgconfig plugin mobility link_pkgconfig
+PKGCONFIG += buteosyncfw
+
 MOBILITY += contacts
-PKGCONFIG = synccommon
+
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
  
 QT -= GUI
 
@@ -24,5 +27,5 @@ QMAKE_CXXFLAGS = -Wall \
 
 QMAKE_CLEAN += $(TARGET)
 
-target.path = /usr/lib/sync/
+target.path = /usr/lib/buteo-plugins
 INSTALLS += target
