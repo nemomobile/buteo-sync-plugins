@@ -23,7 +23,7 @@
 
 #include "CalendarTest.h"
 
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StorageItem.h>
 
 #include <QtTest>
 

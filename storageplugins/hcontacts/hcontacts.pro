@@ -1,16 +1,6 @@
 TEMPLATE = lib
 TARGET = hcontacts-storage
 
-linux-g++-maemo {
-  message("Compiling for maemo")
-} else {
-  message("Compiling for non-maemo")
-  INCLUDEPATH += \
-    /usr/include/QtMobility/ \
-    /usr/include/QtContacts \
-    /usr/include/QtVersit \
-}
-
 DEPENDPATH += .
 INCLUDEPATH += .  \
     ../../syncmlcommon

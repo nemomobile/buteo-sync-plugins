@@ -25,7 +25,7 @@
 
 #include <QtTest>
 
-#include <libsyncpluginmgr/StorageItem.h>
+#include <buteosyncfw/StorageItem.h>
 
 NotesTest::NotesTest() : iNotesStorage( "hnotes" )
 {
