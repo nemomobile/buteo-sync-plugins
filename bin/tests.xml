@@ -6,9 +6,7 @@
     <set name="storageplugins" description="tests for storage plugins" feature="storage-plugins">
       <!-- Possibly some pre-steps to execute before running the test cases -->
       <pre_steps>
-        <step>source /tmp/session_bus_address.user;export DISPLAY=:1</step>
         <step>/usr/lib/tracker/tracker-store &amp; </step>
-        <step>export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH</step>
       </pre_steps>
 
       <case name="hcalendar-tests" type="Functional" description="Running Tests for Calendar Storage Plugin" timeout="1000" subfeature="">
