@@ -61,11 +61,3 @@ QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_LIBDIR  = $$target.path
 QMAKE_PKGCONFIG_INCDIR  = $$headers.path
 pkgconfig.files = $${TARGET}.pc
-
-# for compiling on meego
-linux-g++-maemo {
-  message("Compiling with sysinfo support")
-  DEFINES += __SYSINFO__
-} else {
-  message("Compiling without sysinfo")
-}
