@@ -4,10 +4,6 @@
   <suite name="sync-app-tests" domain="synchronization"> 
     <!-- At least one set per suite, name and description mandatory -->
     <set name="storageplugins" description="tests for storage plugins" feature="storage-plugins">
-      <!-- Possibly some pre-steps to execute before running the test cases -->
-      <pre_steps>
-        <step>/usr/lib/tracker/tracker-store &amp; </step>
-      </pre_steps>
 
       <case name="hcalendar-tests" type="Functional" description="Running Tests for Calendar Storage Plugin" timeout="1000" subfeature="">
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
