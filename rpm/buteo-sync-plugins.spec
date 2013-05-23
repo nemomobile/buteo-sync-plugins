@@ -15,6 +15,7 @@ BuildRequires: pkgconfig(openobex)
 BuildRequires: pkgconfig(accounts-qt)
 BuildRequires: pkgconfig(buteosyncml)
 BuildRequires: pkgconfig(buteosyncfw)
+BuildRequires: pkgconfig(libmkcal)
 BuildRequires: doxygen
 
 %description

@@ -16,10 +16,6 @@ INCLUDEPATH += . \
     ../../../syncmlcommon
         
 		
-LIBS += -lsyncpluginmgr \
-        -lsynccommon \
-        -lQtTest
-
 # Input
 HEADERS += CalendarTest.h \
            CalendarStorage.h \
@@ -34,7 +30,8 @@ SOURCES += main.cpp \
            SimpleItem.cpp \
    	   SyncMLConfig.cpp
 
-CONFIG += qtestlib kcalcoren mkcal
+CONFIG += link_pkgconfig qtestlib mkcal
+PKGCONFIG += buteosyncfw libkcalcoren
 
 QT += testlib \
     core \

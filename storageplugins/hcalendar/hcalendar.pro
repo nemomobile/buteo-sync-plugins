@@ -6,8 +6,8 @@ INCLUDEPATH += . \
     ../../syncmlcommon
 		
 		
-CONFIG += link_pkgconfig plugin kcalcore mkcal
-PKGCONFIG += buteosyncfw
+CONFIG += link_pkgconfig plugin mkcal
+PKGCONFIG += buteosyncfw libkcalcoren
 
 VER_MAJ = 1
 VER_MIN = 0

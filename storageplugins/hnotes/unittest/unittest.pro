@@ -52,8 +52,8 @@ SOURCES += main.cpp \
 
 QT += testlib
 QT -= gui
-CONFIG += qtestlib kcalcoren mkcal link_pkgconfig
-PKGCONFIG = buteosyncfw
+CONFIG += qtestlib mkcal link_pkgconfig
+PKGCONFIG = buteosyncfw libkcalcoren
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
