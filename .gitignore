@@ -6,3 +6,5 @@ Makefile
 doc/html
 storageplugins/hcontacts/unittest/hcontacts-tests
 syncmlcommon/pkgconfig/
+/storageplugins/hcalendar/unittest/hcalendar-tests
+/storageplugins/hnotes/unittest/hnotes-tests
