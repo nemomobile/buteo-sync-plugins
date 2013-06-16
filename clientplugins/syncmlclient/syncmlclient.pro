@@ -1,14 +1,24 @@
 TEMPLATE = lib
 TARGET = syncml-client
-DEPENDPATH += . 
+DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon
+CONFIG += link_pkgconfig plugin
 
-CONFIG += link_pkgconfig plugin mobility
-PKGCONFIG += buteosyncfw buteosyncml
+equals(QT_MAJOR_VERSION, 4): {
+    CONFIG += mobility
+    MOBILITY += systeminfo
+    PKGCONFIG = buteosyncfw buteosyncml
+    LIBS += -lsyncmlcommon
+}
 
-MOBILITY += systeminfo
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt0SystemInfo
+    LIBS += -lsyncmlcommon5
+}
+
+LIBS += -L../../syncmlcommon
+
 QT += dbus sql network
 QT -= gui
 
@@ -37,7 +47,7 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 #install
 target.path = /usr/lib/buteo-plugins
 
-client.path = /etc/buteo/profiles/client 
+client.path = /etc/buteo/profiles/client
 client.files = xml/syncml.xml
 
 ####To Remove Later After Accounts Integration
@@ -51,4 +61,4 @@ sync.files = xml/sync/*
 storage.path = /etc/buteo/profiles/storage
 storage.files = xml/storage/*
 
-INSTALLS += target client sync service storage 
+INSTALLS += target client sync service storage

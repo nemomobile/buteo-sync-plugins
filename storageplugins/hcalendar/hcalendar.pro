@@ -1,13 +1,22 @@
 TEMPLATE = lib
 TARGET = hcalendar-storage
 DEPENDPATH += . \
-              
+
 INCLUDEPATH += . \
     ../../syncmlcommon
-		
-		
-CONFIG += link_pkgconfig plugin mkcal
-PKGCONFIG += buteosyncfw libkcalcoren
+
+CONFIG += link_pkgconfig plugin
+
+equals(QT_MAJOR_VERSION, 4): {
+    PKGCONFIG = buteosyncfw libkcalcoren libmkcal
+    CONFIG += mkcal
+    LIBS += -lsyncmlcommon
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 libkcalcoren-qt5 libmkcal-qt5
+    LIBS += -lsyncmlcommon5
+}
 
 VER_MAJ = 1
 VER_MIN = 0
@@ -15,11 +24,11 @@ VER_PAT = 0
 
 QT -= gui
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon
+LIBS += -L../../syncmlcommon
 
 HEADERS += CalendarStorage.h \
            definitions.h \
-	   CalendarBackend.h \ 
+           CalendarBackend.h \
 
 SOURCES += CalendarStorage.cpp \
            CalendarBackend.cpp
@@ -39,4 +48,3 @@ ctcaps.files=xml/CTCaps_calendar_11.xml xml/CTCaps_calendar_12.xml
 
 INSTALLS += target ctcaps
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
-

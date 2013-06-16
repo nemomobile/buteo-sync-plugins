@@ -45,7 +45,7 @@ const QString DEVINFO_DEVTYPE("phone");
 
 DeviceInfo::DeviceInfo()
 {
-	FUNCTION_CALL_TRACE;
+        FUNCTION_CALL_TRACE;
 
     iProperties << XML_KEY_MANUFACTURER << XML_KEY_MODEL << XML_KEY_HW_VER << XML_KEY_SW_VER << XML_KEY_FW_VER  << XML_KEY_ID << XML_KEY_DEV_TYPE;
 
@@ -54,14 +54,19 @@ DeviceInfo::DeviceInfo()
 
 DeviceInfo::~DeviceInfo()
 {
-	FUNCTION_CALL_TRACE;
+        FUNCTION_CALL_TRACE;
 }
 
 QString DeviceInfo::getDeviceIMEI()
 {
-	FUNCTION_CALL_TRACE;
+        FUNCTION_CALL_TRACE;
 
-	return IMEI + deviceInfo.imei();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        /// @todo returning first IMEI for now; needs fixing on multisim devices
+        return IMEI + deviceInfo.imei(0);
+#else
+        return IMEI + deviceInfo.imei();
+#endif
 }
 
 QString DeviceInfo::getManufacturer()
@@ -83,7 +88,11 @@ QString DeviceInfo::getSwVersion()
 {
     FUNCTION_CALL_TRACE;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    return deviceInfo.version(QDeviceInfo::Firmware);
+#else
     return systemInfo.version(QtMobility::QSystemInfo::Firmware);
+#endif
 }
 
 
@@ -189,16 +198,16 @@ QMap<QString,QString> DeviceInfo::getDeviceInformation()
                 QXmlStreamReader reader(data);
                 while(!reader.atEnd()) {
                      if(reader.tokenType() == QXmlStreamReader::StartElement) {
-                    	 if(reader.name() ==  "DevInfo" ) {
-                    		  reader.readNext();
-                    	 } else {
-                    	    QString key =  reader.name().toString();
+                         if(reader.name() ==  "DevInfo" ) {
+                                  reader.readNext();
+                         } else {
+                            QString key =  reader.name().toString();
                             reader.readNext();
                             deviceMap.insert(key,reader.text().toString());
                             reader.readNext();
-                    	 }
+                         }
                      }
-                	reader.readNext();
+                        reader.readNext();
                 }
                 file.close();
             } else {

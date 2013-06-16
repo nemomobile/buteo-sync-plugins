@@ -161,10 +161,10 @@ QByteArray StorageAdapter::getPluginCTCaps( DataSync::ProtocolVersion aVersion )
     Q_ASSERT( iPlugin );
 
     if( aVersion == DataSync::SYNCML_1_1 ) {
-        return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_11 ).toAscii();
+        return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_11 ).toLatin1();
     }
     else if( aVersion == DataSync::SYNCML_1_2 ) {
-        return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_12 ).toAscii();
+        return iPlugin->getProperty( STORAGE_SYNCML_CTCAPS_PROP_12 ).toLatin1();
     }
     else {
         Q_ASSERT( 0 );
@@ -178,7 +178,7 @@ QByteArray StorageAdapter::getPluginExts() const
 
     Q_ASSERT( iPlugin );
 
-    return iPlugin->getProperty( STORAGE_SYNCML_EXTENSIONS ).toAscii();
+    return iPlugin->getProperty( STORAGE_SYNCML_EXTENSIONS ).toLatin1();
 }
 
 bool StorageAdapter::getAll( QList<DataSync::SyncItemKey>& aKeys )

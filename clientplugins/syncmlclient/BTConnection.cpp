@@ -90,7 +90,7 @@ int BTConnection::connect()
         return -1;
     }
 
-    iFd = open( iDevice.toAscii().constData(), O_RDWR | O_NOCTTY | O_SYNC );
+    iFd = open( iDevice.toLatin1().constData(), O_RDWR | O_NOCTTY | O_SYNC );
 
     if( iFd == -1 ) {
         LOG_CRITICAL( "Could not open file descriptor of the connection, aborting" );
@@ -314,4 +314,3 @@ bool BTConnection::fdRawMode( int aFD )
 
     return true;
 }
-

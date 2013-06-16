@@ -6,32 +6,47 @@ TEMPLATE = app
 TARGET = hcalendar-tests
 DEPENDPATH += . \
               ../ \
-              ../../../syncmlcommon 
-              
+              ../../../syncmlcommon
+
+VPATH = .. \
+    ../../../syncmlcommon
+
 INCLUDEPATH += . \
     ../ \
     /usr/include/libsynccommon \
     /usr/include/libsyncpluginmgr \
     /usr/include/sync \
     ../../../syncmlcommon
-        
-		
+
+
 # Input
 HEADERS += CalendarTest.h \
            CalendarStorage.h \
            CalendarBackend.h \
            SimpleItem.h \
-   	   SyncMLConfig.h
+           SyncMLConfig.h
 
 SOURCES += main.cpp \
            CalendarTest.cpp \
            CalendarStorage.cpp \
            CalendarBackend.cpp \
            SimpleItem.cpp \
-   	   SyncMLConfig.cpp
+           SyncMLConfig.cpp
 
-CONFIG += link_pkgconfig qtestlib mkcal
-PKGCONFIG += buteosyncfw libkcalcoren
+CONFIG += link_pkgconfig qtestlib
+LIBS += -L../../../syncmlcommon
+
+equals(QT_MAJOR_VERSION, 4): {
+    PKGCONFIG = buteosyncfw libkcalcoren libmkcal
+    CONFIG += mkcal
+    LIBS += -lsyncmlcommon
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 libkcalcoren-qt5 libmkcal-qt5
+    LIBS += -lsyncmlcommon5
+}
+
 
 QT += testlib \
     core \
