@@ -1,0 +1,124 @@
+#!/bin/bash
+
+MSYNCD_HOME=$HOME/.cache/msyncd
+BUTEO_CONFIG=/etc/buteo/
+BUTEO_LOG_SETTING=$BUTEO_LOG_SETTING/set_sync_log_level
+BUTEO_PROCESS=msync
+
+function usage ()
+{
+    echo "
+    usage: $0 [options]
+
+    This is a common line tool for Buteo sync. It can be used to peform various tasks like
+    initiating sync, fetching the available profiles etc. Some options require you to run 
+    this tool as a root user
+
+    -h | --help : this help
+    -e | --enableprofile: enables a given profile
+    -d | --disableprofile: disables a given profile
+    -l | --listprofiles: lists all available profiles
+    -s | --startsync: starts sync for a given profile
+    -r | --syncresult: dumps the sync results
+    " 
+}
+
+function is_msyncd_running ()
+{
+    if [ -z $(pidof $BUTEO_PROCESS) ] ; then
+	return 0
+    else
+	return 1
+    fi
+}
+
+function enable_debug ()
+{
+    echo 4 > $BUTEO_LOG_SETTING
+    pkill -9 $BUTEO_PROCESS
+}
+
+function disable_debug ()
+{
+    :> $BUTEO_LOG_SETTING
+    pkill -9 $BUTEO_PROCESS
+}
+
+function list_sync_profiles ()
+{
+    ls $BUTEO_CONFIG/profiles/sync
+}
+
+function list_enabled_profiles ()
+{
+    echo "Enabled profiles "
+}
+
+function disable_profile ()
+{
+    echo "Disabling profile " $1
+}
+
+function enable_profile ()
+{
+    echo "Enabling profile " $1
+}
+
+function start_sync ()
+{
+    profile_name=$1
+    # Set the dbus session bus before sending the message
+    export $(dbus-launch |grep DBUS_SESSION_BUS_ADDRESS)
+
+    # Send dbus message to start sync for profile $profile_name
+    dbus-send --session --type=method_call --print-reply --dest=com.meego.msyncd /synchronizer com.meego.msyncd.startSync string:'$profile_name'
+
+    echo "Initiated sync. Check $HOME/.cache/msyncd/synchronizer.log to follow sync process"
+}
+
+function sync_result ()
+{
+    profile_name=$1
+
+    # List all the sync results for now
+    cat $MSYNCD_HOME/sync/logs/$profile_name.log.xml
+
+    echo "A non-zero minor/major code means error"
+    echo "If your results are not seen, then the plugin has not exited properly (probably did not emit a signal to sync fw)"
+
+    # minorcode=$(xmllint --xpath 'string(//synclog/syncresults/@minorcode)' $MSYNCD_HOME/sync/logs/$profile_name.log.xml)
+    # majorcode=$(xmllint --xpath 'string(//synclog/syncresults/@majorcode)' $MSYNCD_HOME/sync/logs/$profile_name.log.xml)
+    # timestamp=$(xmllint --xpath 'string(//synclog/syncresults/@time)' $MSYNCD_HOME/sync/logs/$profile_name.log.xml)
+}
+
+if [ $# -lt 1 ]
+then
+    usage
+    exit 127
+fi
+
+ARGS=$(getopt -o "he:d:ls:r:" -l "help,enableprofile:,disableprofile:,listprofiles,startsync:,syncresult:" -n "buteosync-tool" -- "$@")
+
+eval set -- "$ARGS"
+
+case "$1" in
+-e | --enableprofile)
+    enable_profile $2
+    shift;;
+-h | --help)
+    usage
+    shift;;
+-d | --disableprofile)
+    disable_profile $2
+    shift;;
+-l | --listprofiles)
+    list_sync_profiles
+    shift;;
+-s | --startsync)
+    start_sync $2
+    shift;;
+-r | --syncresult)
+    sync_result $2
+    shift;;
+esac
+

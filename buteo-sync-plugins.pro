@@ -3,7 +3,8 @@ TEMPLATE = subdirs
 
 CONFIG += ordered \
 
-SUBDIRS += syncmlcommon
+SUBDIRS += syncmlcommon \
+    utils
 SUBDIRS += clientplugins
 SUBDIRS += storageplugins
 SUBDIRS += storagechangenotifierplugins
