@@ -25,35 +25,46 @@
 TEMPLATE = app
 TARGET = hnotes-tests
 DEPENDPATH += . \
-              ../ \ 
-              
+              ../ \
+
+VPATH = .. \
+    ../../../
+
 INCLUDEPATH += . \
     ../ \
-    ../../../syncmlcommon \
-    /usr/include/libsynccommon \
-    /usr/include/mkcal
+    ../../../syncmlcommon
 
-LIBS += -lQtTest
+LIBS += -L../../../syncmlcommon
 
 HEADERS += NotesTest.h \
            NotesStorage.h \
            NotesBackend.h \
-           ../../../syncmlcommon/SimpleItem.h \
-           ../../../syncmlcommon/SyncMLConfig.h \
-           ../../../syncmlcommon/SyncMLCommon.h
+           syncmlcommon/SimpleItem.h \
+           syncmlcommon/SyncMLConfig.h \
+           syncmlcommon/SyncMLCommon.h
 
 
 SOURCES += main.cpp \
            NotesTest.cpp \
            NotesStorage.cpp \
            NotesBackend.cpp \
-           ../../../syncmlcommon/SimpleItem.cpp \
-           ../../../syncmlcommon/SyncMLConfig.cpp 
+           syncmlcommon/SimpleItem.cpp \
+           syncmlcommon/SyncMLConfig.cpp
 
 QT += testlib
 QT -= gui
-CONFIG += qtestlib mkcal link_pkgconfig
-PKGCONFIG = buteosyncfw libkcalcoren
+CONFIG += qtestlib link_pkgconfig
+
+equals(QT_MAJOR_VERSION, 4): {
+    PKGCONFIG = buteosyncfw libkcalcoren libmkcal
+    CONFIG += mkcal
+    LIBS += -lsyncmlcommon
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 libkcalcoren-qt5 libmkcal-qt5
+    LIBS += -lsyncmlcommon5
+}
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

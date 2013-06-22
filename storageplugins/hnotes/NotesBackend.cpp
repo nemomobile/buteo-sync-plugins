@@ -75,7 +75,7 @@ bool NotesBackend::init( const QString& aNotebookName, const QString& aUid,
     {
         LOG_TRACE("Calendar storage open failed");
     }
-    
+
     mKCal::Notebook::Ptr openedNb;
 
     // If we have an Uid, we try to get the corresponding Notebook
@@ -368,7 +368,7 @@ bool NotesBackend::modifyNote( Buteo::StorageItem& aItem, bool aCommitNow )
         return false;
     }
 
-    QString description = QString::fromAscii( data.constData() );
+    QString description = QString::fromLatin1( data.constData() );
 
     item->setDescription( description );
 

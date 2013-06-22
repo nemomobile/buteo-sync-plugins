@@ -3,10 +3,20 @@ TARGET = hnotes-storage
 DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon
 
-LIBS += -L../../syncmlcommon -lsyncmlcommon
+LIBS += -L../../syncmlcommon
 
-CONFIG += link_pkgconfig plugin mkcal
-PKGCONFIG += buteosyncfw libkcalcoren
+CONFIG += link_pkgconfig plugin
+
+equals(QT_MAJOR_VERSION, 4): {
+    PKGCONFIG = buteosyncfw libkcalcoren libmkcal
+    CONFIG += mkcal
+    LIBS += -lsyncmlcommon
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 libkcalcoren-qt5 libmkcal-qt5
+    LIBS += -lsyncmlcommon5
+}
 
 VER_MAJ = 1
 VER_MIN = 0
