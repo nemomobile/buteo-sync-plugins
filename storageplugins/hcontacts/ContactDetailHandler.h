@@ -2,9 +2,9 @@
 #define CONTACTDETAILHANDLER_H
 
 #include <QVersitContactExporterDetailHandlerV2>
-#include <qversitdocument.h>
-#include <qversitproperty.h>
-#include <qcontact.h>
+#include <QVersitDocument>
+#include <QVersitProperty>
+#include <QContact>
 #include <QObject>
 #include <QSet>
 #include <QString>
@@ -13,8 +13,9 @@
  *
  */
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 QTM_USE_NAMESPACE;
-
+#endif
 
 class ContactDetailHandler : public QVersitContactExporterDetailHandlerV2
 {

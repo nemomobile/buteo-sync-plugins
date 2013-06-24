@@ -23,14 +23,20 @@
 #ifndef CONTACTSBACKEND_H_
 #define CONTACTSBACKEND_H_
 
-#include <qcontactmanager.h>
-#include <qcontact.h>
-#include <qcontactchangelogfilter.h>
-#include <qcontactid.h>
-#include <qversitdocument.h>
+#include <QContactManager>
+#include <QContact>
+#include <QContactChangeLogFilter>
+#include <QContactId>
+#include <QVersitDocument>
 #include <QStringList>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 QTM_USE_NAMESPACE;
+#else
+using namespace QtContacts;
+using namespace QtVersit;
+#define QContactLocalId QContactId
+#endif
 
 enum VCARD_VERSION { VCARD_VERSION21, VCARD_VERSION30 };
 
@@ -39,7 +45,7 @@ struct ContactsStatus
     int id;
     QContactManager::Error errorCode;
 };
-     
+
 //! \brief Harmattan Contact storage plugin backend interface class
 ///
 /// This class interfaces with the backend implementation of contact manager on harmattan
@@ -48,14 +54,14 @@ class ContactsBackend
 {
 
 public:
-	
+
     /*!
      * \brief Constructor
-     * @param aVerType 
+     * @param aVerType
      */
     ContactsBackend(QVersitDocument::VersitType aVerType);
 
-	
+
     /*!
      * \brief Destructor
      */
@@ -63,16 +69,16 @@ public:
 
     /*!
      * \brief Searches for available storage plugins and sets the manager to that plugin
-     * @return 
+     * @return
      */
     bool init();
 
     /*!
      * \brief releases the resources held.
-     * @return 
+     * @return
      */
     bool uninit();
-    
+
     /*!
      * \brief Return ids of all contacts retrieved from the backend
      * @return List of contact IDs
@@ -100,7 +106,7 @@ public:
      * @return List of contact IDs
      */
     QList<QContactLocalId> getAllDeletedContactIds(const QDateTime& aTimeStamp);
-    
+
     /*!
      * \brief Get contact data for a given gontact ID as a QContact object
      * @param aContactId The ID of the contact
@@ -108,8 +114,8 @@ public:
      */
     void getContact(const QContactLocalId& aContactId,
                     QContact& aContact);
-    
-	
+
+
     /*!
      * \brief Get multiple contacts at once as vcards
      * @param aContactIDs List of contact IDs to be returned
@@ -168,7 +174,7 @@ public:
      * @return True if enabled, false if not
      */
     inline bool batchUpdatesEnabled() {  return true;     }
-    
+
     /*!
      * \brief Returns the last time the contact was modified
      * @param  aContactId Id of the contact
@@ -200,10 +206,10 @@ public:
 private: // functions
 
     QMap<QContactLocalId, QString> convertQContactListToVCardList \
-    					(const QList<QContact> &aContactList);
+                                        (const QList<QContact> &aContactList);
 
     QList<QContact> convertVCardListToQContactList \
-    				(const QStringList &aVCardList);
+                                (const QStringList &aVCardList);
 
     /*!
      * \brief Returns contact IDs specified by event type and timestamp
@@ -225,7 +231,7 @@ private: // functions
     QContactFilter getSyncTargetFilter() const;
 
 private: // data
-    
+
     // if there is more than one Manager we need to have a list of Managers
     QContactManager                *iMgr;      ///< A pointer to contact manager
 
@@ -238,6 +244,3 @@ private: // data
 
 
 #endif /* CONTACTSBACKEND_H_ */
-
-
-
