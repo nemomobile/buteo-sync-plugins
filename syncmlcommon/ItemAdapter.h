@@ -24,7 +24,13 @@
 #ifndef ITEMADAPTER_H
 #define ITEMADAPTER_H
 
+#include <LogMacros.h>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncml5/SyncItem.h>
+#else
 #include <buteosyncml/SyncItem.h>
+#endif
 
 namespace Buteo {
     class StorageItem;

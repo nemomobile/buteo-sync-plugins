@@ -23,6 +23,16 @@
 
 #include "SyncMLStorageProvider.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/Profile.h>
+#include <buteosyncfw5/ProfileEngineDefs.h>
+
+#include <buteosyncfw5/PluginCbInterface.h>
+#include <buteosyncfw5/StoragePlugin.h>
+
+#include <buteosyncml5/StoragePlugin.h>
+#include <buteosyncml5/SessionHandler.h>
+#else
 #include <buteosyncfw/Profile.h>
 #include <buteosyncfw/ProfileEngineDefs.h>
 
@@ -31,6 +41,7 @@
 
 #include <buteosyncml/StoragePlugin.h>
 #include <buteosyncml/SessionHandler.h>
+#endif
 
 #include "SyncMLCommon.h"
 #include "StorageAdapter.h"

@@ -16,7 +16,7 @@ void ContactDetailHandler::contactProcessed(const QContact &contact, QVersitDocu
 }
 
 void ContactDetailHandler::detailProcessed(const QContact &contact, const QContactDetail &detail,
-                                           const QVersitDocument &document, QSet<QString> *processedFields,
+                                           const QVersitDocument &document, QSet<int> *processedFields,
                                            QList<QVersitProperty> *toBeRemoved, QList<QVersitProperty> *toBeAdded)
 {
     Q_UNUSED(contact);

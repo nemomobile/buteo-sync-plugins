@@ -1,9 +1,20 @@
 TEMPLATE = app
-TARGET = hcontacts-tests 
- 
+TARGET = hcontacts-tests
+
 QT += core testlib sql
-CONFIG += link_pkgconfig qtestlib mobility
-PKGCONFIG = buteosyncfw
+CONFIG += link_pkgconfig testlib
+
+equals(QT_MAJOR_VERSION, 4): {
+    CONFIG += mobility
+    PKGCONFIG = buteosyncfw buteosyncml
+    MOBILITY += contacts versit
+    LIBS += -lsyncmlcommon -lQtTest
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5
+    LIBS += -lsyncmlcommon5 -lQt5Test
+}
 
 DEPENDPATH += . \
               ../ \
@@ -13,21 +24,13 @@ INCLUDEPATH += . \
     ../ \
     ../../../syncmlcommon
 
-MOBILITY += contacts versit    
-
-HEADERS += ContactsTest.h SyncMLConfig.h
+HEADERS += ContactsTest.h
 
 SOURCES += main.cpp \
-	   ContactsTest.cpp \
-	   ContactsStorage.cpp \
-	   ContactsBackend.cpp \
-       SimpleItem.cpp \
-           SyncMLConfig.cpp \
-           ContactDetailHandler.cpp
+       ContactsTest.cpp
 
-LIBS += -L ../
-LIBS += -lQtTest
-
+LIBPATH += ../ ../../../syncmlcommon
+LIBS += -lhcontacts-storage
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

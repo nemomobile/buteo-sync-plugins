@@ -23,7 +23,11 @@
 
 #include "ItemAdapter.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/StorageItem.h>
+#else
 #include <buteosyncfw/StorageItem.h>
+#endif
 
 ItemAdapter::ItemAdapter( Buteo::StorageItem* aItem ) : iItem( aItem )
 {

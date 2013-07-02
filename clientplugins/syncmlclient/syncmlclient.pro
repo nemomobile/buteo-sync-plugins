@@ -3,7 +3,7 @@ TARGET = syncml-client
 DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon
 
-CONFIG += link_pkgconfig plugin
+CONFIG += link_pkgconfig plugin 
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility

@@ -25,7 +25,11 @@
 
 #include <QtTest>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/StorageItem.h>
+#else
 #include <buteosyncfw/StorageItem.h>
+#endif
 
 NotesTest::NotesTest() : iNotesStorage( "hnotes" )
 {

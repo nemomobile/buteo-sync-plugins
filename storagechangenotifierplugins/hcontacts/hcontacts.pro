@@ -3,15 +3,22 @@ TARGET = hcontacts-changenotifier
 
 DEPENDPATH += .
 
-CONFIG += link_pkgconfig plugin mobility link_pkgconfig
-PKGCONFIG += buteosyncfw
+CONFIG += link_pkgconfig plugin link_pkgconfig
 
-MOBILITY += contacts
+equals(QT_MAJOR_VERSION, 4): {
+    CONFIG += mobility
+    PKGCONFIG += buteosyncfw
+    MOBILITY += contacts
+}
+
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG += buteosyncfw5 Qt5Contacts
+}
 
 VER_MAJ = 1
 VER_MIN = 0
 VER_PAT = 0
- 
+
 QT -= GUI
 
 HEADERS += ContactsChangeNotifierPlugin.h \

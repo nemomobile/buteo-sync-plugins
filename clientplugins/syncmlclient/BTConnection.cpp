@@ -38,8 +38,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termios.h>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/SyncDBusConnection.h>
+#include <buteosyncfw5/LogMacros.h>
+#else
 #include <buteosyncfw/SyncDBusConnection.h>
 #include <buteosyncfw/LogMacros.h>
+#endif
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_MANAGER_INTERFACE "org.bluez.Manager"

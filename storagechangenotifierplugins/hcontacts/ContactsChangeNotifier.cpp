@@ -8,16 +8,7 @@ ContactsChangeNotifier::ContactsChangeNotifier() :
 iDisabled(true)
 {
     FUNCTION_CALL_TRACE;
-    iManager = 0;
-    QStringList availableManagers = QContactManager::availableManagers();
-    if(availableManagers.contains(DEFAULT_CONTACTS_MANAGER))
-    {
-        iManager = new QContactManager(DEFAULT_CONTACTS_MANAGER);
-    }
-    else
-    {
-        LOG_WARNING("Couldn't create a contacts manager");
-    }
+    iManager = new QContactManager("org.nemomobile.contacts.sqlite");
 }
 
 ContactsChangeNotifier::~ContactsChangeNotifier()
@@ -46,12 +37,14 @@ void ContactsChangeNotifier::onContactsAdded(const QList<QContactLocalId>& ids)
 {
     FUNCTION_CALL_TRACE;
     if(ids.count())
-    { 
+    {
         QList<QContact> contacts = iManager->contacts(ids);
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         foreach(QContact contact, contacts)
         {
             LOG_DEBUG("Added contact" << contact.displayLabel());
         }
+#endif
         emit change();
     }
 }
@@ -60,7 +53,7 @@ void ContactsChangeNotifier::onContactsRemoved(const QList<QContactLocalId>& ids
 {
     FUNCTION_CALL_TRACE;
     if(ids.count())
-    { 
+    {
         foreach(QContactLocalId id, ids)
         {
             LOG_DEBUG("Removed contact with id" << id);
@@ -73,12 +66,14 @@ void ContactsChangeNotifier::onContactsChanged(const QList<QContactLocalId>& ids
 {
     FUNCTION_CALL_TRACE;
     if(ids.count())
-    { 
+    {
         QList<QContact> contacts = iManager->contacts(ids);
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         foreach(QContact contact, contacts)
         {
             LOG_DEBUG("Changed contact" << contact.displayLabel());
         }
+#endif
         emit change();
     }
 }

@@ -23,11 +23,15 @@
 #ifndef NOTESSTORAGE_H
 #define NOTESSTORAGE_H
 
+#include "NotesBackend.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/StoragePlugin.h>
+#include <buteosyncfw5/ProfileEngineDefs.h>
+#else
 #include <buteosyncfw/StoragePlugin.h>
 #include <buteosyncfw/ProfileEngineDefs.h>
-
-#include "NotesBackend.h"
+#endif
 
 /*! \brief Harmattan notes storage plugin
  *

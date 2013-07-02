@@ -23,14 +23,19 @@
 #ifndef CALENDARSTORAGE_H
 #define CALENDARSTORAGE_H
 
-#include <buteosyncfw/StoragePlugin.h>
-#include <buteosyncfw/ProfileEngineDefs.h>
-
 //sync backend related includes
 #include "definitions.h"
 #include "StoragePlugin.h"
 #include "StorageItem.h"
 #include "CalendarBackend.h"
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/StoragePlugin.h>
+#include <buteosyncfw5/ProfileEngineDefs.h>
+#else
+#include <buteosyncfw/StoragePlugin.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
+#endif
 
 enum STORAGE_TYPE {VCALENDAR_FORMAT,ICALENDAR_FORMAT};
 
