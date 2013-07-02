@@ -273,18 +273,30 @@ QList<Buteo::StorageItem*> ContactStorage::getItems( const QStringList& aItemIdL
     FUNCTION_CALL_TRACE;
 
     QList<Buteo::StorageItem*> items;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QMap<QString,QString> vcards;
+#else
     QMap<QContactLocalId,QString> vcards;
+#endif
     QList<QContactLocalId> ids;
     QStringListIterator itr( aItemIdList );
 
     if( iBackend )
     {
-        while( itr.hasNext() )
+        foreach (const QString itr, aItemIdList)
         {
-            ids.append( itr.next().toUInt() );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+            ids.append( QContactId::fromString (itr) );
+#else
+            ids.append( itr.toUInt() );
+#endif
         }
         iBackend->getContacts( ids, vcards );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QMapIterator<QString,QString> i(vcards);
+#else
         QMapIterator<QContactLocalId,QString> i(vcards);
+#endif
         while( i.hasNext() )
         {
             i.next();
@@ -292,7 +304,7 @@ QList<Buteo::StorageItem*> ContactStorage::getItems( const QStringList& aItemIdL
             {
                 SimpleItem *item = new SimpleItem;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-                item->setId( i.key().toString() );
+                item->setId( i.key() );
 #else
                 item->setId( QString::number( i.key() ) );
 #endif
@@ -321,19 +333,32 @@ Buteo::StorageItem* ContactStorage::getItem( const QString& aItemId )
 
     SimpleItem* newItem = NULL;
 
-    QContactLocalId id = aItemId.toUInt();
+    QContactLocalId id;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    id = QContactId::fromString (aItemId);
+#else
+    id = aItemId.toUInt();
+#endif
     QContact contact;
 
     iBackend->getContact( id, contact );
+    QDateTime creationTime = iBackend->getCreationTime( contact );
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    if( iFreshItems.contains( id.toString () ) )
+    {
+        LOG_DEBUG( "Intercepted fresh item:" << id.toString () );
+        iSnapshot.insert( id.toString (), creationTime );
+        iFreshItems.removeOne( id.toString () );
+    }
+#else
     if( iFreshItems.contains( id ) )
     {
         LOG_DEBUG( "Intercepted fresh item:" << id );
-        QDateTime creationTime = iBackend->getCreationTime( contact );
         iSnapshot.insert( id, creationTime );
         iFreshItems.removeOne( id );
     }
-
+#endif
     QString contactData = iBackend->convertQContactToVCard( contact );
 
     if(!contactData.isEmpty())
@@ -413,7 +438,11 @@ QList<ContactStorage::OperationStatus> ContactStorage::addItems( const QList<But
         while (i.hasNext()) {
             i.next();
             Buteo::StorageItem *item = aItems[j];
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+            item->setId(i.value().id);
+#else
             item->setId(QString::number(i.value().id));
+#endif
 
             ContactStorage::OperationStatus status = mapErrorStatus(i.value().errorCode);
 
@@ -493,7 +522,11 @@ QList<ContactStorage::OperationStatus> ContactStorage::modifyItems(const QList<B
                         while (i.hasNext()) {
                                 i.next();
                                 Buteo::StorageItem *item = aItems[j];
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+                                item->setId(i.value().id);
+#else
                                 item->setId(QString::number(i.value().id));
+#endif
                                 LOG_DEBUG("Id set in Storage " << item->getId());
                                 storageErrorList.append(mapErrorStatus(i.value().errorCode));
                                 j++;
@@ -572,11 +605,16 @@ QList<ContactStorage::OperationStatus> ContactStorage::deleteItems(const QList<Q
                 QString itemId = aItemIds[j];
 
                 itemIds.append( itemId );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+                creationTimes.append( iSnapshot.value( itemId ));
+                iSnapshot.remove( itemId );
+#else
                 creationTimes.append( iSnapshot.value( itemId.toUInt()) );
+                iSnapshot.remove( itemId.toUInt() );
+#endif
                 deletionTimes.append( currentTime );
 
 
-                iSnapshot.remove( itemId.toUInt() );
             }
 
             statusList.append( status );
@@ -628,10 +666,15 @@ bool ContactStorage::doInitItemAnalysis()
     iFreshItems.clear();
 
     QDateTime currentTime = QDateTime::currentDateTime();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QMap<QString, QDateTime> snapshot;
+    QList<QString> backend;
+    QList<QString> freshItems;
+#else
     QMap<QContactLocalId, QDateTime> snapshot;
     QList<QContactLocalId> backend;
     QList<QContactLocalId> freshItems;
-
+#endif
 
     // ** Retrieve previous snapshot from db and convert to QHash
     QList<QString> snapshotItems;
@@ -643,22 +686,36 @@ bool ContactStorage::doInitItemAnalysis()
 
     for( int i = 0; i < snapshotItems.count(); ++i )
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        snapshot.insert( snapshotItems[i], snapshotCreationTimes[i] );
+#else
         snapshot.insert( snapshotItems[i].toUInt(), snapshotCreationTimes[i] );
+#endif
     }
 
     // ** Retrieve backend
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QList<QContactId> backendIds = iBackend->getAllContactIds();
+    foreach (const QContactId id, backendIds) {
+        backend << id.toString ();
+    }
+#else
     backend = iBackend->getAllContactIds();
+#endif
 
     LOG_DEBUG( "Found" << snapshot.count() << "items from snapshot" );
     LOG_DEBUG( "Found" << backend.count() << "items from backend" );
 
-    // ** Find items only in the snapshot and mark them as deleted
-
-    QMutableMapIterator<QContactLocalId, QDateTime> i( snapshot );
-
     QList<QString> itemIds;
     QList<QDateTime> creationTimes;
     QList<QDateTime> deletionTimes;
+
+    // ** Find items only in the snapshot and mark them as deleted
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QMutableMapIterator<QString, QDateTime> i( snapshot );
+#else
+    QMutableMapIterator<QContactLocalId, QDateTime> i( snapshot );
+#endif
 
     while( i.hasNext() )
     {
@@ -666,7 +723,7 @@ bool ContactStorage::doInitItemAnalysis()
         if( !backend.contains( i.key() ) )
         {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-            itemIds.append( i.key().toString() );
+            itemIds.append( i.key() );
 #else
             itemIds.append( QString::number( i.key() ) );
 #endif
@@ -713,10 +770,17 @@ bool ContactStorage::doUninitItemAnalysis()
 
     if( !iFreshItems.isEmpty() )
     {
-
         LOG_DEBUG( "Retrieving creation times for" << iFreshItems.count() << "fresh items" );
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QList<QContactId> idList;
+        foreach (const QString freshItem, iFreshItems) {
+            idList << QContactId::fromString (freshItem);
+        }
+        QList<QDateTime> freshCreationTimes = iBackend->getCreationTimes( idList );
+#else
         QList<QDateTime> freshCreationTimes = iBackend->getCreationTimes( iFreshItems );
+#endif
 
         for( int i = 0; i < iFreshItems.count(); ++i )
         {
@@ -728,13 +792,17 @@ bool ContactStorage::doUninitItemAnalysis()
 
     QTime timer;
     timer.start();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QList<QString> intIds = iSnapshot.keys();
+#else
     QList<QContactLocalId> intIds = iSnapshot.keys();
+#endif
 
     QList<QString> ids;
     for( int i = 0; i < intIds.count(); ++i )
     {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        ids.append( intIds[i].toString() );
+        ids.append( intIds[i] );
 #else
         ids.append( QString::number( intIds[i] ) );
 #endif
@@ -761,13 +829,21 @@ QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &
 
 
     if (iBackend != NULL) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QMap<QString,QString> idDataMap;
+#else
         QMap<QContactLocalId,QString> idDataMap;
+#endif
         iBackend->getContacts(aStrIDList, idDataMap);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QMapIterator<QString, QString > iter(idDataMap);
+#else
         QMapIterator<QContactLocalId, QString > iter(idDataMap);
+#endif
 
         while (iter.hasNext()) {
             iter.next();
-            SimpleItem* item = convertVcardToStorageItem(iter.key(), iter.value());
+            SimpleItem* item = convertVcardToStorageItem(QContactId::fromString (iter.key()), iter.value());
 
             if (item  != NULL) {
                 itemList.append(item);

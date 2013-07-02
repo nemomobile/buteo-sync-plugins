@@ -27,10 +27,17 @@
 #include <QMap>
 #include <QVector>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/StoragePlugin.h>
+#include <buteosyncml5/StoragePlugin.h>
+#include <buteosyncml5/DataStore.h>
+#include <buteosyncml5/SyncItemKey.h>
+#else
 #include <buteosyncfw/StoragePlugin.h>
 #include <buteosyncml/StoragePlugin.h>
 #include <buteosyncml/DataStore.h>
 #include <buteosyncml/SyncItemKey.h>
+#endif
 
 #include "ItemIdMapper.h"
 

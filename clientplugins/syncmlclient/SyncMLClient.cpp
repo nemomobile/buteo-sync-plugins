@@ -26,6 +26,16 @@
 #include <QLibrary>
 #include <QtNetwork>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/PluginCbInterface.h>
+#include <buteosyncml5/SyncAgent.h>
+#include <buteosyncml5/SyncAgentConfig.h>
+#include <buteosyncml5/SyncAgentConfigProperties.h>
+#include <buteosyncml5/HTTPTransport.h>
+#include <buteosyncml5/OBEXTransport.h>
+#include <buteosyncml5/DeviceInfo.h>
+#include <buteosyncfw5/LogMacros.h>
+#else
 #include <buteosyncfw/PluginCbInterface.h>
 #include <buteosyncml/SyncAgent.h>
 #include <buteosyncml/SyncAgentConfig.h>
@@ -33,12 +43,12 @@
 #include <buteosyncml/HTTPTransport.h>
 #include <buteosyncml/OBEXTransport.h>
 #include <buteosyncml/DeviceInfo.h>
+#include <buteosyncfw/LogMacros.h>
+#endif
 
 #include "SyncMLConfig.h"
 #include "SyncMLCommon.h"
 #include "DeviceInfo.h"
-
-#include <buteosyncfw/LogMacros.h>
 
 const QString DEFAULTCONFIGFILE("/etc/buteo/meego-syncml-conf.xml");
 const QString EXTCONFIGFILE("/etc/buteo/ext-syncml-conf.xml");
@@ -67,6 +77,7 @@ SyncMLClient::~SyncMLClient() {
 
 bool SyncMLClient::init() {
 	FUNCTION_CALL_TRACE;
+
 
 	iProperties = iProfile.allNonStorageKeys();
 

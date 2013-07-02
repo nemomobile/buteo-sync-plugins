@@ -5,7 +5,13 @@
 #include <QContactManager>
 #include <QList>
 
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+#include <QContactId>
+using namespace QtContacts;
+#define QContactLocalId QContactId
+#else
 QTM_USE_NAMESPACE;
+#endif
 
 class ContactsChangeNotifier : public QObject
 {

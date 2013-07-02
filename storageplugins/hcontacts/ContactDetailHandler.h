@@ -1,21 +1,21 @@
 #ifndef CONTACTDETAILHANDLER_H
 #define CONTACTDETAILHANDLER_H
 
-#include <QVersitContactExporterDetailHandlerV2>
 #include <QVersitDocument>
+#include <QVersitContactExporterDetailHandlerV2>
 #include <QVersitProperty>
 #include <QContact>
-#include <QObject>
 #include <QSet>
-#include <QString>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+QTM_USE_NAMESPACE
+#else
+using namespace QtVersit;
+#endif
 
 /*! \brief ContactDetailHandler class removes unused fields from vcard
  *
  */
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-QTM_USE_NAMESPACE;
-#endif
 
 class ContactDetailHandler : public QVersitContactExporterDetailHandlerV2
 {
@@ -32,8 +32,8 @@ public:
     /*! \brief Not used/implemented.
      */
     virtual void detailProcessed (const QContact & contact, const QContactDetail & detail,
-                                  const QVersitDocument & document, QSet<QString> * processedFields,
-                                  QList<QVersitProperty> * toBeRemoved, QList<QVersitProperty> * toBeAdded);
+                          const QVersitDocument & document, QSet<int> * processedFields,
+                          QList<QVersitProperty> * toBeRemoved, QList<QVersitProperty> * toBeAdded);
 
 };
 

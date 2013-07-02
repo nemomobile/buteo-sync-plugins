@@ -22,7 +22,11 @@
  */
 
 #include "SyncMLStorageProviderTest.h"
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncml5/StoragePlugin.h>
+#else
 #include <buteosyncml/StoragePlugin.h>
+#endif
 #include <QDomDocument>
 
 #include <QtTest/QtTest>

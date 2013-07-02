@@ -28,7 +28,11 @@
 #include "SyncMLStorageProvider.h"
 #include <ClientPlugin.h>
 #include <SyncResults.h>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncml5/SyncAgent.h>
+#else
 #include <buteosyncml/SyncAgent.h>
+#endif
 
 namespace DataSync {
 
