@@ -31,9 +31,15 @@ public:
 
     /*! \brief Not used/implemented.
      */
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    virtual void detailProcessed (const QContact & contact, const QContactDetail & detail,
+                                  const QVersitDocument & document, QSet<QString> * processedFields,
+                                  QList<QVersitProperty> * toBeRemoved, QList<QVersitProperty> * toBeAdded);
+#else
     virtual void detailProcessed (const QContact & contact, const QContactDetail & detail,
                           const QVersitDocument & document, QSet<int> * processedFields,
                           QList<QVersitProperty> * toBeRemoved, QList<QVersitProperty> * toBeAdded);
+#endif
 
 };
 

@@ -843,8 +843,11 @@ QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &
 
         while (iter.hasNext()) {
             iter.next();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
             SimpleItem* item = convertVcardToStorageItem(QContactId::fromString (iter.key()), iter.value());
-
+#else
+            SimpleItem* item = convertVcardToStorageItem(iter.key(), iter.value());
+#endif
             if (item  != NULL) {
                 itemList.append(item);
             }

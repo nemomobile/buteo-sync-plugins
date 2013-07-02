@@ -15,9 +15,15 @@ void ContactDetailHandler::contactProcessed(const QContact &contact, QVersitDocu
     document->removeProperties(FIELD_SOUND);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+void ContactDetailHandler::detailProcessed (const QContact & contact, const QContactDetail & detail,
+                      const QVersitDocument & document, QSet<QString> * processedFields,
+                      QList<QVersitProperty> * toBeRemoved, QList<QVersitProperty> * toBeAdded)
+#else
 void ContactDetailHandler::detailProcessed(const QContact &contact, const QContactDetail &detail,
                                            const QVersitDocument &document, QSet<int> *processedFields,
                                            QList<QVersitProperty> *toBeRemoved, QList<QVersitProperty> *toBeAdded)
+#endif
 {
     Q_UNUSED(contact);
     Q_UNUSED(detail);
