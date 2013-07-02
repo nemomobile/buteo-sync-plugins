@@ -3,18 +3,20 @@ TARGET = syncml-client
 DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon
 
-CONFIG += link_pkgconfig plugin 
+CONFIG += link_pkgconfig plugin
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY += systeminfo
     PKGCONFIG = buteosyncfw buteosyncml
     LIBS += -lsyncmlcommon
+    target.path = /usr/lib/buteo-plugins
 }
 
 equals(QT_MAJOR_VERSION, 5): {
     PKGCONFIG = buteosyncfw5 buteosyncml5 Qt0SystemInfo
     LIBS += -lsyncmlcommon5
+    target.path = /usr/lib/buteo-plugins-qt5
 }
 
 LIBS += -L../../syncmlcommon
@@ -45,7 +47,6 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 
 
 #install
-target.path = /usr/lib/buteo-plugins
 
 client.path = /etc/buteo/profiles/client
 client.files = xml/syncml.xml

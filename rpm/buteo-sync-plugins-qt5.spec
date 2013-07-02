@@ -11,6 +11,9 @@ BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Contacts)
 BuildRequires: pkgconfig(Qt5Versit)
+BuildRequires: pkgconfig(Qt5Sql)
+BuildRequires: pkgconfig(Qt5DBus)
+BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(Qt0SystemInfo)
 BuildRequires: pkgconfig(openobex)
 BuildRequires: pkgconfig(accounts-qt5)
@@ -18,6 +21,7 @@ BuildRequires: pkgconfig(buteosyncml5)
 BuildRequires: pkgconfig(buteosyncfw5)
 BuildRequires: pkgconfig(libmkcal-qt5)
 BuildRequires: pkgconfig(libkcalcoren-qt5)
+BuildRequires: pkgconfig(sqlite3)
 BuildRequires: doxygen
 
 %description
@@ -29,7 +33,7 @@ BuildRequires: doxygen
 %config %{_sysconfdir}/buteo/profiles/client/*.xml
 %config %{_sysconfdir}/buteo/profiles/storage/*.xml
 %config %{_sysconfdir}/buteo/profiles/sync/bt_template.xml
-%{_libdir}/buteo-plugins/*.so
+%{_libdir}/buteo-plugins-qt5/*.so
 %{_libdir}/*.so.*
 
 %package devel

@@ -11,11 +11,13 @@ equals(QT_MAJOR_VERSION, 4): {
     PKGCONFIG = buteosyncfw libkcalcoren libmkcal
     CONFIG += mkcal
     LIBS += -lsyncmlcommon
+    target.path = /usr/lib/buteo-plugins
 }
 
 equals(QT_MAJOR_VERSION, 5): {
     PKGCONFIG = buteosyncfw5 libkcalcoren-qt5 libmkcal-qt5
     LIBS += -lsyncmlcommon5
+    target.path = /usr/lib/buteo-plugins-qt5
 }
 
 VER_MAJ = 1
@@ -40,8 +42,6 @@ QMAKE_CXXFLAGS = -Wall \
     -O2 -finline-functions
 
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
-
-target.path = /usr/lib/buteo-plugins
 
 ctcaps.path =/etc/buteo/xml/
 ctcaps.files=xml/CTCaps_calendar_11.xml xml/CTCaps_calendar_12.xml
