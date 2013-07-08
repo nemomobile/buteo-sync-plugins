@@ -46,11 +46,11 @@ HEADERS += ItemAdapterTest.h \
            ../StorageAdapter.h \
            ../SyncMLStorageProvider.h \
            SyncMLStorageProviderTest.h \
-	       FolderItemParserTest.h \
+               FolderItemParserTest.h \
            ../FolderItemParser.h \
            DeviceInfoTest.h \
            ../DeviceInfo.h \
-           
+
 
 SOURCES += main.cpp \
            ItemAdapterTest.cpp \
@@ -64,15 +64,15 @@ SOURCES += main.cpp \
            ../StorageAdapter.cpp \
            ../SyncMLStorageProvider.cpp \
            SyncMLStorageProviderTest.cpp \
-	       FolderItemParserTest.cpp \
+               FolderItemParserTest.cpp \
            ../FolderItemParser.cpp \
            DeviceInfoTest.cpp \
-           ../DeviceInfo.cpp 
-           
+           ../DeviceInfo.cpp
+
 
 QT += testlib sql xml
 QT -= gui
-CONFIG += link_pkgconfig qtestlib
+CONFIG += link_pkgconfig
 PKGCONFIG = buteosyncfw
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno

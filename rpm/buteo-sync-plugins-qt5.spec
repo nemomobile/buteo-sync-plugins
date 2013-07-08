@@ -8,13 +8,15 @@ License: LGPLv2.1
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(Qt5Core)
+# check if qtcontacts still uses qpixmap
+BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Contacts)
 BuildRequires: pkgconfig(Qt5Versit)
 BuildRequires: pkgconfig(Qt5Sql)
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Test)
-BuildRequires: pkgconfig(Qt0SystemInfo)
+BuildRequires: pkgconfig(Qt5SystemInfo)
 BuildRequires: pkgconfig(openobex)
 BuildRequires: pkgconfig(accounts-qt5)
 BuildRequires: pkgconfig(buteosyncml5)

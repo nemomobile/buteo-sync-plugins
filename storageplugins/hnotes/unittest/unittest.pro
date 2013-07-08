@@ -53,7 +53,7 @@ SOURCES += main.cpp \
 
 QT += testlib
 QT -= gui
-CONFIG += qtestlib link_pkgconfig
+CONFIG += link_pkgconfig
 
 equals(QT_MAJOR_VERSION, 4): {
     PKGCONFIG = buteosyncfw libkcalcoren libmkcal

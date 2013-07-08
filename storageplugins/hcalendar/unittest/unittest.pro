@@ -33,7 +33,7 @@ SOURCES += main.cpp \
            SimpleItem.cpp \
            SyncMLConfig.cpp
 
-CONFIG += link_pkgconfig qtestlib
+CONFIG += link_pkgconfig
 LIBS += -L../../../syncmlcommon
 
 equals(QT_MAJOR_VERSION, 4): {
