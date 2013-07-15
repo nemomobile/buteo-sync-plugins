@@ -34,9 +34,12 @@
  *         host for synchronization of data using buteosyncml
  *
  */
-class USBConnection : public DataSync::OBEXConnection
+class USBConnection : public DataSync::OBEXConnection, public QObject
 {
+    Q_OBJECT
+
 public:
+
     USBConnection ();
 
     virtual ~USBConnection ();
@@ -56,8 +59,21 @@ public:
      */
     virtual void disconnect ();
 
+signals:
+
+    void usbConnected (int fd);
+
+protected slots:
+
+    void handleUSBActivated (int fd);
+
 private:
+
+    void setupFdListener (const int fd);
+
     int                      mFd;
+
+    QSocketNotifier*         mReadNotifier;
 };
 
 #endif // USBCONNECTION_H

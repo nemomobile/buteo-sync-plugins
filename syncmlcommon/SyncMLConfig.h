@@ -59,6 +59,14 @@ public:
      */
     static QString getDevInfoFile();
 
+    /*! \brief Returns the config XML files for configuring SyncML stack
+     *
+     * @param aDefaultConfigFile - the default config file, out parameter
+     * @param aExtConfigFile - the extended properties config file, out parameter
+     * @return void
+     */
+    static void syncmlConfigFilePaths (QString& aDefaultConfigFile, QString& aExtConfigFile);
+
 protected:
 
 private:

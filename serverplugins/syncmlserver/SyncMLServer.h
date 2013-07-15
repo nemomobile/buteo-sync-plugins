@@ -28,17 +28,31 @@
 #include <buteosyncfw5/ServerPlugin.h>
 #include <buteosyncfw5/SyncCommonDefs.h>
 #include <buteosyncfw5/SyncResults.h>
+#include <buteosyncml5/StorageProvider.h>
+#include <buteosyncml5/SyncAgent.h>
+#include <buteosyncml5/Transport.h>
+#include <buteosyncml5/SyncAgentConfig.h>
 #else
 #include <buteosyncfw/ServerPlugin.h>
 #include <buteosyncfw/SyncCommonDefs.h>
 #include <buteosyncfw/SyncResults.h>
+#include <buteosyncml/StorageProvider.h>
+#include <buteosyncml/SyncAgent.h>
+#include <buteosyncml/Transport.h>
 #endif
+
+#include "USBConnection.h"
+#include "SyncMLStorageProvider.h"
 
 namespace Buteo {
     class ServerPlugin;
     class Profile;
 }
 
+namespace DataSync {
+    class SyncAgent;
+    class Transport;
+}
 class SYNCMLSERVERSHARED_EXPORT SyncMLServer : public Buteo::ServerPlugin
 {
     Q_OBJECT
@@ -72,6 +86,56 @@ public slots:
 
     virtual void connectivityStateChanged (Sync::ConnectivityType type, bool state);
 
+protected slots:
+    void handleUSBConnected (int fd);
+
+    void handleSyncFinished (DataSync::SyncState state);
+
+    void handleStateChanged (DataSync::SyncState state);
+
+    void handleStorageAccquired (QString storageType);
+
+    void handleItemProcessed (DataSync::ModificationType modificationType,
+                              DataSync::ModifiedDatabase modifiedDb,
+                              QString localDb,
+                              QString dbType);
+private:
+
+    bool initSyncAgent ();
+
+    void closeSyncAgent ();
+
+    bool initTransport ();
+
+    void closeUSBTransport ();
+
+    DataSync::SyncAgentConfig *initSyncAgentConfig();
+
+    void closeSyncAgentConfig ();
+
+    bool initStorageProvider ();
+
+    bool createUSBTransport ();
+
+    bool startNewSession ();
+
+    void generateResults (bool success);
+
+    QMap<QString, QString>          mProperties;
+
+    DataSync::SyncAgent*            mAgent;
+
+    DataSync::SyncAgentConfig*      mConfig;
+
+    USBConnection                   mUSBConnection;
+
+    DataSync::Transport*            mTransport;
+
+    Buteo::SyncResults              mResults;
+
+    SyncMLStorageProvider           mStorageProvider;
+
+    qint32                          mCommittedItems;
 };
 
 #endif // SYNCMLSERVER_H

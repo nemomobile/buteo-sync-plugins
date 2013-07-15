@@ -79,8 +79,30 @@ USBConnection::disconnect ()
 bool
 USBConnection::isConnected () const
 {
+    FUNCTION_CALL_TRACE;
     if (mFd == -1)
         return false;
     else
         return true;
+}
+
+void
+USBConnection::setupFdListener (const int fd)
+{
+    FUNCTION_CALL_TRACE;
+    mReadNotifier = new QSocketNotifier (fd, QSocketNotifier::Read, this);
+    mReadNotifier->setEnabled (true);
+
+    QObject::connect (mReadNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleUSBActivated (int)));
+}
+
+void
+USBConnection::handleUSBActivated (int fd)
+{
+    FUNCTION_CALL_TRACE;
+
+    LOG_DEBUG ("USB is activated. Emitting signal to handle incoming data");
+
+    emit usbConnected (fd);
 }
