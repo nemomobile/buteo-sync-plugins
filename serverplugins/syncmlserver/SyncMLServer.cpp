@@ -20,8 +20,83 @@
 * 02110-1301 USA
 */
 #include "SyncMLServer.h"
+#include <LogMacros.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/SyncProfile.h>
+#else
+#include <buteosyncfw/SyncProfile.h>
+#endif
 
-SyncMLServer::SyncMLServer()
+extern "C" SyncMLServer* createPlugin(const QString& pluginName,
+        const Buteo::SyncProfile& profile,
+        Buteo::PluginCbInterface *cbInterface) {
+    return new SyncMLServer(pluginName, profile, cbInterface);
+}
+
+extern "C" void destroyPlugin(SyncMLServer *server) {
+    delete server;
+}
+
+SyncMLServer::SyncMLServer (const QString& pluginName,
+                            const Buteo::Profile profile,
+                            Buteo::PluginCbInterface *cbInterface) :
+    ServerPlugin (pluginName, profile, cbInterface)
+{
+    FUNCTION_CALL_TRACE;
+}
+
+SyncMLServer::~SyncMLServer ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+bool
+SyncMLServer::init ()
 {
 }
+
+bool
+SyncMLServer::uninit ()
+{
+}
+
+void
+SyncMLServer::abortSync (Sync::SyncStatus status)
+{
+}
+
+bool
+SyncMLServer::cleanUp ()
+{
+}
+
+Buteo::SyncResults
+SyncMLServer::getSyncResults () const
+{
+}
+
+bool
+SyncMLServer::startListen ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+void
+SyncMLServer::stopListen ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+void
+SyncMLServer::suspend ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+void
+SyncMLServer::resume ()
+{
+    FUNCTION_CALL_TRACE;
+}
+

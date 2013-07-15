@@ -22,7 +22,7 @@
 #ifndef USBCONNECTION_H
 #define USBCONNECTION_H
 
-#include <QString>
+#include <QSocketNotifier>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <buteosyncml5/OBEXConnection.h>
@@ -57,7 +57,7 @@ public:
     virtual void disconnect ();
 
 private:
-    int         mFd;
+    int                      mFd;
 };
 
 #endif // USBCONNECTION_H

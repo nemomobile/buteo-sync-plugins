@@ -24,11 +24,54 @@
 
 #include "syncmlserver_global.h"
 
-class SYNCMLSERVERSHARED_EXPORT SyncMLServer
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/ServerPlugin.h>
+#include <buteosyncfw5/SyncCommonDefs.h>
+#include <buteosyncfw5/SyncResults.h>
+#else
+#include <buteosyncfw/ServerPlugin.h>
+#include <buteosyncfw/SyncCommonDefs.h>
+#include <buteosyncfw/SyncResults.h>
+#endif
+
+namespace Buteo {
+    class ServerPlugin;
+    class Profile;
+}
+
+class SYNCMLSERVERSHARED_EXPORT SyncMLServer : public Buteo::ServerPlugin
 {
+    Q_OBJECT
 
 public:
-    SyncMLServer();
+    SyncMLServer (const QString& pluginName,
+                  const Buteo::Profile profile,
+                  Buteo::PluginCbInterface *cbInterface);
+
+    virtual ~SyncMLServer ();
+
+    virtual bool init ();
+
+    virtual bool uninit ();
+
+    virtual void abortSync (Sync::SyncStatus status = Sync::SYNC_ABORTED);
+
+    virtual bool cleanUp ();
+
+    virtual Buteo::SyncResults getSyncResults () const;
+
+    virtual bool startListen ();
+
+    virtual void stopListen ();
+
+    virtual void suspend ();
+
+    virtual void resume ();
+
+public slots:
+
+    virtual void connectivityStateChanged (Sync::ConnectivityType type, bool state);
+
 };
 
 #endif // SYNCMLSERVER_H
