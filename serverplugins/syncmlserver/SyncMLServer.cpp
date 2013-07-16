@@ -54,6 +54,10 @@ SyncMLServer::SyncMLServer (const QString& pluginName,
 SyncMLServer::~SyncMLServer ()
 {
     FUNCTION_CALL_TRACE;
+
+    closeSyncAgentConfig ();
+    closeSyncAgent ();
+    closeUSBTransport ();
 }
 
 bool
@@ -110,12 +114,26 @@ bool
 SyncMLServer::startListen ()
 {
     FUNCTION_CALL_TRACE;
+
+    LOG_DEBUG ("Starting listener");
+
+    if (createUSBTransport ()) {
+        LOG_DEBUG ("USB transport created");
+        return true;
+    }
+    else {
+        LOG_DEBUG ("USB transport not created");
+        return false;
+    }
 }
 
 void
 SyncMLServer::stopListen ()
 {
     FUNCTION_CALL_TRACE;
+
+    // Stop all connections
+    closeUSBTransport ();
 }
 
 void
@@ -165,6 +183,10 @@ DataSync::SyncAgentConfig*
 SyncMLServer::initSyncAgentConfig ()
 {
     FUNCTION_CALL_TRACE;
+
+    mTransport = new DataSync::OBEXTransport (mUSBConnection,
+                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
+                                              DataSync::OBEXTransport::TYPEHINT_USB);
 
     if (!mTransport || !mStorageProvider.init (&iProfile, this, iCbInterface, true))
         return 0;
@@ -228,8 +250,12 @@ SyncMLServer::createUSBTransport ()
 
     LOG_DEBUG ("Opening new USB connection");
 
+    mUSBConnection.connect ();
+
     QObject::connect (&mUSBConnection, SIGNAL (usbConnected (int)),
-             this, SLOT (handleUSBConnected (int)));
+                      this, SLOT (handleUSBConnected (int)));
+
+    return mUSBConnection.isConnected ();
 }
 
 void
@@ -246,18 +272,9 @@ void
 SyncMLServer::handleUSBConnected (int fd)
 {
     FUNCTION_CALL_TRACE;
+    Q_UNUSED (fd);
 
     LOG_DEBUG ("New incoming data over USB");
-
-    mTransport = new DataSync::OBEXTransport (mUSBConnection,
-                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
-                                              DataSync::OBEXTransport::TYPEHINT_USB);
-
-    if (!mTransport)
-    {
-        LOG_CRITICAL ("Unable to create transport");
-        return;
-    }
 
     startNewSession ();
 }
@@ -299,6 +316,9 @@ void
 SyncMLServer::handleSyncFinished (DataSync::SyncState state)
 {
     FUNCTION_CALL_TRACE;
+
+    // FIXME: Handle the state correctly
+    emit syncFinished (Sync::SYNC_DONE);
 }
 
 void

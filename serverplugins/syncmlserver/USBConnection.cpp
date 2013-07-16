@@ -55,9 +55,10 @@ USBConnection::connect ()
     if (mFd < 0) {
         LOG_CRITICAL ("Count not open USB device");
         return -1;
+    } else {
+        setupFdListener (mFd);
+        LOG_DEBUG ("Opened USB device " << USB_DEVICE);
     }
-
-    LOG_DEBUG ("Opened USB device " << USB_DEVICE);
 
     return mFd;
 }

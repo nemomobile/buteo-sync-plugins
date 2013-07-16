@@ -82,11 +82,16 @@ public:
 
     virtual void resume ();
 
+signals:
+
+    void syncFinished (Sync::SyncStatus);
+
 public slots:
 
     virtual void connectivityStateChanged (Sync::ConnectivityType type, bool state);
 
 protected slots:
+
     void handleUSBConnected (int fd);
 
     void handleSyncFinished (DataSync::SyncState state);
