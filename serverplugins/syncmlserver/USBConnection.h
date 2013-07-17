@@ -34,7 +34,7 @@
  *         host for synchronization of data using buteosyncml
  *
  */
-class USBConnection : public DataSync::OBEXConnection, public QObject
+class USBConnection : public QObject, public DataSync::OBEXConnection
 {
     Q_OBJECT
 

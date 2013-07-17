@@ -25,9 +25,11 @@
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <buteosyncfw5/SyncProfile.h>
 #include <buteosyncml5/OBEXTransport.h>
+#include <buteosyncml5/SyncAgentConfig.h>
 #else
 #include <buteosyncfw/SyncProfile.h>
 #include <buteosyncml/OBEXTransport.h>
+#include <buteosyncml/SyncAgentConfig.h>
 #endif
 
 #include "SyncMLConfig.h"

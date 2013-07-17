@@ -68,8 +68,8 @@ QString SyncMLConfig::getDevInfoFile()
     return SyncMLConfig::getDatabasePath() + DEVINFO_FILE_NAME;
 }
 
-static void
-SyncMLConfig::syncMLConfig (QString& aDefaultConfigFile, QString& aExtConfigFile)
+void
+SyncMLConfig::syncmlConfigFilePaths (QString& aDefaultConfigFile, QString& aExtConfigFile)
 {
     aDefaultConfigFile = "/etc/buteo/meego-syncml-conf.xml";
     aExtConfigFile = "/etc/buteo/ext-syncml-conf.xml";

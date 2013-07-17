@@ -15,7 +15,7 @@ INCLUDEPATH += . ../../syncmlcommon
 LIBS += -L../../syncmlcommon
 
 equals(QT_MAJOR_VERSION, 4): {
-    PKGCONFIG = buteosyncfw buteosyncml
+    PKGCONFIG = buteosyncfw buteosyncml QtSystemInfo
     LIBS += -lsyncmlcommon
     target.path = /usr/lib/buteo-plugins
 }
@@ -49,8 +49,8 @@ HEADERS += SyncMLServer.h\
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov $(OBJECTS_DIR)/moc_*
 
-sync.path = /etc/buteo/profiles/sync
-sync.files = xml/sync/*
+sync.path = /etc/buteo/profiles/server
+sync.files = xml/syncml.xml
 
 #installs
 INSTALLS += target sync
