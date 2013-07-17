@@ -1,4 +1,4 @@
-Name: buteo-sync-plugins
+Name: buteo-sync-plugins-qt5
 Version: 0.7.0
 Release: 1
 Summary: Synchronization plugins
