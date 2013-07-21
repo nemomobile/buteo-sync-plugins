@@ -13,15 +13,16 @@ CONFIG += link_pkgconfig plugin
 
 INCLUDEPATH += . ../../syncmlcommon
 LIBS += -L../../syncmlcommon
+PKGCONFIG += glib-2.0
 
 equals(QT_MAJOR_VERSION, 4): {
-    PKGCONFIG = buteosyncfw buteosyncml QtSystemInfo
+    PKGCONFIG += buteosyncfw buteosyncml QtSystemInfo
     LIBS += -lsyncmlcommon
     target.path = /usr/lib/buteo-plugins
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo
+    PKGCONFIG += buteosyncfw5 buteosyncml5 Qt0SystemInfo
     LIBS += -lsyncmlcommon5
     target.path = /usr/lib/buteo-plugins-qt5
 }

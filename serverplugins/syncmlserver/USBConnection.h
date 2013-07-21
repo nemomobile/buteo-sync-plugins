@@ -23,6 +23,7 @@
 #define USBCONNECTION_H
 
 #include <QSocketNotifier>
+#include <glib.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <buteosyncml5/OBEXConnection.h>
@@ -68,8 +69,19 @@ protected slots:
     void handleUSBActivated (int fd);
 
 private:
+    // Functions
 
-    void setupFdListener (const int fd);
+    int openUSBDevice ();
+
+    void closeUSBDevice ();
+
+    void addFdListener ();
+
+    void removeFdListener ();
+
+    void signalNewSession ();
+
+private:
 
     int                      mFd;
 

@@ -103,7 +103,7 @@ protected slots:
     void handleItemProcessed (DataSync::ModificationType modificationType,
                               DataSync::ModifiedDatabase modifiedDb,
                               QString localDb,
-                              QString dbType);
+                              QString dbType, int committedItems);
 private:
 
     bool initSyncAgent ();

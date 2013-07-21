@@ -25,9 +25,10 @@
 
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <termios.h>
 
 USBConnection::USBConnection () :
-    mFd (-1)
+    mFd (-1), mReadNotifier (0)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -39,6 +40,38 @@ USBConnection::~USBConnection ()
 
 int
 USBConnection::connect ()
+{
+    FUNCTION_CALL_TRACE;
+
+    mFd = openUSBDevice ();
+
+    addFdListener ();
+
+    return mFd;
+}
+
+void
+USBConnection::disconnect ()
+{
+    FUNCTION_CALL_TRACE;
+
+    removeFdListener ();
+
+    closeUSBDevice ();
+}
+
+bool
+USBConnection::isConnected () const
+{
+    FUNCTION_CALL_TRACE;
+    if (mFd == -1)
+        return false;
+    else
+        return true;
+}
+
+int
+USBConnection::openUSBDevice ()
 {
     FUNCTION_CALL_TRACE;
 
@@ -55,47 +88,73 @@ USBConnection::connect ()
     if (mFd < 0) {
         LOG_CRITICAL ("Count not open USB device");
         return -1;
-    } else {
-        setupFdListener (mFd);
-        LOG_DEBUG ("Opened USB device " << USB_DEVICE);
+    }
+
+    long flags = fcntl (mFd, F_GETFL);
+    fcntl (mFd, F_SETFL, flags & ~O_NONBLOCK);
+
+    struct termios opts;
+    tcgetattr (mFd, &opts);
+    cfmakeraw (&opts);
+    opts.c_oflag &= ~ONLCR;
+    tcsetattr (mFd, TCSANOW, &opts);
+
+    int arg = fcntl (mFd, F_GETFL);
+    if (arg < 0)
+    {
+        LOG_WARNING ("Unable to get file attributes");
+        close (mFd);
+        return -1;
+    }
+
+    arg |= O_NONBLOCK;
+    if (fcntl (mFd, F_SETFL, arg) < 0)
+    {
+        LOG_WARNING ("Could not set file attributes");
+        close (mFd);
+        return -1;
     }
 
     return mFd;
 }
 
 void
-USBConnection::disconnect ()
+USBConnection::closeUSBDevice ()
 {
     FUNCTION_CALL_TRACE;
 
-    if (isConnected ()) {
+    if (isConnected ())
+    {
+        LOG_DEBUG ("Closing USB device with fd " << mFd);
+
         shutdown (mFd, SHUT_RDWR);
         close (mFd);
         mFd = -1;
-
-        LOG_DEBUG ("Closed USB connection with fd " << mFd);
     }
 }
 
-bool
-USBConnection::isConnected () const
-{
-    FUNCTION_CALL_TRACE;
-    if (mFd == -1)
-        return false;
-    else
-        return true;
-}
-
 void
-USBConnection::setupFdListener (const int fd)
+USBConnection::addFdListener ()
 {
     FUNCTION_CALL_TRACE;
-    mReadNotifier = new QSocketNotifier (fd, QSocketNotifier::Read, this);
+    mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read, this);
     mReadNotifier->setEnabled (true);
 
     QObject::connect (mReadNotifier, SIGNAL (activated (int)),
                       this, SLOT (handleUSBActivated (int)));
+}
+
+void
+USBConnection::removeFdListener ()
+{
+    QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
+                         this, SLOT (handleUSBActivated (int)));
+}
+
+void
+USBConnection::signalNewSession ()
+{
+    emit usbConnected (mFd);
 }
 
 void

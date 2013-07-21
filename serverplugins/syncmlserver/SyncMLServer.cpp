@@ -48,7 +48,7 @@ extern "C" void destroyPlugin(SyncMLServer *server) {
 SyncMLServer::SyncMLServer (const QString& pluginName,
                             const Buteo::Profile profile,
                             Buteo::PluginCbInterface *cbInterface) :
-    ServerPlugin (pluginName, profile, cbInterface)
+    ServerPlugin (pluginName, profile, cbInterface), mAgent (0), mConfig (0), mTransport (0), mCommittedItems (0)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -278,7 +278,8 @@ SyncMLServer::handleUSBConnected (int fd)
 
     LOG_DEBUG ("New incoming data over USB");
 
-    startNewSession ();
+    if (!mAgent)
+        startNewSession ();
 }
 
 bool
@@ -295,8 +296,8 @@ SyncMLServer::startNewSession ()
              this, SLOT (handleSyncFinished (DataSync::SyncState)));
     QObject::connect (mAgent, SIGNAL (storageAccquired (QString)),
              this, SLOT (handleStorageAccquired (QString)));
-    QObject::connect (mAgent, SIGNAL (itemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString)),
-             this, SLOT (handleItemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString)));
+    QObject::connect (mAgent, SIGNAL (itemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString, int)),
+             this, SLOT (handleItemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString, int)));
 
     if (mAgent->listen (*mConfig))
     {
@@ -333,7 +334,8 @@ void
 SyncMLServer::handleItemProcessed (DataSync::ModificationType modificationType,
                                    DataSync::ModifiedDatabase modifiedDb,
                                    QString localDb,
-                                   QString dbType)
+                                   QString dbType,
+                                   int committedItems)
 {
     FUNCTION_CALL_TRACE;
 }

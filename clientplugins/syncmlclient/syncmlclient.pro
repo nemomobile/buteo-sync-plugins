@@ -14,7 +14,7 @@ equals(QT_MAJOR_VERSION, 4): {
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo
+    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt0SystemInfo
     LIBS += -lsyncmlcommon5
     target.path = /usr/lib/buteo-plugins-qt5
 }
