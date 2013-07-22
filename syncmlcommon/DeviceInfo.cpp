@@ -63,11 +63,7 @@ QString DeviceInfo::getDeviceIMEI()
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         /// @todo returning first IMEI for now; needs fixing on multisim devices
-        // FIXME: As of 21July2013, this method aborts
-        //if (deviceInfo.imeiCount () > 0)
-        //    return IMEI + deviceInfo.imei(0);
-        //else
-            return IMEI + DUMMY_IMEI;
+        return IMEI + deviceInfo.imei(0);
 #else
         return IMEI + deviceInfo.imei();
 #endif

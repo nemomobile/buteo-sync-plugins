@@ -26,8 +26,10 @@
 #include <buteosyncfw5/SyncProfile.h>
 #include <buteosyncml5/OBEXTransport.h>
 #include <buteosyncml5/SyncAgentConfig.h>
+#include <buteosyncfw5/PluginCbInterface.h>
 #else
 #include <buteosyncfw/SyncProfile.h>
+#include <buteosyncfw/PluginCbInterface.h>
 #include <buteosyncml/OBEXTransport.h>
 #include <buteosyncml/SyncAgentConfig.h>
 #endif
@@ -48,7 +50,8 @@ extern "C" void destroyPlugin(SyncMLServer *server) {
 SyncMLServer::SyncMLServer (const QString& pluginName,
                             const Buteo::Profile profile,
                             Buteo::PluginCbInterface *cbInterface) :
-    ServerPlugin (pluginName, profile, cbInterface), mAgent (0), mConfig (0), mTransport (0), mCommittedItems (0)
+    ServerPlugin (pluginName, profile, cbInterface), mAgent (0), mConfig (0),
+    mTransport (0), mCommittedItems (0), mConnectionType (Sync::CONNECTIVITY_USB)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -74,6 +77,12 @@ bool
 SyncMLServer::uninit ()
 {
     FUNCTION_CALL_TRACE;
+
+    closeSyncAgentConfig ();
+    closeSyncAgent ();
+    closeUSBTransport ();
+
+    mStorageProvider.uninit ();
 
     return true;
 }
@@ -119,14 +128,22 @@ SyncMLServer::startListen ()
 
     LOG_DEBUG ("Starting listener");
 
-    if (createUSBTransport ()) {
-        LOG_DEBUG ("USB transport created");
-        return true;
+    bool listening = false;
+    if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_USB))
+    {
+        mConnectionType = Sync::CONNECTIVITY_USB;
+        listening = createUSBTransport ();
+    } else if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_BT))
+    {
+        mConnectionType = Sync::CONNECTIVITY_BT;
+        // TODO: Start listning for BT
+    } else
+    {
+        mConnectionType = Sync::CONNECTIVITY_INTERNET;
+        // No sync over IP as of now
     }
-    else {
-        LOG_DEBUG ("USB transport not created");
-        return false;
-    }
+
+    return listening;
 }
 
 void
@@ -159,8 +176,24 @@ SyncMLServer::connectivityStateChanged (Sync::ConnectivityType type, bool state)
 {
     FUNCTION_CALL_TRACE;
 
-    // TODO: Handle state changes for the corresponding connection (USB/BT/...)
     LOG_DEBUG ("Connectivity state changed event " << type << ". Connectivity changed to " << state);
+
+    if (type == Sync::CONNECTIVITY_USB)
+    {
+        // Only connectivity changes would be USB enabled/disabled
+        if (state)
+        {
+            LOG_DEBUG ("USB available. Starting sync...");
+            createUSBTransport ();
+        } else {
+            LOG_DEBUG ("USB connection not available. Stopping sync...");
+            closeUSBTransport ();
+
+            // FIXME: Should we also abort any ongoing sync session?
+        }
+    } else if (type == Sync::CONNECTIVITY_BT)
+    {
+    }
 }
 
 bool
@@ -313,6 +346,8 @@ void
 SyncMLServer::handleStateChanged (DataSync::SyncState state)
 {
     FUNCTION_CALL_TRACE;
+
+    LOG_DEBUG ("SyncML new state " << state);
 }
 
 void
@@ -320,14 +355,51 @@ SyncMLServer::handleSyncFinished (DataSync::SyncState state)
 {
     FUNCTION_CALL_TRACE;
 
-    // FIXME: Handle the state correctly
-    emit syncFinished (Sync::SYNC_DONE);
+    LOG_DEBUG ("Sync finished with state " << state);
+    bool errorStatus = true;
+
+    switch (state)
+    {
+    case DataSync::SUSPENDED:
+    case DataSync::ABORTED:
+    case DataSync::SYNC_FINISHED:
+    {
+        generateResults (true);
+        errorStatus = true;
+        emit success (getProfileName (), QString::number (state));
+        break;
+    }
+
+    case DataSync::INTERNAL_ERROR:
+    case DataSync::DATABASE_FAILURE:
+    case DataSync::CONNECTION_ERROR:
+    case DataSync::INVALID_SYNCML_MESSAGE:
+    {
+        generateResults (false);
+        emit error (getProfileName (), QString::number (state), 0);
+        break;
+    }
+
+    default:
+    {
+        LOG_CRITICAL ("Unexpected state change");
+        generateResults (false);
+
+        emit error (getProfileName (), QString::number (state), 0);
+        break;
+    }
+    }
+
+    uninit ();
 }
 
 void
 SyncMLServer::handleStorageAccquired (QString type)
 {
     FUNCTION_CALL_TRACE;
+
+    // emit signal that storage has been acquired
+    emit accquiredStorage (type);
 }
 
 void
@@ -338,10 +410,117 @@ SyncMLServer::handleItemProcessed (DataSync::ModificationType modificationType,
                                    int committedItems)
 {
     FUNCTION_CALL_TRACE;
+
+    LOG_DEBUG ("Modification type:" << modificationType);
+    LOG_DEBUG ("ModificationType database:" << modifiedDb);
+    LOG_DEBUG ("Local database:" << localDb);
+    LOG_DEBUG ("Database type:" << dbType);
+    LOG_DEBUG ("Committed items:" << committedItems);
+
+    mCommittedItems++;
+
+    if (!receivedItems.contains (localDb))
+    {
+        ReceivedItemDetails details;
+        details.added = details.modified = details.deleted = details.error = 0;
+        details.mime = dbType;
+        receivedItems[localDb] = details;
+    }
+
+    switch (modificationType)
+    {
+    case DataSync::MOD_ITEM_ADDED:
+    {
+        ++receivedItems[localDb].added;
+        break;
+    }
+    case DataSync::MOD_ITEM_MODIFIED:
+    {
+        ++receivedItems[localDb].modified;
+        break;
+    }
+    case DataSync::MOD_ITEM_DELETED:
+    {
+        ++receivedItems[localDb].deleted;
+        break;
+    }
+    case DataSync::MOD_ITEM_ERROR:
+    {
+        ++receivedItems[localDb].error;
+        break;
+    }
+    default:
+    {
+        Q_ASSERT (0);
+        break;
+    }
+    }
+
+    Sync::TransferDatabase db = Sync::LOCAL_DATABASE;
+    if (modifiedDb == DataSync::MOD_LOCAL_DATABASE)
+        db = Sync::LOCAL_DATABASE;
+    else
+        db = Sync::REMOTE_DATABASE;
+
+    if (mCommittedItems == committedItems)
+    {
+        QMapIterator<QString, ReceivedItemDetails> itr (receivedItems);
+        while (itr.hasNext ())
+        {
+            itr.next ();
+            if (itr.value ().added)
+                emit transferProgress (getProfileName (), db, Sync::ITEM_ADDED, itr.value ().mime, itr.value ().added);
+            if (itr.value ().modified)
+                emit transferProgress (getProfileName (), db, Sync::ITEM_MODIFIED, itr.value ().mime, itr.value ().modified);
+            if (itr.value ().deleted)
+                emit transferProgress (getProfileName (), db, Sync::ITEM_DELETED, itr.value ().mime, itr.value ().deleted);
+            if (itr.value ().error)
+                emit transferProgress (getProfileName (), db, Sync::ITEM_ERROR, itr.value ().mime, itr.value ().error);
+        }
+
+        mCommittedItems = 0;
+        receivedItems.clear ();
+    }
 }
 
 void
 SyncMLServer::generateResults (bool success)
 {
     FUNCTION_CALL_TRACE;
+
+    mResults.setMajorCode (success ? Buteo::SyncResults::SYNC_RESULT_SUCCESS : Buteo::SyncResults::SYNC_RESULT_FAILED);
+
+    mResults.setTargetId (mAgent->getResults().getRemoteDeviceId ());
+    const QMap<QString, DataSync::DatabaseResults>* dbResults = mAgent->getResults ().getDatabaseResults ();
+
+    if (dbResults->isEmpty ())
+    {
+        LOG_DEBUG("No items transferred");
+    }
+    else
+    {
+        QMapIterator<QString, DataSync::DatabaseResults> itr (*dbResults);
+        while (itr.hasNext ())
+        {
+            itr.next ();
+            const DataSync::DatabaseResults& r = itr.value ();
+            Buteo::TargetResults targetResults(
+                    itr.key(), // Target name
+                    Buteo::ItemCounts (r.iLocalItemsAdded,
+                                       r.iLocalItemsDeleted,
+                                       r.iLocalItemsModified),
+                    Buteo::ItemCounts (r.iRemoteItemsAdded,
+                                       r.iRemoteItemsDeleted,
+                                       r.iRemoteItemsModified));
+            mResults.addTargetResults (targetResults);
+
+            LOG_DEBUG("Items for" << targetResults.targetName () << ":");
+            LOG_DEBUG("LA:" << targetResults.localItems ().added <<
+                      "LD:" << targetResults.localItems ().deleted <<
+                      "LM:" << targetResults.localItems ().modified <<
+                      "RA:" << targetResults.remoteItems ().added <<
+                      "RD:" << targetResults.remoteItems ().deleted <<
+                      "RM:" << targetResults.remoteItems ().modified);
+        }
+    }
 }

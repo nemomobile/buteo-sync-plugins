@@ -32,6 +32,7 @@
 #include <buteosyncml5/SyncAgent.h>
 #include <buteosyncml5/Transport.h>
 #include <buteosyncml5/SyncAgentConfig.h>
+#include <buteosyncml5/OBEXTransport.h>
 #else
 #include <buteosyncfw/ServerPlugin.h>
 #include <buteosyncfw/SyncCommonDefs.h>
@@ -39,6 +40,7 @@
 #include <buteosyncml/StorageProvider.h>
 #include <buteosyncml/SyncAgent.h>
 #include <buteosyncml/Transport.h>
+#include <buteosyncml/OBEXTransport.h>
 #endif
 
 #include "USBConnection.h"
@@ -141,6 +143,8 @@ private:
     SyncMLStorageProvider           mStorageProvider;
 
     qint32                          mCommittedItems;
+
+    Sync::ConnectivityType          mConnectionType;
 };
 
 #endif // SYNCMLSERVER_H
