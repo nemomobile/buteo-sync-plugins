@@ -22,8 +22,13 @@
 #ifndef USBCONNECTION_H
 #define USBCONNECTION_H
 
-#include <QSocketNotifier>
+#include <QObject>
+
+#ifdef GLIB_FD_WATCH
 #include <glib.h>
+#else
+#include <QSocketNotifier>
+#endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <buteosyncml5/OBEXConnection.h>
@@ -64,9 +69,13 @@ signals:
 
     void usbConnected (int fd);
 
+#ifndef GLIB_FD_WATCH
 protected slots:
 
     void handleUSBActivated (int fd);
+
+    void handleUSBError (int fd);
+#endif
 
 private:
     // Functions
@@ -81,11 +90,43 @@ private:
 
     void signalNewSession ();
 
+#ifdef GLIB_FD_WATCH
+    void setFdWatchEventSource (guint = 0);
+
+    void setIdleEventSource (guint = 0);
+
+    guint fdWatchEventSource ();
+
+    guint idleEventSource ();
+
+    static gboolean handleIncomingUSBEvent (GIOChannel* ioChannel,
+                                            GIOCondition condition,
+                                            gpointer user_data);
+
+    void removeEventSource ();
+
+#endif
 private:
 
-    int                      mFd;
+    int                     mFd;
 
-    QSocketNotifier*         mReadNotifier;
+#ifdef GLIB_FD_WATCH
+    GIOChannel              *mIOChannel;
+
+    guint                   mIdleEventSource;
+
+    guint                   mFdWatchEventSource;
+
+    bool                    mFdWatching;
+
+    bool                    mDisconnected;
+#else
+    QSocketNotifier         *mReadNotifier;
+
+    QSocketNotifier         *mWriteNotifier;
+
+    QSocketNotifier         *mExceptionNotifier;
+#endif
 };
 
 #endif // USBCONNECTION_H

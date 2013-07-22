@@ -11,6 +11,8 @@ TEMPLATE = lib
 
 CONFIG += link_pkgconfig plugin
 
+DEFINES += GLIB_FD_WATCH
+
 INCLUDEPATH += . ../../syncmlcommon
 LIBS += -L../../syncmlcommon
 PKGCONFIG += glib-2.0

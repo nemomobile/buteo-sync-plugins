@@ -27,8 +27,17 @@
 #include <sys/socket.h>
 #include <termios.h>
 
+#ifdef GLIB_FD_WATCH
+#include <glib.h>
+#endif
+
 USBConnection::USBConnection () :
-    mFd (-1), mReadNotifier (0)
+#ifdef GLIB_FD_WATCH
+    mFd (-1), mIOChannel (0), mIdleEventSource (0), mFdWatchEventSource (0),
+    mFdWatching (false), mDisconnected (true)
+#else
+    mFd (-1), mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0)
+#endif
 {
     FUNCTION_CALL_TRACE;
 }
@@ -55,6 +64,9 @@ USBConnection::disconnect ()
 {
     FUNCTION_CALL_TRACE;
 
+#ifdef GLIB_FD_WATCH
+    removeEventSource ();
+#endif
     removeFdListener ();
 
     closeUSBDevice ();
@@ -137,18 +149,54 @@ void
 USBConnection::addFdListener ()
 {
     FUNCTION_CALL_TRACE;
+
+#ifdef GLIB_FD_WATCH
+    if (!mFdWatching && isConnected ())
+    {
+        mIOChannel = g_io_channel_unix_new (mFd);
+
+        g_io_channel_set_close_on_unref (mIOChannel, FALSE);
+
+        mFdWatchEventSource = g_io_add_watch_full (mIOChannel,
+                                                   G_PRIORITY_DEFAULT,
+                                                   (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL),
+                                                   handleIncomingUSBEvent,
+                                                   this,
+                                                   NULL);
+        g_io_channel_unref (mIOChannel);
+
+        mFdWatching = true;
+        mDisconnected = false;
+    }
+#else
     mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read, this);
+    mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write, this);
+    mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception, this);
+
     mReadNotifier->setEnabled (true);
 
     QObject::connect (mReadNotifier, SIGNAL (activated (int)),
                       this, SLOT (handleUSBActivated (int)));
+    QObject::connect (mExceptionNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleUSBError (int)));
+#endif
 }
 
 void
 USBConnection::removeFdListener ()
 {
+    FUNCTION_CALL_TRACE;
+
+#ifdef GLIB_FD_WATCH
+    if ((mFdWatchEventSource > 0) && g_source_remove (mFdWatchEventSource))
+    {
+        LOG_DEBUG ("Removed fd wacher with event source " << mFdWatchEventSource);
+        mFdWatchEventSource = 0;
+    }
+#else
     QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
                          this, SLOT (handleUSBActivated (int)));
+#endif
 }
 
 void
@@ -157,6 +205,84 @@ USBConnection::signalNewSession ()
     emit usbConnected (mFd);
 }
 
+#ifdef GLIB_FD_WATCH
+void
+USBConnection::setFdWatchEventSource (guint fdEventSource)
+{
+    mFdWatchEventSource = fdEventSource;
+}
+
+void
+USBConnection::setIdleEventSource (guint idleEventSource)
+{
+    mIdleEventSource = idleEventSource;
+}
+
+guint
+USBConnection::fdWatchEventSource ()
+{
+    return mFdWatchEventSource;
+}
+
+guint
+USBConnection::idleEventSource ()
+{
+    return mIdleEventSource;
+}
+
+void
+USBConnection::removeEventSource ()
+{
+    FUNCTION_CALL_TRACE;
+
+    if ((mIdleEventSource > 0) && (g_source_remove (mIdleEventSource)))
+    {
+        LOG_DEBUG ("Removing idle event source " << mIdleEventSource);
+        mIdleEventSource = 0;
+    }
+}
+
+gboolean
+USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condition, gpointer user_data)
+{
+    FUNCTION_CALL_TRACE;
+
+    USBConnection* connection = (USBConnection*) user_data;
+
+    int fd = g_io_channel_unix_get_fd (ioChannel);
+
+    LOG_DEBUG ("Channel fd: " << fd);
+
+    if (condition & (G_IO_HUP | G_IO_ERR))
+    {
+        // Receved a hangup or an error. Remove the watchers and
+        // also disconnect the listeners
+
+        if (connection->isConnected ())
+        {
+            guint eventSource = connection->idleEventSource ();
+            if ((eventSource > 0) && g_source_remove (eventSource))
+            {
+                LOG_DEBUG ("Removed event source " << eventSource);
+                connection->setIdleEventSource (0);
+            }
+        }
+
+        connection->removeFdListener ();
+        connection->closeUSBDevice ();
+    } else if (condition & G_IO_IN)
+    {
+        // Some incoming data. Better remove the listener
+        connection->removeFdListener ();
+
+        // Signal a new session
+        connection->signalNewSession ();
+    }
+
+    connection->setFdWatchEventSource (0);
+    return false;
+}
+#else
 void
 USBConnection::handleUSBActivated (int fd)
 {
@@ -165,4 +291,25 @@ USBConnection::handleUSBActivated (int fd)
     LOG_DEBUG ("USB is activated. Emitting signal to handle incoming data");
 
     emit usbConnected (fd);
+
+    // Disable the event notifier
+    mReadNotifier->setEnabled (false);
+    mWriteNotifier->setEnabled (false);
 }
+
+void
+USBConnection::handleUSBError (int fd)
+{
+    FUNCTION_CALL_TRACE;
+
+    LOG_DEBUG ("Error in USB connection");
+
+    mReadNotifier->setEnabled (false);
+    mWriteNotifier->setEnabled (false);
+
+    QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
+                         this, SLOT (handleUSBActivated (int)));
+    QObject::disconnect (mWriteNotifier, SIGNAL (activated (int)),
+                         this, SLOT (handleUSBActivated (int)));
+}
+#endif
