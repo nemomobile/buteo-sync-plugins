@@ -4,11 +4,13 @@ TEMPLATE = subdirs
 CONFIG += ordered \
 
 SUBDIRS += syncmlcommon \
-    utils
-SUBDIRS += clientplugins
-SUBDIRS += storageplugins
-SUBDIRS += storagechangenotifierplugins
-SUBDIRS += doc
+    utils \
+    clientplugins \
+    storageplugins \
+    storagechangenotifierplugins \
+    doc \
+    serverplugins \
+    serverplugins/syncmlserver
 
 QT += QT_NO_EXCEPTIONS
 

@@ -6,4 +6,4 @@ SUBDIRS += \
            hcontacts \
            hcontacts/unittest \
            hnotes  \
-           hnotes/unittest  \
+           hnotes/unittest
