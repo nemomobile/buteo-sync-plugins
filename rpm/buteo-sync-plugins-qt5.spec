@@ -32,6 +32,7 @@ BuildRequires: doxygen
 %files
 %defattr(-,root,root,-)
 %config %{_sysconfdir}/buteo/xml/*.xml
+%config %{_sysconfdir}/buteo/profiles/server/*.xml
 %config %{_sysconfdir}/buteo/profiles/client/*.xml
 %config %{_sysconfdir}/buteo/profiles/storage/*.xml
 %config %{_sysconfdir}/buteo/profiles/sync/bt_template.xml
