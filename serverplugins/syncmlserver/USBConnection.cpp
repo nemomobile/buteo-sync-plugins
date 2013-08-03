@@ -70,6 +70,8 @@ USBConnection::disconnect ()
     removeFdListener ();
 
     closeUSBDevice ();
+
+    mDisconnected = true;
 }
 
 bool
@@ -282,6 +284,28 @@ USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condi
     connection->setFdWatchEventSource (0);
     return false;
 }
+
+gboolean
+USBConnection::reopenUSB (gpointer data)
+{
+    FUNCTION_CALL_TRACE;
+
+    USBConnection* connection = (USBConnection*) data;
+
+    if (!connection->mDisconnected && !connection->isConnected ())
+    {
+        LOG_DEBUG ("USB Not disconnected and not listening");
+        connection->openUSBDevice ();
+        connection->addFdListener ();
+    } else
+    {
+        LOG_DEBUG ("Already listening. No need to reopen");
+    }
+
+    connection->setIdleEventSource (0);
+    return false;
+}
+
 #else
 void
 USBConnection::handleUSBActivated (int fd)

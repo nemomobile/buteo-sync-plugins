@@ -105,6 +105,8 @@ private:
 
     void removeEventSource ();
 
+    static gboolean reopenUSB (gpointer data);
+
 #endif
 private:
 
