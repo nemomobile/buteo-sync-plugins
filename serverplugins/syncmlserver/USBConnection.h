@@ -65,6 +65,8 @@ public:
      */
     virtual void disconnect ();
 
+    void handleSyncFinished (bool isSyncInError);
+
 signals:
 
     void usbConnected (int fd);

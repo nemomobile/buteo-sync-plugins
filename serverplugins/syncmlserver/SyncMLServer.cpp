@@ -365,7 +365,7 @@ SyncMLServer::handleSyncFinished (DataSync::SyncState state)
     case DataSync::SYNC_FINISHED:
     {
         generateResults (true);
-        errorStatus = true;
+        errorStatus = false;
         emit success (getProfileName (), QString::number (state));
         break;
     }
@@ -391,6 +391,9 @@ SyncMLServer::handleSyncFinished (DataSync::SyncState state)
     }
 
     uninit ();
+
+    // Signal the USBConnection that sync has finished
+    mUSBConnection.handleSyncFinished (errorStatus);
 }
 
 void

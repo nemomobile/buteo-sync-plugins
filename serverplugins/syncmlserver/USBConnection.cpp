@@ -148,6 +148,22 @@ USBConnection::closeUSBDevice ()
 }
 
 void
+USBConnection::handleSyncFinished (bool isSyncInError)
+{
+    FUNCTION_CALL_TRACE;
+
+    if (isSyncInError == true)
+    {
+        // What needs to be done here? Should we close the USB?
+    } else
+    {
+        // No errors during sync. Just add channel watcher,
+        // which was removed at the start of the sync
+        addFdListener ();
+    }
+}
+
+void
 USBConnection::addFdListener ()
 {
     FUNCTION_CALL_TRACE;
@@ -199,6 +215,7 @@ USBConnection::removeFdListener ()
     QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
                          this, SLOT (handleUSBActivated (int)));
 #endif
+    mFdWatching = false;
 }
 
 void
