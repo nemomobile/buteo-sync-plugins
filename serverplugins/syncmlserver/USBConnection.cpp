@@ -260,6 +260,11 @@ USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condi
         // Receved a hangup or an error. Remove the watchers and
         // also disconnect the listeners
 
+        if (condition & G_IO_HUP)
+            LOG_DEBUG ("HUP signal received");
+        else
+            LOG_DEBUG ("ERR signal received");
+
         if (connection->isConnected ())
         {
             guint eventSource = connection->idleEventSource ();
@@ -268,9 +273,18 @@ USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condi
                 LOG_DEBUG ("Removed event source " << eventSource);
                 connection->setIdleEventSource (0);
             }
-        }
 
+            // Add an idle loop to reopen USB incase of HUP or ERR
+            eventSource = g_idle_add (reopenUSB, connection);
+
+            connection->setIdleEventSource (eventSource);
+            LOG_DEBUG ("Added watch on the idle event source " << eventSource);
+        } else
+            LOG_DEBUG ("Unable to remove event source");
+
+        // If in error, remove the fd listner and also close the USB device
         connection->removeFdListener ();
+
         connection->closeUSBDevice ();
     } else if (condition & G_IO_IN)
     {
