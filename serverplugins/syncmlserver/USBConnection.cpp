@@ -185,6 +185,8 @@ USBConnection::addFdListener ()
 
         mFdWatching = true;
         mDisconnected = false;
+
+        LOG_DEBUG ("Added fd listner for fd " << mFd << " with event source " << mFdWatchEventSource);
     }
 #else
     mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read, this);
