@@ -23,6 +23,7 @@
 #define USBCONNECTION_H
 
 #include <QObject>
+#include <QMutex>
 
 #ifdef GLIB_FD_WATCH
 #include <glib.h>
@@ -113,6 +114,8 @@ private:
 private:
 
     int                     mFd;
+
+    QMutex                  mMutex;
 
 #ifdef GLIB_FD_WATCH
     GIOChannel              *mIOChannel;

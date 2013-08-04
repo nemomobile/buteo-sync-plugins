@@ -33,7 +33,7 @@
 
 USBConnection::USBConnection () :
 #ifdef GLIB_FD_WATCH
-    mFd (-1), mIOChannel (0), mIdleEventSource (0), mFdWatchEventSource (0),
+    mFd (-1), mMutex (QMutex::Recursive), mIOChannel (0), mIdleEventSource (0), mFdWatchEventSource (0),
     mFdWatching (false), mDisconnected (true)
 #else
     mFd (-1), mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0)
@@ -52,6 +52,8 @@ USBConnection::connect ()
 {
     FUNCTION_CALL_TRACE;
 
+    QMutexLocker lock (&mMutex);
+
     mFd = openUSBDevice ();
 
     addFdListener ();
@@ -63,6 +65,8 @@ void
 USBConnection::disconnect ()
 {
     FUNCTION_CALL_TRACE;
+
+    QMutexLocker lock (&mMutex);
 
 #ifdef GLIB_FD_WATCH
     removeEventSource ();
@@ -88,6 +92,8 @@ int
 USBConnection::openUSBDevice ()
 {
     FUNCTION_CALL_TRACE;
+
+    QMutexLocker lock (&mMutex);
 
     if (isConnected ()) {
         LOG_WARNING ("USB connection already open with fd " << mFd);
@@ -137,6 +143,8 @@ USBConnection::closeUSBDevice ()
 {
     FUNCTION_CALL_TRACE;
 
+    QMutexLocker lock (&mMutex);
+
     if (isConnected ())
     {
         LOG_DEBUG ("Closing USB device with fd " << mFd);
@@ -151,6 +159,8 @@ void
 USBConnection::handleSyncFinished (bool isSyncInError)
 {
     FUNCTION_CALL_TRACE;
+
+    QMutexLocker lock (&mMutex);
 
     if (isSyncInError == true)
     {
@@ -167,6 +177,8 @@ void
 USBConnection::addFdListener ()
 {
     FUNCTION_CALL_TRACE;
+
+    QMutexLocker lock (&mMutex);
 
 #ifdef GLIB_FD_WATCH
     if (!mFdWatching && isConnected ())
@@ -206,6 +218,8 @@ void
 USBConnection::removeFdListener ()
 {
     FUNCTION_CALL_TRACE;
+
+    QMutexLocker lock (&mMutex);
 
 #ifdef GLIB_FD_WATCH
     if ((mFdWatchEventSource > 0) && g_source_remove (mFdWatchEventSource))
