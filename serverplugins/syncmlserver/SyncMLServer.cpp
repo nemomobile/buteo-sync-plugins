@@ -63,6 +63,7 @@ SyncMLServer::~SyncMLServer ()
     closeSyncAgentConfig ();
     closeSyncAgent ();
     closeUSBTransport ();
+    delete mTransport;
 }
 
 bool
@@ -80,9 +81,11 @@ SyncMLServer::uninit ()
 
     closeSyncAgentConfig ();
     closeSyncAgent ();
-    closeUSBTransport ();
 
-    mStorageProvider.uninit ();
+    // uninit() is called after completion of every sync session
+    // Do not invoke close of transports, since in server mode
+    // sync would be initiated from external entities and so
+    // transport has to be open
 
     return true;
 }

@@ -22,6 +22,7 @@
 #include "USBConnection.h"
 
 #include <LogMacros.h>
+#include <QDateTime>
 
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -54,9 +55,15 @@ USBConnection::connect ()
 
     QMutexLocker lock (&mMutex);
 
-    mFd = openUSBDevice ();
+    if (isConnected ())
+    {
+        LOG_DEBUG ("Already connected. Returning fd");
+    } else
+    {
+        mFd = openUSBDevice ();
 
-    addFdListener ();
+        addFdListener ();
+    }
 
     return mFd;
 }
@@ -73,9 +80,8 @@ USBConnection::disconnect ()
 #endif
     removeFdListener ();
 
-    closeUSBDevice ();
-
-    mDisconnected = true;
+    // In server mode, we do not disconnect the connection, since
+    // the host (PC/device/...) might initiate sync again
 }
 
 bool
@@ -135,6 +141,7 @@ USBConnection::openUSBDevice ()
         return -1;
     }
 
+    LOG_DEBUG ("Opened USB device with fd " << mFd);
     return mFd;
 }
 
@@ -152,6 +159,8 @@ USBConnection::closeUSBDevice ()
         shutdown (mFd, SHUT_RDWR);
         close (mFd);
         mFd = -1;
+
+        mDisconnected = true;
     }
 }
 
@@ -169,6 +178,7 @@ USBConnection::handleSyncFinished (bool isSyncInError)
     {
         // No errors during sync. Just add channel watcher,
         // which was removed at the start of the sync
+        LOG_DEBUG ("Handling sync finished. Adding fd listener");
         addFdListener ();
     }
 }
@@ -181,7 +191,7 @@ USBConnection::addFdListener ()
     QMutexLocker lock (&mMutex);
 
 #ifdef GLIB_FD_WATCH
-    if (!mFdWatching && isConnected ())
+    if ((mFdWatching == false) && isConnected ())
     {
         mIOChannel = g_io_channel_unix_new (mFd);
 
@@ -222,10 +232,14 @@ USBConnection::removeFdListener ()
     QMutexLocker lock (&mMutex);
 
 #ifdef GLIB_FD_WATCH
-    if ((mFdWatchEventSource > 0) && g_source_remove (mFdWatchEventSource))
+    if (mFdWatchEventSource > 0)
     {
-        LOG_DEBUG ("Removed fd wacher with event source " << mFdWatchEventSource);
-        mFdWatchEventSource = 0;
+        gboolean removed = g_source_remove (mFdWatchEventSource);
+        if (removed)
+        {
+            LOG_DEBUG ("Removed fd listener with event source " << mFdWatchEventSource);
+            mFdWatchEventSource = 0;
+        }
     }
 #else
     QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
@@ -237,6 +251,8 @@ USBConnection::removeFdListener ()
 void
 USBConnection::signalNewSession ()
 {
+    FUNCTION_CALL_TRACE;
+
     emit usbConnected (mFd);
 }
 
@@ -293,11 +309,6 @@ USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condi
         // Receved a hangup or an error. Remove the watchers and
         // also disconnect the listeners
 
-        if (condition & G_IO_HUP)
-            LOG_DEBUG ("HUP signal received");
-        else
-            LOG_DEBUG ("ERR signal received");
-
         if (connection->isConnected ())
         {
             guint eventSource = connection->idleEventSource ();
@@ -312,8 +323,7 @@ USBConnection::handleIncomingUSBEvent (GIOChannel *ioChannel, GIOCondition condi
 
             connection->setIdleEventSource (eventSource);
             LOG_DEBUG ("Added watch on the idle event source " << eventSource);
-        } else
-            LOG_DEBUG ("Unable to remove event source");
+        }
 
         // If in error, remove the fd listner and also close the USB device
         connection->removeFdListener ();
@@ -339,7 +349,7 @@ USBConnection::reopenUSB (gpointer data)
 
     USBConnection* connection = (USBConnection*) data;
 
-    if (!connection->mDisconnected && !connection->isConnected ())
+    if ((connection->mDisconnected == true) && !connection->isConnected ())
     {
         LOG_DEBUG ("USB Not disconnected and not listening");
         connection->openUSBDevice ();
