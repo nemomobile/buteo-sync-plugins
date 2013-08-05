@@ -174,6 +174,16 @@ USBConnection::handleSyncFinished (bool isSyncInError)
     if (isSyncInError == true)
     {
         // What needs to be done here? Should we close the USB?
+        // For now completely closing USB device and reopening again
+        // syncml-ds-tool sends LINKERR for closing USB connection. This causes
+        // buteosyncml stack to think that a link error has occured and marks the
+        // sync session as error
+        // The following would ensure that the server plugin would return back
+        // to sane state incase of any unexpected sync errors
+        removeFdListener ();
+        closeUSBDevice ();
+        openUSBDevice ();
+        addFdListener ();
     } else
     {
         // No errors during sync. Just add channel watcher,
