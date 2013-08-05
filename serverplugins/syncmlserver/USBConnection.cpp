@@ -33,11 +33,11 @@
 #endif
 
 USBConnection::USBConnection () :
+    mFd (-1), mMutex (QMutex::Recursive), mDisconnected (true), mFdWatching (false),
 #ifdef GLIB_FD_WATCH
-    mFd (-1), mMutex (QMutex::Recursive), mIOChannel (0), mIdleEventSource (0), mFdWatchEventSource (0),
-    mFdWatching (false), mDisconnected (true)
+    mIOChannel (0), mIdleEventSource (0), mFdWatchEventSource (0)
 #else
-    mFd (-1), mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0)
+    mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0)
 #endif
 {
     FUNCTION_CALL_TRACE;
@@ -46,6 +46,30 @@ USBConnection::USBConnection () :
 USBConnection::~USBConnection ()
 {
     FUNCTION_CALL_TRACE;
+
+#ifdef GLIB_FD_WATCH
+    if (mIOChannel)
+    {
+        delete mIOChannel;
+        mIOChannel = 0;
+    }
+#else
+    if (mReadNotifier)
+    {
+        delete mReadNotifier;
+        mReadNotifier = 0;
+    }
+    if (mWriteNotifier)
+    {
+        delete mWriteNotifier;
+        mWriteNotifier = 0;
+    }
+    if (mExceptionNotifier)
+    {
+        delete mExceptionNotifier;
+        mExceptionNotifier = 0;
+    }
+#endif
 }
 
 int
@@ -200,9 +224,9 @@ USBConnection::addFdListener ()
 
     QMutexLocker lock (&mMutex);
 
-#ifdef GLIB_FD_WATCH
     if ((mFdWatching == false) && isConnected ())
     {
+#ifdef GLIB_FD_WATCH
         mIOChannel = g_io_channel_unix_new (mFd);
 
         g_io_channel_set_close_on_unref (mIOChannel, FALSE);
@@ -219,19 +243,24 @@ USBConnection::addFdListener ()
         mDisconnected = false;
 
         LOG_DEBUG ("Added fd listner for fd " << mFd << " with event source " << mFdWatchEventSource);
-    }
 #else
+
     mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read, this);
     mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write, this);
     mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception, this);
 
     mReadNotifier->setEnabled (true);
+    mWriteNotifier->setEnabled (true);
+    mExceptionNotifier->setEnabled (true);
 
     QObject::connect (mReadNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleUSBActivated (int)));
+    QObject::connect (mWriteNotifier, SIGNAL (activated (int)),
                       this, SLOT (handleUSBActivated (int)));
     QObject::connect (mExceptionNotifier, SIGNAL (activated (int)),
                       this, SLOT (handleUSBError (int)));
 #endif
+    }
 }
 
 void
@@ -252,8 +281,16 @@ USBConnection::removeFdListener ()
         }
     }
 #else
+    mWriteNotifier->setEnabled (false);
+    mReadNotifier->setEnabled (false);
+    mExceptionNotifier->setEnabled (false);
+
     QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
-                         this, SLOT (handleUSBActivated (int)));
+                      this, SLOT (handleUSBActivated (int)));
+    QObject::disconnect (mWriteNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleUSBActivated (int)));
+    QObject::disconnect (mExceptionNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleUSBError (int)));
 #endif
     mFdWatching = false;
 }
@@ -384,8 +421,7 @@ USBConnection::handleUSBActivated (int fd)
     emit usbConnected (fd);
 
     // Disable the event notifier
-    mReadNotifier->setEnabled (false);
-    mWriteNotifier->setEnabled (false);
+    removeFdListener ();
 }
 
 void
@@ -395,12 +431,9 @@ USBConnection::handleUSBError (int fd)
 
     LOG_DEBUG ("Error in USB connection");
 
-    mReadNotifier->setEnabled (false);
-    mWriteNotifier->setEnabled (false);
-
-    QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
-                         this, SLOT (handleUSBActivated (int)));
-    QObject::disconnect (mWriteNotifier, SIGNAL (activated (int)),
-                         this, SLOT (handleUSBActivated (int)));
+    removeFdListener ();
+    closeUSBDevice ();
+    openUSBDevice ();
+    addFdListener ();
 }
 #endif

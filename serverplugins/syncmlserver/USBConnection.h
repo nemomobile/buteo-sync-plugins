@@ -117,16 +117,16 @@ private:
 
     QMutex                  mMutex;
 
+    bool                    mDisconnected;
+
+    bool                    mFdWatching;
+
 #ifdef GLIB_FD_WATCH
     GIOChannel              *mIOChannel;
 
     guint                   mIdleEventSource;
 
     guint                   mFdWatchEventSource;
-
-    bool                    mFdWatching;
-
-    bool                    mDisconnected;
 #else
     QSocketNotifier         *mReadNotifier;
 
