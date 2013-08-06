@@ -245,20 +245,20 @@ USBConnection::addFdListener ()
         LOG_DEBUG ("Added fd listner for fd " << mFd << " with event source " << mFdWatchEventSource);
 #else
 
-    mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read, this);
-    mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write, this);
-    mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception, this);
+    mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read);
+    mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write);
+    mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception);
 
     mReadNotifier->setEnabled (true);
     mWriteNotifier->setEnabled (true);
     mExceptionNotifier->setEnabled (true);
 
     QObject::connect (mReadNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleUSBActivated (int)));
+                      this, SLOT (handleUSBActivated (int)), Qt::BlockingQueuedConnection);
     QObject::connect (mWriteNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleUSBActivated (int)));
+                      this, SLOT (handleUSBActivated (int)), Qt::BlockingQueuedConnection);
     QObject::connect (mExceptionNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleUSBError (int)));
+                      this, SLOT (handleUSBError (int)), Qt::BlockingQueuedConnection);
 #endif
     }
 }
