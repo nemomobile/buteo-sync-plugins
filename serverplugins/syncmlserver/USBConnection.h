@@ -23,6 +23,7 @@
 #define USBCONNECTION_H
 
 #include <QObject>
+#include <QMutex>
 
 #ifdef GLIB_FD_WATCH
 #include <glib.h>
@@ -65,6 +66,8 @@ public:
      */
     virtual void disconnect ();
 
+    void handleSyncFinished (bool isSyncInError);
+
 signals:
 
     void usbConnected (int fd);
@@ -105,10 +108,18 @@ private:
 
     void removeEventSource ();
 
+    static gboolean reopenUSB (gpointer data);
+
 #endif
 private:
 
     int                     mFd;
+
+    QMutex                  mMutex;
+
+    bool                    mDisconnected;
+
+    bool                    mFdWatching;
 
 #ifdef GLIB_FD_WATCH
     GIOChannel              *mIOChannel;
@@ -116,10 +127,6 @@ private:
     guint                   mIdleEventSource;
 
     guint                   mFdWatchEventSource;
-
-    bool                    mFdWatching;
-
-    bool                    mDisconnected;
 #else
     QSocketNotifier         *mReadNotifier;
 
