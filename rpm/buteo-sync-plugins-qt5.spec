@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(Qt5Core)
 # check if qtcontacts still uses qpixmap
-BuildRequires: pkgconfig(Qt5Gui)
+#BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: pkgconfig(Qt5Network)
 BuildRequires: pkgconfig(Qt5Contacts)
 BuildRequires: pkgconfig(Qt5Versit)
@@ -97,7 +97,7 @@ Requires: %{name} = %{version}
 
 %build
 qmake -qt=5
-make %{?_smp_mflags}
+make #%{?_smp_mflags}
 
 
 %install

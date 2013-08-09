@@ -1,5 +1,7 @@
 DOXYGEN_BIN=doxygen
 
+QT -= gui
+
 QMAKE_EXTRA_TARGETS += doc
 doc.target = doc
 isEmpty(DOXYGEN_BIN) {
@@ -14,4 +16,4 @@ htmldocs.files = ../doc/html/*
 htmldocs.path = /${DEB_DESTDIR}/usr/share/doc/sync-app-doc
 htmldocs.CONFIG += no_check_exist
 
-INSTALLS += htmldocs    
+INSTALLS += htmldocs

@@ -25,8 +25,7 @@ VER_MAJ = 1
 VER_MIN = 0
 VER_PAT = 0
 
-#the contacts library is using QPixmap, so has to comment below line
-#QT -= gui
+QT -= gui
 QT += sql
 
 HEADERS += ContactsStorage.h \
