@@ -41,11 +41,13 @@ QMAKE_CXXFLAGS = -Wall \
 DEFINES += SYNCMLSERVER_LIBRARY
 
 SOURCES += SyncMLServer.cpp \
-    USBConnection.cpp
+    USBConnection.cpp \
+    BTConnection.cpp
 
 HEADERS += SyncMLServer.h\
         syncmlserver_global.h \
-    USBConnection.h
+    USBConnection.h \
+    BTConnection.h
 
 
 #cleanup
