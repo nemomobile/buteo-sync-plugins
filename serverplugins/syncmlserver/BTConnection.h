@@ -25,6 +25,7 @@
 
 #include <QObject>
 #include <QMutex>
+#include <QtDBus>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <buteosyncml5/OBEXConnection.h>
@@ -65,15 +66,36 @@ signals:
 private:
     // Functions
 
+    /**
+     * ! \brief Method to open bluetooth socket
+     */
     int openBTSocket ();
 
+    /**
+     * ! \brief Method to close bluetooth socket
+     */
     void closeBTSocket ();
 
-    bool addServiceRecords (const QByteArray& sr, quint32 srId);
+    /**
+     * ! \brief Method to add service record using Bluez dbus API
+     */
+    bool init ();
 
-    bool removeServiceRecords (const quint32 srId);
+    bool addServiceRecord (const QByteArray& sdp, quint32& recordId);
     
+    /**
+     * ! \brief Method to remove service record using Bluez dbus API
+     */
+    bool removeServiceRecords ();
+    
+    /**
+     * ! \brief Method to read the service records from file
+     */
     bool readSRFromFile (const QString filename, QByteArray& record);
+
+    const QString clientServiceRecordDef () const;
+    
+    const QString serverServiceRecordDef () const;
 
 private:
 
