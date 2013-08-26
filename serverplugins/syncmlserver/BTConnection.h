@@ -69,6 +69,12 @@ private:
 
     void closeBTSocket ();
 
+    bool addServiceRecords (const QByteArray& sr, quint32 srId);
+
+    bool removeServiceRecords (const quint32 srId);
+    
+    bool readSRFromFile (const QString filename, QByteArray& record);
+
 private:
 
     int                     mFd;
@@ -76,6 +82,10 @@ private:
     QMutex                  mMutex;
 
     bool                    mDisconnected;
+    
+    quint32                 mClientServiceRecordId;
+    
+    quint32                 mServerServiceRecordId;
 };
 
 #endif // BTCONNECTION_H

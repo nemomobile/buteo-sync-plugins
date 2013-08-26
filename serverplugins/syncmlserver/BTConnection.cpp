@@ -29,3 +29,67 @@ BTConnection::BTConnection() :
 {
     FUNCTION_CALL_TRACE;
 }
+
+int
+BTConnection::connect ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    return mFd;
+}
+
+bool
+BTConnection::isConnected () const
+{
+    FUNCTION_CALL_TRACE;
+
+    if (mFd == -1)
+        return false;
+    else
+        return true;
+}
+
+void
+BTConnection::disconnect ()
+{
+    FUNCTION_CALL_TRACE;
+    
+}
+
+int
+BTConnection::openBTSocket ()
+{
+    FUNCTION_CALL_TRACE;
+
+    return mFd;
+}
+
+void
+BTConnection::closeBTSocket ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+bool
+BTConnection::addServiceRecords (const QByteArray &sr, quint32 srId)
+{
+    FUNCTION_CALL_TRACE;
+    
+    return true;
+}
+
+bool
+BTConnection::removeServiceRecords (const quint32 srId)
+{
+    FUNCTION_CALL_TRACE;
+    
+    return true;
+}
+
+bool
+BTConnection::readSRFromFile (const QString filename, QByteArray &record)
+{
+    FUNCTION_CALL_TRACE;
+    
+    return true;
+}
