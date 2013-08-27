@@ -139,7 +139,7 @@ SyncMLServer::startListen ()
     } else if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_BT))
     {
         mConnectionType = Sync::CONNECTIVITY_BT;
-        // TODO: Start listning for BT
+        listening = createBTTransport ();
     } else
     {
         mConnectionType = Sync::CONNECTIVITY_INTERNET;
@@ -156,6 +156,7 @@ SyncMLServer::stopListen ()
 
     // Stop all connections
     closeUSBTransport ();
+    closeBTTransport ();
 }
 
 void
@@ -196,6 +197,15 @@ SyncMLServer::connectivityStateChanged (Sync::ConnectivityType type, bool state)
         }
     } else if (type == Sync::CONNECTIVITY_BT)
     {
+        if (state)
+        {
+            LOG_DEBUG ("BT connection is available. Creating BT connection...");
+            createBTTransport ();
+        } else
+        {
+            LOG_DEBUG ("BT connection unavailable. Closing BT connection...");
+            closeBTTransport ();
+        }
     }
 }
 
@@ -221,10 +231,6 @@ DataSync::SyncAgentConfig*
 SyncMLServer::initSyncAgentConfig ()
 {
     FUNCTION_CALL_TRACE;
-
-    mTransport = new DataSync::OBEXTransport (mUSBConnection,
-                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
-                                              DataSync::OBEXTransport::TYPEHINT_USB);
 
     if (!mTransport || !mStorageProvider.init (&iProfile, this, iCbInterface, true))
         return 0;
@@ -296,6 +302,14 @@ SyncMLServer::createUSBTransport ()
     return mUSBConnection.isConnected ();
 }
 
+bool
+SyncMLServer::createBTTransport ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    return true;
+}
+
 void
 SyncMLServer::closeUSBTransport ()
 {
@@ -307,6 +321,12 @@ SyncMLServer::closeUSBTransport ()
 }
 
 void
+SyncMLServer::closeBTTransport ()
+{
+    FUNCTION_CALL_TRACE;
+}
+
+void
 SyncMLServer::handleUSBConnected (int fd)
 {
     FUNCTION_CALL_TRACE;
@@ -314,6 +334,44 @@ SyncMLServer::handleUSBConnected (int fd)
 
     LOG_DEBUG ("New incoming data over USB");
 
+    if (mTransport)
+    {
+        mTransport = new DataSync::OBEXTransport (mUSBConnection,
+                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
+                                              DataSync::OBEXTransport::TYPEHINT_USB);
+    }
+    
+    if (!mTransport)
+    {
+        LOG_DEBUG ("Creation of USB transport failed");
+        return;
+    }
+
+    if (!mAgent)
+        startNewSession ();
+}
+
+void
+SyncMLServer::handleBTConnected (int fd)
+{
+    FUNCTION_CALL_TRACE;
+    Q_UNUSED (fd);
+    
+    LOG_DEBUG ("New incoming connection over BT");
+    
+    if (mTransport)
+    {
+        mTransport = new DataSync::OBEXTransport (mBTConnection,
+                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
+                                              DataSync::OBEXTransport::TYPEHINT_BT);
+    }
+    
+    if (!mTransport)
+    {
+        LOG_DEBUG ("Creation of BT transport failed");
+        return;
+    }
+    
     if (!mAgent)
         startNewSession ();
 }
