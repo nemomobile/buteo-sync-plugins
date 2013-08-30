@@ -44,6 +44,7 @@
 #endif
 
 #include "USBConnection.h"
+#include "BTConnection.h"
 #include "SyncMLStorageProvider.h"
 
 namespace Buteo {
@@ -87,6 +88,9 @@ public:
 signals:
 
     void syncFinished (Sync::SyncStatus);
+    
+    void sessionInProgress (Sync::ConnectivityType);
+
 
 public slots:
 
@@ -94,7 +98,11 @@ public slots:
 
 protected slots:
 
+    void initTransport ();
+
     void handleUSBConnected (int fd);
+
+    void handleBTConnected (int fd);
 
     void handleSyncFinished (DataSync::SyncState state);
 
@@ -112,17 +120,19 @@ private:
 
     void closeSyncAgent ();
 
-    bool initTransport ();
-
     void closeUSBTransport ();
+    
+    void closeBTTransport ();
 
-    DataSync::SyncAgentConfig *initSyncAgentConfig();
+    DataSync::SyncAgentConfig *initSyncAgentConfig ();
 
     void closeSyncAgentConfig ();
 
     bool initStorageProvider ();
 
     bool createUSBTransport ();
+    
+    bool createBTTransport ();
 
     bool startNewSession ();
 
@@ -136,6 +146,8 @@ private:
 
     USBConnection                   mUSBConnection;
 
+    BTConnection                    mBTConnection;
+
     DataSync::Transport*            mTransport;
 
     Buteo::SyncResults              mResults;
@@ -145,6 +157,8 @@ private:
     qint32                          mCommittedItems;
 
     Sync::ConnectivityType          mConnectionType;
+    
+    bool                            mIsSessionInProgress;
 };
 
 #endif // SYNCMLSERVER_H

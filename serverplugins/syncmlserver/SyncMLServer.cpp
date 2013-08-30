@@ -51,7 +51,8 @@ SyncMLServer::SyncMLServer (const QString& pluginName,
                             const Buteo::Profile profile,
                             Buteo::PluginCbInterface *cbInterface) :
     ServerPlugin (pluginName, profile, cbInterface), mAgent (0), mConfig (0),
-    mTransport (0), mCommittedItems (0), mConnectionType (Sync::CONNECTIVITY_USB)
+    mTransport (0), mCommittedItems (0), mConnectionType (Sync::CONNECTIVITY_USB),
+    mIsSessionInProgress (false)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -63,6 +64,7 @@ SyncMLServer::~SyncMLServer ()
     closeSyncAgentConfig ();
     closeSyncAgent ();
     closeUSBTransport ();
+    closeBTTransport ();
     delete mTransport;
 }
 
@@ -134,15 +136,12 @@ SyncMLServer::startListen ()
     bool listening = false;
     if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_USB))
     {
-        mConnectionType = Sync::CONNECTIVITY_USB;
         listening = createUSBTransport ();
     } else if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_BT))
     {
-        mConnectionType = Sync::CONNECTIVITY_BT;
-        // TODO: Start listning for BT
+        listening = createBTTransport ();
     } else
     {
-        mConnectionType = Sync::CONNECTIVITY_INTERNET;
         // No sync over IP as of now
     }
 
@@ -156,6 +155,7 @@ SyncMLServer::stopListen ()
 
     // Stop all connections
     closeUSBTransport ();
+    closeBTTransport ();
 }
 
 void
@@ -196,6 +196,15 @@ SyncMLServer::connectivityStateChanged (Sync::ConnectivityType type, bool state)
         }
     } else if (type == Sync::CONNECTIVITY_BT)
     {
+        if (state)
+        {
+            LOG_DEBUG ("BT connection is available. Creating BT connection...");
+            createBTTransport ();
+        } else
+        {
+            LOG_DEBUG ("BT connection unavailable. Closing BT connection...");
+            closeBTTransport ();
+        }
     }
 }
 
@@ -221,10 +230,6 @@ DataSync::SyncAgentConfig*
 SyncMLServer::initSyncAgentConfig ()
 {
     FUNCTION_CALL_TRACE;
-
-    mTransport = new DataSync::OBEXTransport (mUSBConnection,
-                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
-                                              DataSync::OBEXTransport::TYPEHINT_USB);
 
     if (!mTransport || !mStorageProvider.init (&iProfile, this, iCbInterface, true))
         return 0;
@@ -296,6 +301,20 @@ SyncMLServer::createUSBTransport ()
     return mUSBConnection.isConnected ();
 }
 
+bool
+SyncMLServer::createBTTransport ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    LOG_DEBUG ("Creating new BT connection");
+    mBTConnection.connect ();
+    
+    QObject::connect (&mBTConnection, SIGNAL (btConnected (int)),
+                      this, SLOT (handleBTConnected (int)));
+    
+    return mBTConnection.isConnected ();
+}
+
 void
 SyncMLServer::closeUSBTransport ()
 {
@@ -307,15 +326,83 @@ SyncMLServer::closeUSBTransport ()
 }
 
 void
+SyncMLServer::closeBTTransport ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    QObject::disconnect (&mBTConnection, SIGNAL (btConnected (int)),
+                         this, SLOT (handleBTConnected (int)));
+    mBTConnection.disconnect ();
+}
+
+void
 SyncMLServer::handleUSBConnected (int fd)
 {
     FUNCTION_CALL_TRACE;
     Q_UNUSED (fd);
 
+    if (mIsSessionInProgress)
+    {
+        LOG_DEBUG ("Sync session is in progress over transport " << mConnectionType);
+        emit sessionInProgress (mConnectionType);
+        return;
+    }
+
     LOG_DEBUG ("New incoming data over USB");
 
+    if (mTransport)
+    {
+        mTransport = new DataSync::OBEXTransport (mUSBConnection,
+                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
+                                              DataSync::OBEXTransport::TYPEHINT_USB);
+    }
+    
+    if (!mTransport)
+    {
+        LOG_DEBUG ("Creation of USB transport failed");
+        return;
+    }
+
     if (!mAgent)
+    {
+        mConnectionType = Sync::CONNECTIVITY_USB;
         startNewSession ();
+    }
+}
+
+void
+SyncMLServer::handleBTConnected (int fd)
+{
+    FUNCTION_CALL_TRACE;
+    Q_UNUSED (fd);
+
+    if (mIsSessionInProgress)
+    {
+        LOG_DEBUG ("Sync session is in progress over transport " << mConnectionType);
+        emit sessionInProgress (mConnectionType);
+        return;
+    }
+
+    LOG_DEBUG ("New incoming connection over BT");
+    
+    if (mTransport)
+    {
+        mTransport = new DataSync::OBEXTransport (mBTConnection,
+                                              DataSync::OBEXTransport::MODE_OBEX_SERVER,
+                                              DataSync::OBEXTransport::TYPEHINT_BT);
+    }
+    
+    if (!mTransport)
+    {
+        LOG_DEBUG ("Creation of BT transport failed");
+        return;
+    }
+    
+    if (!mAgent)
+    {
+        mConnectionType = Sync::CONNECTIVITY_BT;
+        startNewSession ();
+    }
 }
 
 bool
@@ -334,6 +421,8 @@ SyncMLServer::startNewSession ()
              this, SLOT (handleStorageAccquired (QString)));
     QObject::connect (mAgent, SIGNAL (itemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString, int)),
              this, SLOT (handleItemProcessed (DataSync::ModificationType, DataSync::ModifiedDatabase, QString, QString, int)));
+
+    mIsSessionInProgress = true;
 
     if (mAgent->listen (*mConfig))
     {
@@ -396,7 +485,12 @@ SyncMLServer::handleSyncFinished (DataSync::SyncState state)
     uninit ();
 
     // Signal the USBConnection that sync has finished
-    mUSBConnection.handleSyncFinished (errorStatus);
+    if (mConnectionType == Sync::CONNECTIVITY_USB)
+        mUSBConnection.handleSyncFinished (errorStatus);
+    else if (mConnectionType == Sync::CONNECTIVITY_BT)
+        mBTConnection.handleSyncFinished (errorStatus);
+
+    mIsSessionInProgress = false;
 }
 
 void
