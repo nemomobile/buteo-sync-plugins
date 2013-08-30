@@ -21,11 +21,31 @@
 */
 
 #include <LogMacros.h>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <fcntl.h>
 
 #include "BTConnection.h"
 
 const QString CLIENT_BT_SR_FILE ("syncml_client_sdp_record.xml");
 const QString SERVER_BT_SR_FILE ("syncml_server_sdp_record.xml");
+
+const int BT_RFCOMM_PROTO = 3;
+const int RFCOMM_LM = 0x03;
+const int SOL_RFCOMM = 18;
+const int RFCOMM_LM_SECURE = 0x0200;
+const int BT_SERVER_CHANNEL = 26;
+
+typedef struct {
+    uint8_t b[6];
+} __attribute__((packed)) btbdaddr_t;
+
+struct sockaddr_rc {
+    sa_family_t     rc_family;
+    btbdaddr_t      rc_bdaddr;
+    uint8_t         rc_channel;
+};
 
 BTConnection::BTConnection() :
     mFd (-1), mMutex (QMutex::Recursive), mDisconnected (true),
@@ -65,6 +85,56 @@ BTConnection::openBTSocket ()
 {
     FUNCTION_CALL_TRACE;
 
+    int sock = socket (AF_BLUETOOTH, SOCK_STREAM, BT_RFCOMM_PROTO);
+    if (sock < 0)
+    {
+        LOG_WARNING ("Unable to open bluetooth socket");
+        return -1;
+    }
+    
+    int lm = RFCOMM_LM_SECURE;
+    if (setsockopt (sock, SOL_RFCOMM, RFCOMM_LM, &lm, sizeof (lm)) < 0)
+    {
+        LOG_WARNING ("Unable to set socket options." << errno);
+        return -1;
+    }
+    
+    struct sockaddr_rc localAddr;
+    memset (&localAddr, 0, sizeof (localAddr));
+    localAddr.rc_family = AF_BLUETOOTH;
+    btbdaddr_t anyAddr = {{0, 0, 0, 0, 0, 0}}; // bind to any local bluetooth address
+    localAddr.rc_channel = BT_SERVER_CHANNEL; // we open a bt server channel for SyncML
+
+    memcpy (&localAddr.rc_bdaddr, &anyAddr, sizeof (btbdaddr_t));
+    
+    // Bind the socket
+    if (bind (sock, (struct sockaddr*)&localAddr, sizeof (localAddr)) < 0)
+    {
+        LOG_WARNING ("Unable to bind to local address");
+        return -1;
+    }
+    
+    // Listen for incoming connections
+    if (listen (sock, 1) < 0) // We allow a max of 1 connection per SyncML session
+    {
+        LOG_WARNING ("Error while starting listening");
+        return -1;
+    }
+    
+    // Set the socket into non-blocking mode
+    long flags = fcntl (sock, F_GETFL);
+    if (flags < 0)
+    {
+        LOG_WARNING ("Error while getting flags for socket");
+    } else
+    {
+        flags |= O_NONBLOCK;
+        if (fcntl (sock, F_SETFL, flags) < 0)
+        {
+            LOG_WARNING ("Error while setting socket into non-blocking mode");
+        }
+    }
+    mFd = sock;
     return mFd;
 }
 
