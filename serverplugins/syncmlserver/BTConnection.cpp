@@ -78,7 +78,7 @@ BTConnection::connect ()
         LOG_DEBUG ("Already connected. Returning fd " << mFd);
     } else
     {
-        if (init ())
+        if (init () == false)
     	{
         	LOG_WARNING ("BT initialization failure");
         	return -1;
@@ -186,6 +186,8 @@ BTConnection::openBTSocket ()
             LOG_WARNING ("Error while setting socket into non-blocking mode");
         }
     }
+    
+    LOG_DEBUG ("Opened BT server socket with fd " << sock);
     mFd = sock;
     return mFd;
 }
@@ -211,6 +213,7 @@ BTConnection::addFdListener ()
     {
         mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read);
         mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write);
+        mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception);
         
         mReadNotifier->setEnabled (true);
         mWriteNotifier->setEnabled (true);
@@ -306,6 +309,8 @@ BTConnection::init ()
 bool
 BTConnection::addServiceRecord (const QByteArray& sdp, quint32& recordId)
 {
+    FUNCTION_CALL_TRACE;
+
     // Get the Bluez manager dbus interface
     QDBusInterface mgrIface ("org.bluez", "/", "org.bluez.Manager", QDBusConnection::systemBus ());
     if (!mgrIface.isValid ())

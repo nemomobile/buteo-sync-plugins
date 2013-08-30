@@ -98,8 +98,6 @@ public slots:
 
 protected slots:
 
-    void initTransport ();
-
     void handleUSBConnected (int fd);
 
     void handleBTConnected (int fd);

@@ -350,7 +350,7 @@ SyncMLServer::handleUSBConnected (int fd)
 
     LOG_DEBUG ("New incoming data over USB");
 
-    if (mTransport)
+    if (mTransport == NULL)
     {
         mTransport = new DataSync::OBEXTransport (mUSBConnection,
                                               DataSync::OBEXTransport::MODE_OBEX_SERVER,
@@ -385,7 +385,7 @@ SyncMLServer::handleBTConnected (int fd)
 
     LOG_DEBUG ("New incoming connection over BT");
     
-    if (mTransport)
+    if (mTransport == NULL)
     {
         mTransport = new DataSync::OBEXTransport (mBTConnection,
                                               DataSync::OBEXTransport::MODE_OBEX_SERVER,
