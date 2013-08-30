@@ -26,6 +26,7 @@
 #include <QObject>
 #include <QMutex>
 #include <QtDBus>
+#include <QSocketNotifier>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <buteosyncml5/OBEXConnection.h>
@@ -63,6 +64,12 @@ signals:
 
     void btConnected (int fd);
 
+protected slots:
+    
+    void handleIncomingBTConnection (int fd);
+    
+    void handleBTError (int fd);
+
 private:
     // Functions
 
@@ -77,10 +84,23 @@ private:
     void closeBTSocket ();
 
     /**
-     * ! \brief Method to add service record using Bluez dbus API
+     * ! \brief FD listener method
+     */
+    void addFdListener ();
+
+    /**
+     * ! \brief Removes fd listening
+     */
+    void removeFdListener ();
+
+    /**
+     * ! \brief BT initialization method
      */
     bool init ();
 
+    /**
+     * ! \brief Method to add service record using Bluez dbus API
+     */
     bool addServiceRecord (const QByteArray& sdp, quint32& recordId);
     
     /**
@@ -108,6 +128,14 @@ private:
     quint32                 mClientServiceRecordId;
     
     quint32                 mServerServiceRecordId;
+    
+    QSocketNotifier         *mReadNotifier;   
+    
+    QSocketNotifier         *mWriteNotifier;
+
+    QSocketNotifier         *mExceptionNotifier;
+    
+    bool                    mFdWatching;
 };
 
 #endif // BTCONNECTION_H

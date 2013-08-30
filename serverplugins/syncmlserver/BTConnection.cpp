@@ -49,9 +49,22 @@ struct sockaddr_rc {
 
 BTConnection::BTConnection() :
     mFd (-1), mMutex (QMutex::Recursive), mDisconnected (true),
-    mClientServiceRecordId (-1), mServerServiceRecordId (-1)
+    mClientServiceRecordId (-1), mServerServiceRecordId (-1),
+    mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0),
+    mFdWatching (false)
 {
     FUNCTION_CALL_TRACE;
+}
+
+BTConnection::~BTConnection ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    if (mReadNotifier)
+        delete mReadNotifier;
+    
+    if (mWriteNotifier)
+        delete mWriteNotifier;
 }
 
 int
@@ -59,6 +72,23 @@ BTConnection::connect ()
 {
     FUNCTION_CALL_TRACE;
     
+    // Add service records
+    if (isConnected ())
+    {
+        LOG_DEBUG ("Already connected. Returning fd " << mFd);
+    } else
+    {
+        if (init ())
+    	{
+        	LOG_WARNING ("BT initialization failure");
+        	return -1;
+    	}
+
+    	mFd = openBTSocket ();
+
+    	addFdListener ();
+    }
+
     return mFd;
 }
 
@@ -78,6 +108,28 @@ BTConnection::disconnect ()
 {
     FUNCTION_CALL_TRACE;
     
+    removeFdListener ();
+    // We will not close the BT socket in server mode
+}
+
+void
+BTConnection::handleSyncFinished (bool isSyncInError)
+{
+    FUNCTION_CALL_TRACE;
+    
+    if (isSyncInError == true)
+    {
+        // If sync error, then close the BT connection and reopen it
+        removeFdListener ();
+        closeBTSocket ();
+        openBTSocket ();
+        addFdListener ();
+    } else
+    {
+        // No errors during sync. Add the fd listener
+        LOG_DEBUG ("Sync finished. Adding fd listener");
+        addFdListener ();
+    }
 }
 
 int
@@ -142,6 +194,86 @@ void
 BTConnection::closeBTSocket ()
 {
     FUNCTION_CALL_TRACE;
+    
+    if (mFd != -1)
+    {
+        close (mFd);
+        mFd = -1;
+    }
+}
+
+void
+BTConnection::addFdListener ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    if ((mFdWatching == false) && isConnected ())
+    {
+        mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read);
+        mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write);
+        
+        mReadNotifier->setEnabled (true);
+        mWriteNotifier->setEnabled (true);
+        mExceptionNotifier->setEnabled (true);
+        
+        QObject::connect (mReadNotifier, SIGNAL (activated (int)),
+                          this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+        QObject::connect (mWriteNotifier, SIGNAL (activated (int)),
+                          this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+        QObject::connect (mExceptionNotifier, SIGNAL (activated (int)),
+                          this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
+        
+        mFdWatching = true;
+        mDisconnected = false;
+    }
+}
+
+void
+BTConnection::removeFdListener ()
+{
+    FUNCTION_CALL_TRACE;
+    
+    mReadNotifier->setEnabled (false);
+    mWriteNotifier->setEnabled (false);
+    mExceptionNotifier->setEnabled (false);
+    
+    QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleIncomingBTConnection (int)));
+    QObject::disconnect (mWriteNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleIncomingBTConnection (int)));
+    QObject::disconnect (mExceptionNotifier, SIGNAL (activated (int)),
+                      this, SLOT (handleBTError (int)));
+    
+    mFdWatching = false;
+}
+
+void
+BTConnection::handleIncomingBTConnection (int fd)
+{
+    FUNCTION_CALL_TRACE;
+    
+    LOG_DEBUG ("Incoming BT connection. Emitting signal to handle the incoming data");
+    
+    emit btConnected (fd);
+    
+    // Disable event notifier
+    removeFdListener ();
+}
+
+void
+BTConnection::handleBTError (int fd)
+{
+    FUNCTION_CALL_TRACE;
+    Q_UNUSED (fd);
+    
+    LOG_DEBUG ("Error in BT connection");
+    
+    // Should this be similar to USB that we close and re-init BT?
+    
+    removeFdListener ();
+    closeBTSocket ();
+    openBTSocket ();
+    addFdListener ();
 }
 
 bool

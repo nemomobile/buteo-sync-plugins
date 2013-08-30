@@ -88,6 +88,9 @@ public:
 signals:
 
     void syncFinished (Sync::SyncStatus);
+    
+    void sessionInProgress (Sync::ConnectivityType);
+
 
 public slots:
 
@@ -154,6 +157,8 @@ private:
     qint32                          mCommittedItems;
 
     Sync::ConnectivityType          mConnectionType;
+    
+    bool                            mIsSessionInProgress;
 };
 
 #endif // SYNCMLSERVER_H
