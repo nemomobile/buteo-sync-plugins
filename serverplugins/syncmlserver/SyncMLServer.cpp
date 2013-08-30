@@ -63,6 +63,7 @@ SyncMLServer::~SyncMLServer ()
     closeSyncAgentConfig ();
     closeSyncAgent ();
     closeUSBTransport ();
+    closeBTTransport ();
     delete mTransport;
 }
 
@@ -307,7 +308,13 @@ SyncMLServer::createBTTransport ()
 {
     FUNCTION_CALL_TRACE;
     
-    return true;
+    LOG_DEBUG ("Creating new BT connection");
+    mBTConnection.connect ();
+    
+    QObject::connect (&mBTConnection, SIGNAL (btConnected (int)),
+                      this, SLOT (handleBTConnected (int)));
+    
+    return mBTConnection.isConnected ();
 }
 
 void
@@ -324,6 +331,10 @@ void
 SyncMLServer::closeBTTransport ()
 {
     FUNCTION_CALL_TRACE;
+    
+    QObject::disconnect (&mBTConnection, SIGNAL (btConnected (int)),
+                         this, SLOT (handleBTConnected (int)));
+    mBTConnection.disconnect ();
 }
 
 void
