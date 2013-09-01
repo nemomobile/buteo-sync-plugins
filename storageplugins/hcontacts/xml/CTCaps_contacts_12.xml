@@ -103,7 +103,7 @@
     <Property>
       <PropName>PHOTO</PropName>
       <DataType />
-      <MaxSize>256</MaxSize>
+      <MaxSize>160000</MaxSize>
     </Property>
     <Property>
       <PropName>BDAY</PropName>
@@ -113,7 +113,7 @@
     <Property>
       <PropName>SOUND</PropName>
       <DataType />
-      <MaxSize>256</MaxSize>
+      <MaxSize>160000</MaxSize>
     </Property>
     <Property>
       <PropName>X-ASSISTANT</PropName>
