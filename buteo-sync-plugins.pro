@@ -38,8 +38,6 @@ SUBDIRS += \
     serverplugins \
     serverplugins_syncmlserver
 
-QT += QT_NO_EXCEPTIONS
-
 testdefinition.path = /opt/tests/buteo-sync-plugins/test-definition
 testdefinition.files = bin/tests.xml
 tests.path = /opt/tests/buteo-sync-plugins/
