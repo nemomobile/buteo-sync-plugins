@@ -96,8 +96,8 @@ Requires: %{name} = %{version}
 
 
 %build
-qmake -qt=5
-make #%{?_smp_mflags}
+%qmake5
+make %{?_smp_mflags}
 
 
 %install
