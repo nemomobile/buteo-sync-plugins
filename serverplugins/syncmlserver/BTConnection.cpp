@@ -36,6 +36,7 @@ const int RFCOMM_LM = 0x03;
 const int SOL_RFCOMM = 18;
 const int RFCOMM_LM_SECURE = 0x0200;
 const int BT_SERVER_CHANNEL = 26;
+const int BT_CLIENT_CHANNEL = 25;
 
 typedef struct {
     uint8_t b[6];
@@ -256,8 +257,19 @@ BTConnection::handleIncomingBTConnection (int fd)
     FUNCTION_CALL_TRACE;
     
     LOG_DEBUG ("Incoming BT connection. Emitting signal to handle the incoming data");
+
+    struct sockaddr_rc remote;
+    socklen_t len = sizeof (remote);
     
-    emit btConnected (fd);
+    int peerSocket = accept (fd, (struct sockaddr*)&remote, &len);
+    if (peerSocket < 0)
+    {
+        LOG_DEBUG ("Error in accept:" << strerror (errno));
+    } else
+    {
+        mFd = peerSocket;
+        emit btConnected (fd);
+    }
     
     // Disable event notifier
     removeFdListener ();

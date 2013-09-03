@@ -2,6 +2,7 @@
 
 <profile name="syncml" type="server" >
     <key name="usb_transport" value="true"/>
+    <key name="bt_transport" value="true"/>
 
     <profile name="hcontacts" type="storage" >
         <key name="enabled" value="true" />

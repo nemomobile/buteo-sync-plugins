@@ -136,6 +136,7 @@ private:
     QSocketNotifier         *mExceptionNotifier;
     
     bool                    mFdWatching;
+    
 };
 
 #endif // BTCONNECTION_H
