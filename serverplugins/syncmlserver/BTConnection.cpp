@@ -49,10 +49,11 @@ struct sockaddr_rc {
 };
 
 BTConnection::BTConnection() :
-    mFd (-1), mMutex (QMutex::Recursive), mDisconnected (true),
-    mClientServiceRecordId (-1), mServerServiceRecordId (-1),
-    mReadNotifier (0), mWriteNotifier (0), mExceptionNotifier (0),
-    mFdWatching (false)
+    mServerFd (-1), mClientFd (-1), mPeerSocket (-1), mMutex (QMutex::Recursive),
+    mDisconnected (true), mClientServiceRecordId (-1), mServerServiceRecordId (-1),
+    mServerReadNotifier (0), mServerWriteNotifier (0), mServerExceptionNotifier (0),
+    mClientReadNotifier (0), mClientWriteNotifier (0), mClientExceptionNotifier (0),
+    mServerFdWatching (false), mClientFdWatching (false)
 {
     FUNCTION_CALL_TRACE;
 }
@@ -61,11 +62,41 @@ BTConnection::~BTConnection ()
 {
     FUNCTION_CALL_TRACE;
     
-    if (mReadNotifier)
-        delete mReadNotifier;
+    if (mServerReadNotifier)
+    {
+        delete mServerReadNotifier;
+        mServerReadNotifier = 0;
+    }
+
+    if (mServerWriteNotifier)
+    {
+        delete mServerWriteNotifier;
+        mServerWriteNotifier = 0;
+    }
     
-    if (mWriteNotifier)
-        delete mWriteNotifier;
+    if (mServerExceptionNotifier)
+    {
+        delete mServerExceptionNotifier;
+        mServerExceptionNotifier = 0;
+    }
+
+    if (mClientReadNotifier)
+    {
+        delete mClientReadNotifier;
+        mClientReadNotifier = 0;
+    }
+
+    if (mClientWriteNotifier)
+    {
+        delete mClientWriteNotifier;
+        mClientWriteNotifier = 0;
+    }
+    
+    if (mClientExceptionNotifier)
+    {
+        delete mClientExceptionNotifier;
+        mClientExceptionNotifier = 0;
+    }
 }
 
 int
@@ -73,24 +104,7 @@ BTConnection::connect ()
 {
     FUNCTION_CALL_TRACE;
     
-    // Add service records
-    if (isConnected ())
-    {
-        LOG_DEBUG ("Already connected. Returning fd " << mFd);
-    } else
-    {
-        if (init () == false)
-    	{
-        	LOG_WARNING ("BT initialization failure");
-        	return -1;
-    	}
-
-    	mFd = openBTSocket ();
-
-    	addFdListener ();
-    }
-
-    return mFd;
+    return mPeerSocket;
 }
 
 bool
@@ -98,7 +112,7 @@ BTConnection::isConnected () const
 {
     FUNCTION_CALL_TRACE;
 
-    if (mFd == -1)
+    if (mPeerSocket == -1)
         return false;
     else
         return true;
@@ -108,9 +122,12 @@ void
 BTConnection::disconnect ()
 {
     FUNCTION_CALL_TRACE;
-    
-    removeFdListener ();
-    // We will not close the BT socket in server mode
+
+    if (mPeerSocket != -1)
+    {
+        close (mPeerSocket);
+        mPeerSocket = -1;
+    }
 }
 
 void
@@ -121,20 +138,26 @@ BTConnection::handleSyncFinished (bool isSyncInError)
     if (isSyncInError == true)
     {
         // If sync error, then close the BT connection and reopen it
-        removeFdListener ();
-        closeBTSocket ();
-        openBTSocket ();
-        addFdListener ();
+        removeFdListener (BT_SERVER_CHANNEL);
+        removeFdListener (BT_CLIENT_CHANNEL);
+        closeBTSocket (mServerFd);
+        closeBTSocket (mClientFd);
+        openBTSocket (BT_SERVER_CHANNEL);
+        openBTSocket (BT_CLIENT_CHANNEL);
+
+        addFdListener (BT_SERVER_CHANNEL, mServerFd);
+        addFdListener (BT_CLIENT_CHANNEL, mClientFd);
     } else
     {
         // No errors during sync. Add the fd listener
         LOG_DEBUG ("Sync finished. Adding fd listener");
-        addFdListener ();
+        addFdListener (BT_SERVER_CHANNEL, mServerFd);
+        addFdListener (BT_CLIENT_CHANNEL, mClientFd);
     }
 }
 
 int
-BTConnection::openBTSocket ()
+BTConnection::openBTSocket (const int channelNumber)
 {
     FUNCTION_CALL_TRACE;
 
@@ -156,7 +179,7 @@ BTConnection::openBTSocket ()
     memset (&localAddr, 0, sizeof (localAddr));
     localAddr.rc_family = AF_BLUETOOTH;
     btbdaddr_t anyAddr = {{0, 0, 0, 0, 0, 0}}; // bind to any local bluetooth address
-    localAddr.rc_channel = BT_SERVER_CHANNEL; // we open a bt server channel for SyncML
+    localAddr.rc_channel = channelNumber;
 
     memcpy (&localAddr.rc_bdaddr, &anyAddr, sizeof (btbdaddr_t));
     
@@ -188,67 +211,105 @@ BTConnection::openBTSocket ()
         }
     }
     
-    LOG_DEBUG ("Opened BT server socket with fd " << sock);
-    mFd = sock;
-    return mFd;
+    LOG_DEBUG ("Opened BT socket with fd " << sock << " for channel " << channelNumber);
+    return sock;
 }
 
 void
-BTConnection::closeBTSocket ()
+BTConnection::closeBTSocket (int& fd)
 {
     FUNCTION_CALL_TRACE;
-    
-    if (mFd != -1)
+
+    if (fd != -1)
     {
-        close (mFd);
-        mFd = -1;
+        close (fd);
+        fd = -1;
     }
 }
 
 void
-BTConnection::addFdListener ()
+BTConnection::addFdListener (const int channelNumber, int fd)
 {
     FUNCTION_CALL_TRACE;
     
-    if ((mFdWatching == false) && isConnected ())
+    if ((channelNumber == BT_SERVER_CHANNEL) && (mServerFdWatching == false) && (fd != -1))
     {
-        mReadNotifier = new QSocketNotifier (mFd, QSocketNotifier::Read);
-        mWriteNotifier = new QSocketNotifier (mFd, QSocketNotifier::Write);
-        mExceptionNotifier = new QSocketNotifier (mFd, QSocketNotifier::Exception);
-        
-        mReadNotifier->setEnabled (true);
-        mWriteNotifier->setEnabled (true);
-        mExceptionNotifier->setEnabled (true);
-        
-        QObject::connect (mReadNotifier, SIGNAL (activated (int)),
-                          this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
-        QObject::connect (mWriteNotifier, SIGNAL (activated (int)),
-                          this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
-        QObject::connect (mExceptionNotifier, SIGNAL (activated (int)),
-                          this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
-        
-        mFdWatching = true;
-        mDisconnected = false;
+        mServerReadNotifier = new QSocketNotifier (fd, QSocketNotifier::Read);
+    	mServerWriteNotifier = new QSocketNotifier (fd, QSocketNotifier::Write);
+    	mServerExceptionNotifier = new QSocketNotifier (fd, QSocketNotifier::Exception);
+    
+    	mServerReadNotifier->setEnabled (true);
+    	mServerWriteNotifier->setEnabled (true);
+    	mServerExceptionNotifier->setEnabled (true);
+    
+    	QObject::connect (mServerReadNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+    	QObject::connect (mServerWriteNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+    	QObject::connect (mServerExceptionNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
+
+        LOG_DEBUG ("Added listener for server socket " << fd);
+        mServerFdWatching = true;
     }
+
+    if ((channelNumber == BT_CLIENT_CHANNEL) && (mClientFdWatching == false) && (fd != -1))
+    {
+    	mClientReadNotifier = new QSocketNotifier (fd, QSocketNotifier::Read);
+    	mClientWriteNotifier = new QSocketNotifier (fd, QSocketNotifier::Write);
+    	mClientExceptionNotifier = new QSocketNotifier (fd, QSocketNotifier::Exception);
+    
+    	mClientReadNotifier->setEnabled (true);
+    	mClientWriteNotifier->setEnabled (true);
+    	mClientExceptionNotifier->setEnabled (true);
+    
+    	QObject::connect (mClientReadNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+    	QObject::connect (mClientWriteNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+    	QObject::connect (mClientExceptionNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
+
+        LOG_DEBUG ("Added listener for client socket " << fd);
+        mClientFdWatching = true;
+    }
+        
+    mDisconnected = false;
 }
 
 void
-BTConnection::removeFdListener ()
+BTConnection::removeFdListener (const int channelNumber)
 {
     FUNCTION_CALL_TRACE;
+    if (channelNumber == BT_SERVER_CHANNEL)
+    {
+        mServerReadNotifier->setEnabled (false);
+    	mServerWriteNotifier->setEnabled (false);
+    	mServerExceptionNotifier->setEnabled (false);
     
-    mReadNotifier->setEnabled (false);
-    mWriteNotifier->setEnabled (false);
-    mExceptionNotifier->setEnabled (false);
-    
-    QObject::disconnect (mReadNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleIncomingBTConnection (int)));
-    QObject::disconnect (mWriteNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleIncomingBTConnection (int)));
-    QObject::disconnect (mExceptionNotifier, SIGNAL (activated (int)),
-                      this, SLOT (handleBTError (int)));
-    
-    mFdWatching = false;
+    	QObject::disconnect (mServerReadNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)));
+    	QObject::disconnect (mServerWriteNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)));
+    	QObject::disconnect (mServerExceptionNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleBTError (int)));
+        
+        mServerFdWatching = false;
+    } else if (channelNumber == BT_CLIENT_CHANNEL)
+    {
+        mClientReadNotifier->setEnabled (false);
+    	mClientWriteNotifier->setEnabled (false);
+    	mClientExceptionNotifier->setEnabled (false);
+
+    	QObject::disconnect (mClientReadNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)));
+    	QObject::disconnect (mClientWriteNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleIncomingBTConnection (int)));
+    	QObject::disconnect (mClientExceptionNotifier, SIGNAL (activated (int)),
+                      	this, SLOT (handleBTError (int)));
+        
+        mClientFdWatching = false;
+    }
 }
 
 void
@@ -261,34 +322,48 @@ BTConnection::handleIncomingBTConnection (int fd)
     struct sockaddr_rc remote;
     socklen_t len = sizeof (remote);
     
-    int peerSocket = accept (fd, (struct sockaddr*)&remote, &len);
-    if (peerSocket < 0)
+    mPeerSocket = accept (fd, (struct sockaddr*)&remote, &len);
+    if (mPeerSocket < 0)
     {
         LOG_DEBUG ("Error in accept:" << strerror (errno));
     } else
     {
-        mFd = peerSocket;
-        emit btConnected (fd);
+        emit btConnected (mPeerSocket);
     }
     
     // Disable event notifier
-    removeFdListener ();
+    if (fd == mServerFd)
+        removeFdListener (BT_SERVER_CHANNEL);
+    else if (fd == mClientFd)
+        removeFdListener (BT_CLIENT_CHANNEL);
 }
 
 void
 BTConnection::handleBTError (int fd)
 {
     FUNCTION_CALL_TRACE;
-    Q_UNUSED (fd);
     
     LOG_DEBUG ("Error in BT connection");
     
     // Should this be similar to USB that we close and re-init BT?
     
-    removeFdListener ();
-    closeBTSocket ();
-    openBTSocket ();
-    addFdListener ();
+    // FIXME: Ugly API for fd listeners. Add a more decent way
+    if (fd == mServerFd)
+        removeFdListener (BT_SERVER_CHANNEL);
+    else if (fd == mClientFd)
+        removeFdListener (BT_CLIENT_CHANNEL);
+
+    closeBTSocket (fd);
+
+    if (fd == mServerFd)
+        openBTSocket (BT_SERVER_CHANNEL);
+    else if (fd == mClientFd)
+        openBTSocket (BT_CLIENT_CHANNEL);
+
+    if (fd == mServerFd)
+        addFdListener (BT_SERVER_CHANNEL, fd);
+    else if (fd == mClientFd)
+        addFdListener (BT_CLIENT_CHANNEL, fd);
 }
 
 bool
@@ -314,8 +389,38 @@ BTConnection::init ()
     }
     
     addServiceRecord (serverSDP, mServerServiceRecordId);
+
+    // Open the server and client socket
+    mServerFd = openBTSocket (BT_SERVER_CHANNEL);
+    mClientFd = openBTSocket (BT_CLIENT_CHANNEL);
+    
+    if (mServerFd == -1 || mClientFd == -1)
+    {
+        LOG_WARNING ("Error in opening BT client and server sockets");
+        return false;
+    }
+
+    addFdListener (BT_SERVER_CHANNEL, mServerFd);
+    addFdListener (BT_CLIENT_CHANNEL, mClientFd);
     
     return true;
+}
+
+void BTConnection::uninit()
+{
+    // Remove listeners
+    removeFdListener (BT_SERVER_CHANNEL);
+    removeFdListener (BT_CLIENT_CHANNEL);
+
+    // Close the fd's
+    closeBTSocket (mServerFd);
+    closeBTSocket (mClientFd);
+
+    // Close the peer socket
+    closeBTSocket (mPeerSocket);
+
+    // Remove service records
+    removeServiceRecords ();
 }
 
 bool

@@ -307,12 +307,12 @@ SyncMLServer::createBTTransport ()
     FUNCTION_CALL_TRACE;
     
     LOG_DEBUG ("Creating new BT connection");
-    mBTConnection.connect ();
+    bool btInitRes = mBTConnection.init ();
     
     QObject::connect (&mBTConnection, SIGNAL (btConnected (int)),
                       this, SLOT (handleBTConnected (int)));
     
-    return mBTConnection.isConnected ();
+    return btInitRes;
 }
 
 void
@@ -332,7 +332,7 @@ SyncMLServer::closeBTTransport ()
     
     QObject::disconnect (&mBTConnection, SIGNAL (btConnected (int)),
                          this, SLOT (handleBTConnected (int)));
-    mBTConnection.disconnect ();
+    mBTConnection.uninit ();
 }
 
 void

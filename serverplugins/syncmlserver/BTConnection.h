@@ -60,6 +60,16 @@ public:
 
     void handleSyncFinished (bool isSyncInError);
 
+    /**
+     * ! \brief BT initialization method
+     */
+    bool init ();
+
+    /**
+      * ! \brief BT uninitialization method
+      */
+    void uninit ();
+
 signals:
 
     void btConnected (int fd);
@@ -76,27 +86,22 @@ private:
     /**
      * ! \brief Method to open bluetooth socket
      */
-    int openBTSocket ();
+    int openBTSocket (const int channelNumber);
 
     /**
      * ! \brief Method to close bluetooth socket
      */
-    void closeBTSocket ();
+    void closeBTSocket (int &fd);
 
     /**
      * ! \brief FD listener method
      */
-    void addFdListener ();
+    void addFdListener (const int channelNumber, int fd);
 
     /**
      * ! \brief Removes fd listening
      */
-    void removeFdListener ();
-
-    /**
-     * ! \brief BT initialization method
-     */
-    bool init ();
+    void removeFdListener (const int channelNumber);
 
     /**
      * ! \brief Method to add service record using Bluez dbus API
@@ -119,7 +124,11 @@ private:
 
 private:
 
-    int                     mFd;
+    int                     mServerFd;
+
+    int                     mClientFd;
+
+    int                     mPeerSocket;
 
     QMutex                  mMutex;
 
@@ -129,13 +138,21 @@ private:
     
     quint32                 mServerServiceRecordId;
     
-    QSocketNotifier         *mReadNotifier;   
+    QSocketNotifier         *mServerReadNotifier;
     
-    QSocketNotifier         *mWriteNotifier;
+    QSocketNotifier         *mServerWriteNotifier;
 
-    QSocketNotifier         *mExceptionNotifier;
+    QSocketNotifier         *mServerExceptionNotifier;
     
-    bool                    mFdWatching;
+    QSocketNotifier         *mClientReadNotifier;
+    
+    QSocketNotifier         *mClientWriteNotifier;
+    
+    QSocketNotifier         *mClientExceptionNotifier;
+
+    bool                    mServerFdWatching;
+
+    bool                    mClientFdWatching;
     
 };
 
