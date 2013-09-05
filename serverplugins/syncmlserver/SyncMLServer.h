@@ -98,8 +98,6 @@ public slots:
 
 protected slots:
 
-    void initTransport ();
-
     void handleUSBConnected (int fd);
 
     void handleBTConnected (int fd);
@@ -156,9 +154,25 @@ private:
 
     qint32                          mCommittedItems;
 
+    /**
+      * ! \brief The connectivity type used for the current sync session
+      */
     Sync::ConnectivityType          mConnectionType;
     
+    /**
+      * ! \brief Flag to indicate if the sync session is in progress
+      */
     bool                            mIsSessionInProgress;
+    
+    /**
+      * ! \brief Flag to indicate if bluetooth is active
+      */
+    bool                            mBTActive;
+    
+    /**
+      * ! \brief Flag to indicate if USB is active
+      */
+    bool                            mUSBActive;
 };
 
 #endif // SYNCMLSERVER_H
