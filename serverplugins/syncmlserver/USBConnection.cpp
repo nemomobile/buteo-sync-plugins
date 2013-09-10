@@ -136,7 +136,7 @@ USBConnection::openUSBDevice ()
                    O_RDWR | O_NOCTTY);
 
     if (mFd < 0) {
-        LOG_CRITICAL ("Count not open USB device");
+        LOG_WARNING ("Count not open USB device");
         return -1;
     }
 
