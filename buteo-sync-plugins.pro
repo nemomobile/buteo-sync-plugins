@@ -27,6 +27,7 @@ serverplugins.depends = sub-syncmlcommon
 
 serverplugins_syncmlserver.subdir = serverplugins/syncmlserver
 serverplugins_syncmlserver.target = sub-serverplugins_syncmlserver
+serverplugins_syncmlserver.depends = sub-syncmlcommon
 
 SUBDIRS += \
     syncmlcommon \
