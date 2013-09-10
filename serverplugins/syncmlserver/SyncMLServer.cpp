@@ -143,7 +143,7 @@ SyncMLServer::startListen ()
     
     if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_BT))
     {
-        mBTActive = listening &= createBTTransport ();
+        mBTActive = listening |= createBTTransport ();
     }
     
     if (iCbInterface->isConnectivityAvailable (Sync::CONNECTIVITY_INTERNET))
