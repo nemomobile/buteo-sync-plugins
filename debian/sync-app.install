@@ -1,7 +1,0 @@
-usr/lib/lib*.so*
-usr/lib/sync/lib*.so
-etc/sync/xml/*
-etc/sync/profiles/client/*
-etc/sync/profiles/service/*
-etc/sync/profiles/storage/*
-etc/sync/profiles/sync/*

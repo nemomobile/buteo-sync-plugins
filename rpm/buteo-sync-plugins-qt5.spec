@@ -36,6 +36,7 @@ BuildRequires: doxygen
 %config %{_sysconfdir}/buteo/profiles/client/*.xml
 %config %{_sysconfdir}/buteo/profiles/storage/*.xml
 %config %{_sysconfdir}/buteo/profiles/sync/bt_template.xml
+%config %{_sysconfdir}/buteo/plugins/syncmlserver/*.xml
 %{_libdir}/buteo-plugins-qt5/*.so
 %{_libdir}/*.so.*
 
@@ -96,8 +97,8 @@ Requires: %{name} = %{version}
 
 
 %build
-qmake -qt=5
-make #%{?_smp_mflags}
+%qmake5
+make %{?_smp_mflags}
 
 
 %install
