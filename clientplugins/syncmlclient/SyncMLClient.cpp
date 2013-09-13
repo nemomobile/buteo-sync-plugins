@@ -35,6 +35,7 @@
 #include <buteosyncml5/OBEXTransport.h>
 #include <buteosyncml5/DeviceInfo.h>
 #include <buteosyncfw5/LogMacros.h>
+#include <buteosyncfw5/ProfileEngineDefs.h>
 #else
 #include <buteosyncfw/PluginCbInterface.h>
 #include <buteosyncml/SyncAgent.h>
@@ -44,8 +45,10 @@
 #include <buteosyncml/OBEXTransport.h>
 #include <buteosyncml/DeviceInfo.h>
 #include <buteosyncfw/LogMacros.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
 #endif
 
+#include <Accounts/Account>
 #include "SyncMLConfig.h"
 #include "SyncMLCommon.h"
 #include "DeviceInfo.h"
@@ -67,7 +70,7 @@ SyncMLClient::SyncMLClient(const QString& aPluginName,
 		const Buteo::SyncProfile& aProfile,
 		Buteo::PluginCbInterface *aCbInterface) :
 	ClientPlugin(aPluginName, aProfile, aCbInterface), iAgent(0),
-			iTransport(0), iConfig(0), iCommittedItems(0) {
+			iTransport(0), iConfig(0), iCommittedItems(0), iAccountManager(new Accounts::Manager()) {
 	FUNCTION_CALL_TRACE;
 }
 
@@ -82,6 +85,15 @@ bool SyncMLClient::init() {
 	iProperties = iProfile.allNonStorageKeys();
 
     if (initAgent() && initTransport() && initConfig()) {
+        if (initAccount()) {
+            // Fetch the key/values settings from Account and merge them with iProperties
+            QMap<QString, QString> accSettings = accountSettings();
+            
+            QMap<QString, QString>::iterator iter;
+            for (iter = accSettings.begin(); iter != accSettings.end(); ++iter) {
+                iProperties[iter.key()] = iter.value();
+            }
+        }
 		return true;
 	} else {
 		// Uninitialize everything that was initialized before failure.
@@ -878,4 +890,46 @@ void SyncMLClient::generateResults( bool aSuccessful )
                       "RM:" << targetResults.remoteItems().modified);
         }
     }
+}
+
+Accounts::AccountId SyncMLClient::accountId()
+{
+    FUNCTION_CALL_TRACE;
+    
+    Accounts::AccountId accountId = -1;
+    QStringList accountList = iProfile.keyValues ( Buteo::KEY_ACCOUNT_ID );
+    if ( !accountList.isEmpty() )
+    {
+        accountId = accountList.first().toUInt();
+    }
+    
+    return accountId;
+}
+
+bool SyncMLClient::initAccount()
+{
+    FUNCTION_CALL_TRACE;
+    Q_ASSERT( iAccountManager );
+
+    Accounts::AccountId accId = accountId();
+    if (accId != (Accounts::AccountId)-1) {
+        iAccount = iAccountManager->account( accId );
+        return true;
+    } else {
+        return false;
+    }
+}
+
+QMap<QString, QString> SyncMLClient::accountSettings()
+{
+    FUNCTION_CALL_TRACE;
+    Q_ASSERT( iAccount );
+    
+    QMap<QString, QString> accSettings;
+    QStringList allKeys = iAccount->allKeys();
+    foreach (const QString key, allKeys) {
+        accSettings[key] = iAccount->value( key ).toString();
+    }
+    
+    return accSettings;
 }

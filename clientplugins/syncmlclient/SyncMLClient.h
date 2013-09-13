@@ -34,6 +34,9 @@
 #include <buteosyncml/SyncAgent.h>
 #endif
 
+#include <Accounts/Account>
+#include <Accounts/Manager>
+
 namespace DataSync {
 
 class Transport;
@@ -167,6 +170,12 @@ private:
 
     void generateResults( bool aSuccessful );
 
+    Accounts::AccountId accountId();
+
+    bool initAccount();
+
+    QMap<QString, QString>  accountSettings();
+
 #ifndef QT_NO_DEBUG
     // helper function for debugging
     // does nothing in release mode
@@ -188,6 +197,9 @@ private:
 
     quint32                     iCommittedItems;
 
+    Accounts::Manager*          iAccountManager;
+    
+    Accounts::Account*          iAccount;
 };
 
 /*! \brief Creates SyncML client plugin
