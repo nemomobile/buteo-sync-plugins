@@ -8,13 +8,13 @@ CONFIG += link_pkgconfig plugin
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY += systeminfo
-    PKGCONFIG = buteosyncfw buteosyncml accounts-qt
+    PKGCONFIG = buteosyncfw buteosyncml accounts-qt libsignon-qt
     LIBS += -lsyncmlcommon
     target.path = /usr/lib/buteo-plugins
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo accounts-qt5
+    PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo accounts-qt5 libsignon-qt5
     LIBS += -lsyncmlcommon5
     target.path = /usr/lib/buteo-plugins-qt5
 }
