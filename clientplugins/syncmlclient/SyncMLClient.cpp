@@ -970,17 +970,30 @@ void SyncMLClient::credentialsResponse( const SignOn::SessionData &sessionData )
 
     QStringList sdpns = sessionData.propertyNames();
     foreach (const QString &sdpn, sdpns) {
-        if ( (sdpn.compare("username", Qt::CaseInsensitive) == 0) ||
-             (sdpn.compare("password", Qt::CaseInsensitive) == 0) )
-        {
+        LOG_DEBUG(sdpn << sessionData.getProperty(sdpn).toString());
+
+        if (sdpn.compare("username", Qt::CaseInsensitive) == 0)
             iProperties[Buteo::KEY_USERNAME] = sessionData.getProperty( sdpn ).toString();
+        else if (sdpn.compare("secret", Qt::CaseInsensitive) == 0)
             iProperties[Buteo::KEY_PASSWORD] = sessionData.getProperty( sdpn ).toString();
-        }
+    }
+
+    if ( iProperties[Buteo::KEY_USERNAME].isEmpty() ||
+         iProperties[Buteo::KEY_PASSWORD].isEmpty() )
+    {
+        SignOn::Error error(SignOn::Error::Unknown, "Empty username or password returned from signond");
+        credentialsError(error);
     }
 
     // Start the actual sync process
     if (iAgent)
+    {
+        // Set the config with the credentials from SSO
+	    iConfig->setAuthParams(DataSync::AUTH_BASIC,
+                               iProperties[Buteo::KEY_USERNAME],
+                               iProperties[Buteo::KEY_PASSWORD]);
 	    iAgent->startSync(*iConfig);
+    }
 }
 
 void SyncMLClient::credentialsError( const SignOn::Error &error )
