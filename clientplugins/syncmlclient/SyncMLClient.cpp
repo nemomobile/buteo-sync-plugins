@@ -35,6 +35,7 @@
 #include <buteosyncml5/OBEXTransport.h>
 #include <buteosyncml5/DeviceInfo.h>
 #include <buteosyncfw5/LogMacros.h>
+#include <buteosyncfw5/ProfileEngineDefs.h>
 #else
 #include <buteosyncfw/PluginCbInterface.h>
 #include <buteosyncml/SyncAgent.h>
@@ -44,8 +45,10 @@
 #include <buteosyncml/OBEXTransport.h>
 #include <buteosyncml/DeviceInfo.h>
 #include <buteosyncfw/LogMacros.h>
+#include <buteosyncfw/ProfileEngineDefs.h>
 #endif
 
+#include <Accounts/Account>
 #include "SyncMLConfig.h"
 #include "SyncMLCommon.h"
 #include "DeviceInfo.h"
@@ -67,21 +70,34 @@ SyncMLClient::SyncMLClient(const QString& aPluginName,
 		const Buteo::SyncProfile& aProfile,
 		Buteo::PluginCbInterface *aCbInterface) :
 	ClientPlugin(aPluginName, aProfile, aCbInterface), iAgent(0),
-			iTransport(0), iConfig(0), iCommittedItems(0) {
+	iTransport(0), iConfig(0), iCommittedItems(0) {
 	FUNCTION_CALL_TRACE;
 }
 
 SyncMLClient::~SyncMLClient() {
 	FUNCTION_CALL_TRACE;
+    
 }
 
 bool SyncMLClient::init() {
 	FUNCTION_CALL_TRACE;
 
-
 	iProperties = iProfile.allNonStorageKeys();
 
     if (initAgent() && initTransport() && initConfig()) {
+        if (useAccounts () && initAccount()) {
+            // Fetch the credentials from SSO. Currently, only "password"
+            // method and mechanism are supported to be retrieved
+            getCredentials();
+
+            // Fetch the key/values settings from Account and merge them with iProperties
+            QMap<QString, QString> accSettings = accountSettings();
+            
+            QMap<QString, QString>::iterator iter;
+            for (iter = accSettings.begin(); iter != accSettings.end(); ++iter) {
+                iProperties[iter.key()] = iter.value();
+            }
+        }
 		return true;
 	} else {
 		// Uninitialize everything that was initialized before failure.
@@ -130,8 +146,10 @@ bool SyncMLClient::startSync()
 
 	iConfig->setTransport(iTransport);
 
-	return iAgent->startSync(*iConfig);
-
+    if (useAccounts()) // The actual sync start would be done in credentialsResponse() slot
+        return true;
+    else
+        return iAgent->startSync(*iConfig);
 }
 
 void SyncMLClient::abortSync(Sync::SyncStatus aStatus)
@@ -878,4 +896,113 @@ void SyncMLClient::generateResults( bool aSuccessful )
                       "RM:" << targetResults.remoteItems().modified);
         }
     }
+}
+
+Accounts::AccountId SyncMLClient::accountId()
+{
+    FUNCTION_CALL_TRACE;
+
+    Accounts::AccountId accountId = 0;
+    QStringList accountList = iProfile.keyValues ( Buteo::KEY_ACCOUNT_ID );
+    if ( !accountList.isEmpty() )
+    {
+        accountId = accountList.first().toUInt();
+    }
+    
+    return accountId;
+}
+
+bool SyncMLClient::initAccount()
+{
+    FUNCTION_CALL_TRACE;
+    Accounts::Manager* manager = new Accounts::Manager();
+
+    Accounts::AccountId accId = accountId();
+
+    if ( accId != (Accounts::AccountId)0 ) {
+        iAccount = manager->account( accId );
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void SyncMLClient::getCredentials ()
+{
+    FUNCTION_CALL_TRACE;
+
+    quint32 credentialsId = iAccount->credentialsId();
+
+    SignOn::Identity* identity = SignOn::Identity::existingIdentity( credentialsId );
+
+    SignOn::SessionData data;
+
+    // Currently, we support only "password" method and mechanism for
+    // SyncML
+    iAuthSession = identity->createSession( QLatin1String("password") );
+    QObject::connect( iAuthSession, SIGNAL(response(const SignOn::SessionData &)),
+                      this, SLOT(credentialsResponse(const SessionData&)));
+    QObject::connect( iAuthSession, SIGNAL(error(const SignOn::Error &)),
+        this, SLOT(credentialsError(const Error&)));
+
+    iAuthSession->process(data, QLatin1String("password"));    
+}
+
+bool SyncMLClient::useAccounts() const
+{
+    return iProfile.boolKey( Buteo::KEY_USE_ACCOUNTS );
+}
+
+QMap<QString,QString> SyncMLClient::accountSettings() const
+{
+    QStringList keys = iAccount->allKeys();
+    QMap<QString,QString> accSettings;
+    foreach (const QString key, keys) {
+        accSettings[key] = iAccount->valueAsString( key );
+    }
+
+    return accSettings;
+}
+
+void SyncMLClient::credentialsResponse( const SignOn::SessionData &sessionData )
+{
+    FUNCTION_CALL_TRACE;
+
+    QStringList sdpns = sessionData.propertyNames();
+    foreach (const QString &sdpn, sdpns) {
+        LOG_DEBUG(sdpn << sessionData.getProperty(sdpn).toString());
+
+        if (sdpn.compare("username", Qt::CaseInsensitive) == 0)
+            iProperties[Buteo::KEY_USERNAME] = sessionData.getProperty( sdpn ).toString();
+        else if (sdpn.compare("secret", Qt::CaseInsensitive) == 0)
+            iProperties[Buteo::KEY_PASSWORD] = sessionData.getProperty( sdpn ).toString();
+    }
+
+    if ( iProperties[Buteo::KEY_USERNAME].isEmpty() ||
+         iProperties[Buteo::KEY_PASSWORD].isEmpty() )
+    {
+        SignOn::Error error(SignOn::Error::Unknown, "Empty username or password returned from signond");
+        credentialsError(error);
+    }
+
+    // Start the actual sync process
+    if (iAgent)
+    {
+        // Set the config with the credentials from SSO
+	    iConfig->setAuthParams(DataSync::AUTH_BASIC,
+                               iProperties[Buteo::KEY_USERNAME],
+                               iProperties[Buteo::KEY_PASSWORD]);
+	    iAgent->startSync(*iConfig);
+    }
+}
+
+void SyncMLClient::credentialsError( const SignOn::Error &error )
+{
+    LOG_WARNING("Error in retrieving credentials from SSO."
+                << error.type() << error.message());
+    LOG_WARNING("Emitting authentication failure");
+
+    // Emitting authentication failure for lack of a proper enum from
+    // DataSync::
+    syncFinished(DataSync::AUTHENTICATION_FAILURE);
 }
