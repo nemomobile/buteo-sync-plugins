@@ -34,6 +34,15 @@
 #include <buteosyncml/SyncAgent.h>
 #endif
 
+#include <Accounts/Account>
+#include <Accounts/Service>
+#include <Accounts/Manager>
+#include <SessionData>
+#include <IdentityInfo>
+#include <Identity>
+#include <AuthSession>
+#include <AuthService>
+
 namespace DataSync {
 
 class Transport;
@@ -121,7 +130,17 @@ protected slots:
 								DataSync::ModifiedDatabase aModifiedDatabase,
 								QString aLocalDatabase,
 								QString aMimeType,
-                                                                int aCommittedItems );
+                                int aCommittedItems );
+
+    /*!
+     * \brief Slot for response on call for retrieving credentials
+     */
+    void credentialsResponse( const SignOn::SessionData& data );
+
+    /*!
+     * \brief Error slot for response on call for retrieving credentials
+     */
+    void credentialsError( const SignOn::Error& error );
 
 private:
 
@@ -167,6 +186,16 @@ private:
 
     void generateResults( bool aSuccessful );
 
+    Accounts::AccountId accountId();
+
+    bool initAccount();
+
+    void getCredentials();
+
+    bool useAccounts() const;
+
+    QMap<QString,QString> accountSettings() const;
+
 #ifndef QT_NO_DEBUG
     // helper function for debugging
     // does nothing in release mode
@@ -188,6 +217,9 @@ private:
 
     quint32                     iCommittedItems;
 
+    Accounts::Account*          iAccount;
+    
+    SignOn::AuthSession*        iAuthSession;
 };
 
 /*! \brief Creates SyncML client plugin
