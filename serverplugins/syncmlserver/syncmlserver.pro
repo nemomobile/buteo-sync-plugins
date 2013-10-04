@@ -57,11 +57,14 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno $(OBJECTS_DIR)/*.gcov
 sync.path = /etc/buteo/profiles/server
 sync.files = xml/syncml.xml
 
+template.path = /etc/buteo/profiles/sync
+template.files = xml/bt_template.xml
+
 btsrs.path = /etc/buteo/plugins/syncmlserver
 btsrs.files = xml/syncml_server_sdp_record.xml xml/syncml_client_sdp_record.xml
 
 #installs
-INSTALLS += target sync btsrs
+INSTALLS += target sync btsrs template
 
 OTHER_FILES += xml/syncml_server_sdp_record.xml \
                 xml/syncml_client_sdp_record.xml
