@@ -100,7 +100,7 @@ protected slots:
 
     void handleUSBConnected (int fd);
 
-    void handleBTConnected (int fd);
+    void handleBTConnected (int fd, QString btAddr);
 
     void handleSyncFinished (DataSync::SyncState state);
 
@@ -132,7 +132,7 @@ private:
     
     bool createBTTransport ();
 
-    bool startNewSession ();
+    bool startNewSession (QString address);
 
     void generateResults (bool success);
 

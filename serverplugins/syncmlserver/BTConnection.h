@@ -72,7 +72,7 @@ public:
 
 signals:
 
-    void btConnected (int fd);
+    void btConnected (int fd, QString btAddr);
 
 protected slots:
     
