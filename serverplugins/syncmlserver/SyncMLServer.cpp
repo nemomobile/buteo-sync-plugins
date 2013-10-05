@@ -319,8 +319,8 @@ SyncMLServer::createBTTransport ()
     LOG_DEBUG ("Creating new BT connection");
     bool btInitRes = mBTConnection.init ();
     
-    QObject::connect (&mBTConnection, SIGNAL (btConnected (int)),
-                      this, SLOT (handleBTConnected (int)));
+    QObject::connect (&mBTConnection, SIGNAL (btConnected (int, QString)),
+                      this, SLOT (handleBTConnected (int, QString)));
     
     return btInitRes;
 }
@@ -340,8 +340,8 @@ SyncMLServer::closeBTTransport ()
 {
     FUNCTION_CALL_TRACE;
     
-    QObject::disconnect (&mBTConnection, SIGNAL (btConnected (int)),
-                         this, SLOT (handleBTConnected (int)));
+    QObject::disconnect (&mBTConnection, SIGNAL (btConnected (int, QString)),
+                         this, SLOT (handleBTConnected (int, QString)));
     mBTConnection.uninit ();
 }
 
@@ -376,12 +376,12 @@ SyncMLServer::handleUSBConnected (int fd)
     if (!mAgent)
     {
         mConnectionType = Sync::CONNECTIVITY_USB;
-        startNewSession ();
+        startNewSession ("USB");
     }
 }
 
 void
-SyncMLServer::handleBTConnected (int fd)
+SyncMLServer::handleBTConnected (int fd, QString btAddr)
 {
     FUNCTION_CALL_TRACE;
     Q_UNUSED (fd);
@@ -411,12 +411,12 @@ SyncMLServer::handleBTConnected (int fd)
     if (!mAgent)
     {
         mConnectionType = Sync::CONNECTIVITY_BT;
-        startNewSession ();
+        startNewSession (btAddr);
     }
 }
 
 bool
-SyncMLServer::startNewSession ()
+SyncMLServer::startNewSession (QString address)
 {
     FUNCTION_CALL_TRACE;
 
@@ -436,7 +436,7 @@ SyncMLServer::startNewSession ()
 
     if (mAgent->listen (*mConfig))
     {
-        LOG_DEBUG ("New session started");
+        emit newSession (address);
         return true;
     } else
     {

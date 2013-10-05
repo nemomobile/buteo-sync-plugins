@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<profile name="bt_template" type="sync">
+
+    <key name="enabled" value="false"/>
+    <key name="hidden" value="true"/>
+    <key name="remote_id" value="/"/>
+    <!-- For purpose of localization in UI -->
+    <key name="displayname" value="qtn_sync_dest_name_device_default"/>
+
+    <profile type="service" name="bt">
+    </profile>
+
+    <profile name="syncml" type="client" >
+        <key name="Sync Direction" value="two-way" />
+    </profile>
+
+    <profile name="hcontacts" type="storage">
+	<key name="enabled" value="true"/>
+    </profile>
+    
+    <profile name="hcalendar" type="storage">
+        <key name="enabled" value="true"/>
+	<key name="Notebook Name" value="Personal"/>
+    </profile>
+
+     <profile name="hsms" type="storage">
+         <key name="enabled" value="false"/>
+    </profile>	    
+    
+    <profile name="hnotes" type="storage">
+	 <key name="enabled" value="true"/>
+     </profile>
+</profile>

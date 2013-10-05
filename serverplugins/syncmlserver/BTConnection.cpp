@@ -48,6 +48,15 @@ struct sockaddr_rc {
     uint8_t         rc_channel;
 };
 
+static QString
+btAddrInHex (const btbdaddr_t* ba, char* str)
+{
+    sprintf(str, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+            ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
+    QString btAddr (str);
+    return btAddr.toUpper ();
+}
+
 BTConnection::BTConnection() :
     mServerFd (-1), mClientFd (-1), mPeerSocket (-1), mMutex (QMutex::Recursive),
     mDisconnected (true), mClientServiceRecordId (-1), mServerServiceRecordId (-1),
@@ -328,7 +337,9 @@ BTConnection::handleIncomingBTConnection (int fd)
         LOG_DEBUG ("Error in accept:" << strerror (errno));
     } else
     {
-        emit btConnected (mPeerSocket);
+        char buf[128] = { 0 };
+        QString btAddr = btAddrInHex (&remote.rc_bdaddr, buf);
+        emit btConnected (mPeerSocket, btAddr);
     }
     
     // Disable event notifier
