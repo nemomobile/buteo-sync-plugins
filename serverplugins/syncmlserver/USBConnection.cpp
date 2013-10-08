@@ -48,11 +48,9 @@ USBConnection::~USBConnection ()
     FUNCTION_CALL_TRACE;
 
 #ifdef GLIB_FD_WATCH
-    if (mIOChannel)
-    {
-        delete mIOChannel;
-        mIOChannel = 0;
-    }
+    // Make sure glibc does not try to deliver more events to us.
+    // This also frees mIOChannel by removing the last ref, if any.
+    removeFdListener();
 #else
     if (mReadNotifier)
     {
