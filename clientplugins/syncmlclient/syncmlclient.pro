@@ -81,7 +81,7 @@ CONFIG += link_pkgconfig plugin
 
 PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo accounts-qt5 libsignon-qt5
 LIBS += -lsyncmlcommon5
-target.path = /usr/lib/buteo-plugins-qt5
+target.path = /usr/lib/buteo-plugins-qt5/oopp
 
 DEFINES += "CLASSNAME=SyncMLClient"
 DEFINES += CLASSNAME_H=\\\"SyncMLClient.h\\\"
