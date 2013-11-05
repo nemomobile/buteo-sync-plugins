@@ -34,6 +34,7 @@ VER_PAT = 0
 #input
 HEADERS += SyncMLClient.h BTConnection.h
 
+#DEFINES += BUTEO_ENABLE_DEBUG
 SOURCES += SyncMLClient.cpp BTConnection.cpp
 
 QMAKE_CXXFLAGS = -Wall \
@@ -65,7 +66,7 @@ sync.files = xml/sync/*
 storage.path = /etc/buteo/profiles/storage
 storage.files = xml/storage/*
 
-INSTALLS += target client sync service storage
+INSTALLS += target client sync storage
 
 }
 
@@ -77,6 +78,7 @@ TARGET = syncml-client
 DEPENDPATH += .
 INCLUDEPATH += . ../../syncmlcommon
 
+#DEFINES += BUTEO_ENABLE_DEBUG
 CONFIG += link_pkgconfig plugin
 
 PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo accounts-qt5 libsignon-qt5
@@ -85,6 +87,7 @@ target.path = /usr/lib/buteo-plugins-qt5/oopp
 
 DEFINES += "CLASSNAME=SyncMLClient"
 DEFINES += CLASSNAME_H=\\\"SyncMLClient.h\\\"
+DEFINES += CLIENT_PLUGIN
 
 LIBS += -L../../syncmlcommon
 
