@@ -1,5 +1,5 @@
 # Configuration for generation a DLL plugin
-PLUGIN_LIBRARY {
+PLUGIN_DLL {
 
 TEMPLATE = lib
 TARGET = syncml-client
@@ -86,9 +86,11 @@ INCLUDEPATH += . ../../syncmlcommon
 #DEFINES += BUTEO_ENABLE_DEBUG
 CONFIG += link_pkgconfig plugin
 
+equals(QT_MAJOR_VERSION, 5): {
 PKGCONFIG = buteosyncfw5 buteosyncml5 Qt5SystemInfo accounts-qt5 libsignon-qt5
 LIBS += -lsyncmlcommon5
 target.path = /usr/lib/buteo-plugins-qt5/oopp
+}
 
 DEFINES += "CLASSNAME=SyncMLClient"
 DEFINES += CLASSNAME_H=\\\"SyncMLClient.h\\\"
