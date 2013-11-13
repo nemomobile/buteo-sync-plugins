@@ -252,11 +252,11 @@ BTConnection::addFdListener (const int channelNumber, int fd)
     	mServerExceptionNotifier->setEnabled (true);
     
     	QObject::connect (mServerReadNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleIncomingBTConnection (int)));
     	QObject::connect (mServerWriteNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleIncomingBTConnection (int)));
     	QObject::connect (mServerExceptionNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleBTError (int)));
 
         LOG_DEBUG ("Added listener for server socket " << fd);
         mServerFdWatching = true;
@@ -273,11 +273,11 @@ BTConnection::addFdListener (const int channelNumber, int fd)
     	mClientExceptionNotifier->setEnabled (true);
     
     	QObject::connect (mClientReadNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleIncomingBTConnection (int)));
     	QObject::connect (mClientWriteNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleIncomingBTConnection (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleIncomingBTConnection (int)));
     	QObject::connect (mClientExceptionNotifier, SIGNAL (activated (int)),
-                      	this, SLOT (handleBTError (int)), Qt::BlockingQueuedConnection);
+                      	this, SLOT (handleBTError (int)));
 
         LOG_DEBUG ("Added listener for client socket " << fd);
         mClientFdWatching = true;
