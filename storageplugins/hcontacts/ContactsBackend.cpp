@@ -730,10 +730,9 @@ QContactFilter ContactsBackend::getSyncTargetFilter() const {
     detailFilterDefaultSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
                                          QContactSyncTarget::FieldSyncTarget);
 #endif
-    // Instead of returning contacts belonging to only "buteo", return all contacts
-    // from all sync targets.
-    // WARNING: This will return contacts of facebook/google/phonebook/...
-    //detailFilterDefaultSyncTarget.setValue(QLatin1String("buteo"));
+    // Return only the contact data which is conceptually owned by
+    // by the user (ie, "local" device contacts)
+    detailFilterDefaultSyncTarget.setValue(QLatin1String("local"));
 
     // return the union
     return detailFilterDefaultSyncTarget;
