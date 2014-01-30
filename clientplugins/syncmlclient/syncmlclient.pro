@@ -56,8 +56,8 @@ client.files = xml/syncml.xml
 sync.path = /etc/buteo/profiles/sync
 sync.files = xml/sync/*
 
-#service.path = /etc/buteo/profiles/service
-#service.files = xml/service/*
+service.path = /etc/buteo/profiles/service
+service.files = xml/service/*
 
 storage.path = /etc/buteo/profiles/storage
 storage.files = xml/storage/*
