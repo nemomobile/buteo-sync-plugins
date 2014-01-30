@@ -524,6 +524,7 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
     } // no else
 
     // Convert strIdList to aIdList (QContactId)
+    aIdList.clear();
     foreach (const QString &id, strIdList) {
         aIdList << QContactId::fromString (id);
     }
