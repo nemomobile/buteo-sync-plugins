@@ -29,6 +29,7 @@
 #include <QContactTimestamp>
 #include <QContactSyncTarget>
 #include <QContactDetailFilter>
+#include <QContactUnionFilter>
 #include <QBuffer>
 #include <QSet>
 
@@ -390,6 +391,13 @@ QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringLis
     if (contactsImported)
     {
         contactList =  contactImporter.contacts();
+
+        // record that this contact was imported via bluetooth
+        for (int i=0; i<contactList.count(); i++) {
+            QContactSyncTarget syncTarget = contactList[i].detail<QContactSyncTarget>();
+            syncTarget.setSyncTarget(QLatin1String("bluetooth"));
+            contactList[i].saveDetail(&syncTarget);
+        }
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         if (!contactList.isEmpty()) {
             foreach (QContact contact, contactList) {
@@ -731,10 +739,22 @@ QContactFilter ContactsBackend::getSyncTargetFilter() const {
     detailFilterDefaultSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
                                          QContactSyncTarget::FieldSyncTarget);
 #endif
-    // Return only the contact data which is conceptually owned by
+    // contact data that is conceptually owned by
     // by the user (ie, "local" device contacts)
     detailFilterDefaultSyncTarget.setValue(QLatin1String("local"));
 
+    // contact data that has been imported via bluetooth
+    QContactDetailFilter detailFilterBluetoothSyncTarget;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    detailFilterBluetoothSyncTarget.setDetailType(QContactSyncTarget::Type, QContactSyncTarget::FieldSyncTarget);
+#else
+    detailFilterBluetoothSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName, QContactSyncTarget::FieldSyncTarget);
+#endif
+    detailFilterBluetoothSyncTarget.setValue(QLatin1String("bluetooth"));
+
     // return the union
-    return detailFilterDefaultSyncTarget;
+    QContactUnionFilter unionFilter;
+    unionFilter.append(detailFilterDefaultSyncTarget);
+    unionFilter.append(detailFilterBluetoothSyncTarget);
+    return unionFilter;
 }
