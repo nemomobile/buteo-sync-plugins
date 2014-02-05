@@ -128,10 +128,10 @@ public:
      * @param aContactData Returned contact data
      */
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    void getContacts(const QList<QContactLocalId> &aContactIDs,
+    void getContactsForExport(const QList<QContactLocalId> &aContactIDs,
                      QMap<QString,QString>& aContactData );
 #else
-    void getContacts(const QList<QContactLocalId> &aContactIDs,
+    void getContactsForExport(const QList<QContactLocalId> &aContactIDs,
                      QMap<QContactLocalId,QString>& aContactData );
 #endif
 
@@ -245,6 +245,13 @@ private: // functions
      * - value for QContactSyncTarget::SyncTarget written by this backend is "buteo".
      */
     QContactFilter getSyncTargetFilter() const;
+
+    QList<QContact> retrieveAllPartialAggregates();
+
+    QList<QContact> relatedLocals(const QContact &contact,
+                                  const QMap<QContactId, QContact> &locals,
+                                  const QMap<QContactId, QContact> &waslocals,
+                                  const QMap<QContactId, QContact> &aggregates);
 
 private: // data
 

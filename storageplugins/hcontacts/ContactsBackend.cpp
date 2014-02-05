@@ -641,22 +641,40 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>& aContactIds,
 }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-void ContactsBackend::getContacts(const QList<QContactLocalId>&  aIdsList,
+void ContactsBackend::getContactsForExport(const QList<QContactLocalId>&  aIdsList,
                                   QMap<QString,QString>& aDataMap)
 #else
-void ContactsBackend::getContacts(const QList<QContactLocalId>&  aIdsList,
+void ContactsBackend::getContactsForExport(const QList<QContactLocalId>&  aIdsList,
                                   QMap<QContactLocalId,QString>& aDataMap)
 #endif
 {
     FUNCTION_CALL_TRACE;
 
-    QList<QContact> returnedContacts;
-
-    // As this is an overloaded convenience function, these two functions
-    // are utilized to get contacts from the backend and to convert them
-    // to vcard format.
-    getContacts(aIdsList, returnedContacts);
+    // XXX only return the ids reported by aIdsList
+    QList<QContact> returnedContacts = retrieveAllPartialAggregates();
     aDataMap = convertQContactListToVCardList(returnedContacts);
+
+//<<<<<<< Updated upstream
+//    QList<QContact> returnedContacts;
+
+//    // As this is an overloaded convenience function, these two functions
+//    // are utilized to get contacts from the backend and to convert them
+//    // to vcard format.
+//    getContacts(aIdsList, returnedContacts);
+//=======
+////    QList<QContact> returnedContacts;
+////    getContacts(aIdsList, returnedContacts);
+
+//    QContactLocalIdFilter contactFilter;
+//    contactFilter.setIds(aIdsList);
+//    QList<QContact> returnedContacts = retrieveAllPartialAggregates();
+////    if (iMgr != NULL) {
+////        aggregatedContacts = iMgr->contacts(contactFilter & getSyncTargetFilter());
+////    }
+
+
+//>>>>>>> Stashed changes
+//    aDataMap = convertQContactListToVCardList(returnedContacts);
 }
 
 QDateTime ContactsBackend::getCreationTime( const QContact& aContact )
@@ -775,4 +793,161 @@ QContactFilter ContactsBackend::getSyncTargetFilter() const
         detailFilterDefaultSyncTarget.setValue(iSyncTarget);
     }
     return detailFilterDefaultSyncTarget;
+}
+
+QList<QContact> ContactsBackend::retrieveAllPartialAggregates()
+{
+    QMap<QContactId, QContact> localContacts;
+    QMap<QContactId, QContact> waslocalContacts;
+    QMap<QContactId, QContact> googleContacts;
+    QMap<QContactId, QContact> aggregateContacts;
+
+    // first, build up some data structures, containing all of the information we need.
+
+    QContactDetailFilter aggregateFilter;
+    aggregateFilter.setDetailType(QContactDetail::TypeSyncTarget, QContactSyncTarget::FieldSyncTarget);
+    aggregateFilter.setValue(QLatin1String("aggregate"));
+    QList<QContact> allAggregates = iMgr->contacts(aggregateFilter);
+    for (int i = 0; i < allAggregates.size(); ++i)
+        aggregateContacts.insert(allAggregates[i].id(), allAggregates[i]);
+
+    QContactDetailFilter localFilter;
+    localFilter.setDetailType(QContactDetail::TypeSyncTarget, QContactSyncTarget::FieldSyncTarget);
+    localFilter.setValue(QLatin1String("local"));
+    QList<QContact> allLocals = iMgr->contacts(localFilter);
+    for (int i = 0; i < allLocals.size(); ++i)
+        localContacts.insert(allLocals[i].id(), allLocals[i]);
+
+    QContactDetailFilter waslocalFilter;
+    waslocalFilter.setDetailType(QContactDetail::TypeSyncTarget, QContactSyncTarget::FieldSyncTarget);
+    waslocalFilter.setValue(QLatin1String("was_local"));
+    QList<QContact> allWasLocals = iMgr->contacts(waslocalFilter);
+    for (int i = 0; i < allWasLocals.size(); ++i)
+        waslocalContacts.insert(allWasLocals[i].id(), allWasLocals[i]);
+
+    QContactDetailFilter googleFilter;
+    googleFilter.setDetailType(QContactDetail::TypeSyncTarget, QContactSyncTarget::FieldSyncTarget);
+    googleFilter.setValue(iSyncTarget);
+    QList<QContact> allGoogles = iMgr->contacts(googleFilter);
+    for (int i = 0; i < allGoogles.size(); ++i)
+        googleContacts.insert(allGoogles[i].id(), allGoogles[i]);
+
+    // now build up our list of partial aggregates, consisting of:
+    // all partial aggregates for existing google contacts
+    // all partial aggregates for existing local contacts which don't have an associated google contact
+    QList<QContact> retn;
+    QList<QContactId> localsRelatedToGoogles;
+
+    // first, the existing ones:
+    for (int i = 0; i < allGoogles.size(); ++i) {
+        QContact partialAggregate = allGoogles.at(i);
+//        if (!originIsThisAccount(partialAggregate, accountId)) {
+//            // skip this one ??
+//            // or automatically sync between accounts ??
+//            // XXX TODO!
+//        }
+
+        QList<QContact> localConstituents = relatedLocals(partialAggregate, localContacts, waslocalContacts, aggregateContacts);
+        for (int j = 0; j < localConstituents.size(); ++j) {
+            QContact currLC = localConstituents.at(j);
+            localsRelatedToGoogles.append(currLC.id());
+
+            QList<QContactDetail> currentDetails = currLC.details();
+            for (int k=0; k<currentDetails.count(); k++) {
+                QContactDetail currDetail = currentDetails[k];
+                // check that the partial aggregate doesn't
+                // already have this detail (or one very similar)
+                // If not, promote it!
+                bool found = false;
+                foreach (const QContactDetail &partialAggDetail, partialAggregate.details()) {
+                    if (ContactsImport::detailValuesSuperset(partialAggDetail, currDetail)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    partialAggregate.saveDetail(&currDetail);
+                }
+            }
+        }
+        retn.append(partialAggregate);
+    }
+
+    // then, the locals for which we don't have a google contact yet.
+    for (int i = 0; i < allLocals.size(); ++i) {
+        QContact partialAggregate = allLocals.at(i);
+        if (localsRelatedToGoogles.contains(partialAggregate.id())) {
+            // skip this one - already has a google contact.
+            continue;
+        }
+
+        // valid partial aggregate.
+        QList<QContact> localConstituents = relatedLocals(partialAggregate, localContacts, waslocalContacts, aggregateContacts);
+        for (int j = 0; j < localConstituents.size(); ++j) {
+            QContact currLC = localConstituents.at(j);
+            localsRelatedToGoogles.append(currLC.id());
+//            foreach(QContactDetail &d, currLC.details()) {
+//                // check that the partial aggregate doesn't
+//                // already have this detail (or one very similar)
+//                // If not, promote it!
+//            }
+
+            QList<QContactDetail> currentDetails = currLC.details();
+            for (int k=0; k<currentDetails.count(); k++) {
+                QContactDetail currDetail = currentDetails[k];
+                // check that the partial aggregate doesn't
+                // already have this detail (or one very similar)
+                // If not, promote it!
+                bool found = false;
+                foreach (const QContactDetail &partialAggDetail, partialAggregate.details()) {
+                    if (ContactsImport::detailValuesSuperset(partialAggDetail, currDetail)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    partialAggregate.saveDetail(&currDetail);
+                }
+            }
+        }
+        retn.append(partialAggregate);
+    }
+
+    // done.
+    return retn;
+}
+
+
+QList<QContact> ContactsBackend::relatedLocals(const QContact &contact,
+                              const QMap<QContactId, QContact> &locals,
+                              const QMap<QContactId, QContact> &waslocals,
+                              const QMap<QContactId, QContact> &aggregates)
+{
+    // Returns the local+was_local contacts which are related to the given google contact
+    // Note that multiple google contacts can "share" the same local/was_local contacts,
+    // if multiple google contacts get aggregated together.  But we still generate
+    // a separate partial aggregate for each google contact, not each aggregate contact.
+    QList<QContact> aggs = contact.relatedContacts(QLatin1String("Aggregates"));
+    if (aggs.size() != 1) {
+        qWarning() << "Don't have exactly one aggregate for the google contact!?";
+        return QList<QContact>();
+    }
+
+    QContact aggregate = aggregates.value(aggs.first().id());
+    QList<QContact> related = aggregate.relatedContacts(QLatin1String("Aggregates"));
+    QList<QContact> retn;
+    for (int i = 0; i < related.size(); ++i) {
+        QContactId relatedId = related.at(i).id();
+        if (contact.id() == relatedId) {
+            // ignore this one, it's me.
+            // needed because we call this function on local
+            // as well as google synctarget contacts.
+        } else if (locals.contains(relatedId)) {
+            retn.append(locals.value(relatedId));
+        } else if (waslocals.contains(relatedId)) {
+            retn.append(waslocals.value(relatedId));
+        }
+    }
+
+    return retn;
 }

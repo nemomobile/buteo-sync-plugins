@@ -294,7 +294,7 @@ QList<Buteo::StorageItem*> ContactStorage::getItems( const QStringList& aItemIdL
             ids.append( itr.toUInt() );
 #endif
         }
-        iBackend->getContacts( ids, vcards );
+        iBackend->getContactsForExport( ids, vcards );
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         QMapIterator<QString,QString> i(vcards);
 #else
@@ -837,7 +837,7 @@ QList<Buteo::StorageItem*> ContactStorage::getStoreList(QList<QContactLocalId> &
 #else
         QMap<QContactLocalId,QString> idDataMap;
 #endif
-        iBackend->getContacts(aStrIDList, idDataMap);
+        iBackend->getContactsForExport(aStrIDList, idDataMap);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         QMapIterator<QString, QString > iter(idDataMap);
 #else

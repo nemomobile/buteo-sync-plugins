@@ -154,25 +154,6 @@ static bool variantEqual(const QVariant &lhs, const QVariant &rhs)
     return (lhs == rhs);
 }
 
-static bool detailValuesSuperset(const QContactDetail &lhs, const QContactDetail &rhs)
-{
-    // True if all values in rhs are present in lhs
-    const DetailMap lhsValues(detailValues(lhs));
-    const DetailMap rhsValues(detailValues(rhs));
-
-    if (lhsValues.count() < rhsValues.count()) {
-        return false;
-    }
-
-    foreach (const DetailMap::key_type &key, rhsValues.keys()) {
-        if (!variantEqual(lhsValues[key], rhsValues[key])) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 static void fixupDetail(QContactDetail &)
 {
 }
@@ -234,7 +215,7 @@ bool updateExistingDetails(QContact *updateContact, const QContact &importedCont
         // See if the contact already has a detail which is a superset of this one
         bool found = false;
         foreach (const T &existing, existingDetails) {
-            if (detailValuesSuperset(existing, detail)) {
+            if (ContactsImport::detailValuesSuperset(existing, detail)) {
                 if (removeNonMatchingDetails) {
                     detailsToKeep.insert(existing);
                 }
@@ -309,6 +290,25 @@ void setNickname(QContact &contact, const QString &text)
     contact.saveDetail(&nick);
 }
 
+}
+
+bool ContactsImport::detailValuesSuperset(const QContactDetail &lhs, const QContactDetail &rhs)
+{
+    // True if all values in rhs are present in lhs
+    const DetailMap lhsValues(detailValues(lhs));
+    const DetailMap rhsValues(detailValues(rhs));
+
+    if (lhsValues.count() < rhsValues.count()) {
+        return false;
+    }
+
+    foreach (const DetailMap::key_type &key, rhsValues.keys()) {
+        if (!variantEqual(lhsValues[key], rhsValues[key])) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
