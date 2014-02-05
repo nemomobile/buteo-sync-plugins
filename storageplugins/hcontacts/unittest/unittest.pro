@@ -7,13 +7,13 @@ CONFIG += link_pkgconfig testlib
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
-    PKGCONFIG = buteosyncfw buteosyncml
+    PKGCONFIG = buteosyncfw buteosyncml qtcontacts-sqlite-extensions
     MOBILITY += contacts versit
     LIBS += -lsyncmlcommon -lQtTest
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5
+    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5 qtcontacts-sqlite-qt5-extensions
     LIBS += -lsyncmlcommon5 -lQt5Test
 }
 
