@@ -16,6 +16,7 @@ BuildRequires: pkgconfig(accounts-qt)
 BuildRequires: pkgconfig(libsignon-qt)
 BuildRequires: pkgconfig(buteosyncml)
 BuildRequires: pkgconfig(buteosyncfw)
+BuildRequires: pkgconfig(qtcontacts-sqlite-extensions)
 BuildRequires: pkgconfig(libmkcal)
 BuildRequires: doxygen
 

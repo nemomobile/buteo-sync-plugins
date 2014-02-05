@@ -212,6 +212,9 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     QString pluginName = aProfile->key( Buteo::KEY_PLUGIN, aProfile->name() );
     QString uuid = iProfile->key(Buteo::KEY_UUID);
     QString remoteName = iProfile->key(Buteo::KEY_REMOTE_NAME);
+    QString storageSyncTarget = iProfile->key(Buteo::KEY_STORAGE_SYNC_TARGET);
+    QString storageOriginId = iProfile->key(Buteo::KEY_STORAGE_ORIGIN_ID);
+
     if(!uuid.isEmpty() && !remoteName.isEmpty())
     {
         LOG_DEBUG("uuid and remote name fetched from profile" << uuid << remoteName);
@@ -247,6 +250,14 @@ DataSync::StoragePlugin* SyncMLStorageProvider::acquireStorage( const Buteo::Pro
     if(!remoteName.isEmpty())
     {
         keys.insert(Buteo::KEY_REMOTE_NAME, remoteName);
+    }
+    if(!storageSyncTarget.isEmpty())
+    {
+        keys.insert(Buteo::KEY_STORAGE_SYNC_TARGET, storageSyncTarget);
+    }
+    if(!storageOriginId.isEmpty())
+    {
+        keys.insert(Buteo::KEY_STORAGE_ORIGIN_ID, storageOriginId);
     }
 
     // If protocol version is not defined in the keys read from profile, try to
