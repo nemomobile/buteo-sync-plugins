@@ -54,6 +54,16 @@ const QString STORAGE_SOURCE_URI                        = "Local URI";
 // SyncML Target URI to associate with a storage
 const QString STORAGE_REMOTE_URI                        = "Target URI";
 
+// Sync target to associate with a storage session
+const QString STORAGE_SYNC_TARGET                       = "Sync Target";
+
+// Bluetooth storage sync target
+const QString STORAGE_SYNC_TARGET_BLUETOOTH             = "bluetooth";
+
+// ID of the origin data source to associate with a storage session
+const QString STORAGE_ORIGIN_ID                         = "Origin ID";
+
+
 // Profile properties
 
 const QString PROF_SYNC_TRANSPORT     = "Sync Transport";

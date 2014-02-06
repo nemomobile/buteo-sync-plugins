@@ -63,7 +63,9 @@ public:
      * \brief Constructor
      * @param aVerType
      */
-    ContactsBackend(QVersitDocument::VersitType aVerType);
+    ContactsBackend(QVersitDocument::VersitType aVerType,
+                    const QString &syncTarget,
+                    const QString &originId);
 
 
     /*!
@@ -223,6 +225,7 @@ private: // functions
 
     QList<QContact> convertVCardListToQContactList \
                                 (const QStringList &aVCardList);
+    void prepareContactSave(QList<QContact> *contactList);
 
     /*!
      * \brief Returns contact IDs specified by event type and timestamp
@@ -250,6 +253,8 @@ private: // data
 
     QVersitDocument::VersitType    iVCardVer;  ///< VCard Version type to operate on
 
+    QString iSyncTarget;    ///< syncTarget to use for contact details
+    QString iOriginId;      ///< origin meta-data ID to use for contact details
 };
 
 

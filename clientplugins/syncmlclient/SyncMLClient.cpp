@@ -544,8 +544,12 @@ bool SyncMLClient::initConfig() {
 	}
 
 	DataSync::SyncDirection direction = resolveSyncDirection(initiator);
+	bool forceSlowSync = iProfile.boolKey(Buteo::KEY_FORCE_SLOW_SYNC);
 
 	DataSync::SyncMode syncMode(direction, initiator);
+	if (forceSlowSync) {
+		syncMode.toSlowSync();
+	}
 
 	iConfig->setSyncParams(remoteDeviceName, version, syncMode);
 

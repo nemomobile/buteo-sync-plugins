@@ -21,6 +21,7 @@
  *
  */
 #include "ContactsBackend.h"
+#include "ContactsImport.h"
 #include <LogMacros.h>
 #include <QVersitContactExporter>
 #include <QVersitContactImporter>
@@ -29,8 +30,14 @@
 #include <QContactTimestamp>
 #include <QContactSyncTarget>
 #include <QContactDetailFilter>
+#include <QContactUnionFilter>
 #include <QBuffer>
 #include <QSet>
+
+#include <qtcontacts-extensions.h>
+#include <qtcontacts-extensions_impl.h>
+#include <QContactOriginMetadata>
+#include <qcontactoriginmetadata_impl.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QContactIdFilter>
@@ -41,8 +48,10 @@
 
 #include "ContactDetailHandler.h"
 
-ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer) :
+ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer, const QString &syncTarget, const QString &originId) :
 iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
+    , iSyncTarget(syncTarget)
+    , iOriginId(originId)
 {
         FUNCTION_CALL_TRACE;
 }
@@ -143,7 +152,22 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
 
     Q_ASSERT( iMgr );
 
-    QList<QContact> contactList = convertVCardListToQContactList(aContactDataList);
+    QList<QContact> newContacts = convertVCardListToQContactList(aContactDataList);
+    QList<QContact> contactList;
+
+    if (iOriginId.isEmpty()) {
+        contactList = newContacts;
+    } else {
+        // Import the vcard data into existing contacts. We want to do a careful merge instead of
+        // overwriting existing contacts to avoid losing data about user-applied contact links.
+        int newCount = 0;
+        int updatedCount = 0;
+        QContactDetailFilter originIdFilter = QContactOriginMetadata::matchId(iOriginId);
+        contactList = ContactsImport::buildImportContacts(iMgr, newContacts, originIdFilter & getSyncTargetFilter(), &newCount, &updatedCount);
+        prepareContactSave(&contactList);
+        LOG_DEBUG("New contacts:" << newCount << "Updated contacts:" << updatedCount);
+    }
+
     ContactsStatus status;
     QMap<int, QContactManager::Error> errorMap;
 
@@ -349,6 +373,25 @@ QMap<int , ContactsStatus> ContactsBackend::deleteContacts(const QStringList &aC
         return statusMap;
 }
 
+void ContactsBackend::prepareContactSave(QList<QContact> *contactList)
+{
+    if (!iSyncTarget.isEmpty() || !iOriginId.isEmpty()) {
+        for (int i=0; i<contactList->count(); i++) {
+            QContact *contact = &((*contactList)[i]);
+            if (!iSyncTarget.isEmpty()) {
+                QContactSyncTarget syncTarget = contact->detail<QContactSyncTarget>();
+                syncTarget.setSyncTarget(iSyncTarget);
+                contact->saveDetail(&syncTarget);
+            }
+            if (!iOriginId.isEmpty()) {
+                QContactOriginMetadata originMetaData = contact->detail<QContactOriginMetadata>();
+                originMetaData.setId(iOriginId);
+                contact->saveDetail(&originMetaData);
+            }
+        }
+    }
+}
+
 QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringList &aVCardList)
 {
     FUNCTION_CALL_TRACE;
@@ -390,14 +433,7 @@ QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringLis
     if (contactsImported)
     {
         contactList =  contactImporter.contacts();
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        if (!contactList.isEmpty()) {
-            foreach (QContact contact, contactList) {
-                LOG_DEBUG("Converted item: " << contact.displayLabel());
-            }
-        } // no else
-#endif
-
+        prepareContactSave(&contactList);
     }
 
     LOG_DEBUG( "Converted" << contactList.count() << "VCards" );
@@ -620,7 +656,6 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>&  aIdsList,
     // to vcard format.
     getContacts(aIdsList, returnedContacts);
     aDataMap = convertQContactListToVCardList(returnedContacts);
-
 }
 
 QDateTime ContactsBackend::getCreationTime( const QContact& aContact )
@@ -720,9 +755,8 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
     return creationTimes;
 }
 
-QContactFilter ContactsBackend::getSyncTargetFilter() const {
-    // user enterred contacts, i.e. all other contacts that are not sourcing
-    // from restricted backends or instant messaging service
+QContactFilter ContactsBackend::getSyncTargetFilter() const
+{
     QContactDetailFilter detailFilterDefaultSyncTarget;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     detailFilterDefaultSyncTarget.setDetailType (QContactSyncTarget::Type,
@@ -731,10 +765,13 @@ QContactFilter ContactsBackend::getSyncTargetFilter() const {
     detailFilterDefaultSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
                                          QContactSyncTarget::FieldSyncTarget);
 #endif
-    // Return only the contact data which is conceptually owned by
-    // by the user (ie, "local" device contacts)
-    detailFilterDefaultSyncTarget.setValue(QLatin1String("local"));
 
-    // return the union
+    if (iSyncTarget.isEmpty()) {
+        // contact data that is conceptually owned by
+        // by the user (ie, "local" device contacts)
+        detailFilterDefaultSyncTarget.setValue(QLatin1String("local"));
+    } else {
+        detailFilterDefaultSyncTarget.setValue(iSyncTarget);
+    }
     return detailFilterDefaultSyncTarget;
 }

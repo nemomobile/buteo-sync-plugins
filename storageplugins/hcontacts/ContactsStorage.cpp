@@ -27,6 +27,7 @@
 #include "SimpleItem.h"
 #include "SyncMLCommon.h"
 #include "SyncMLConfig.h"
+#include "ProfileEngineDefs.h"
 
 #include <QContact>
 
@@ -100,7 +101,9 @@ bool ContactStorage::init( const QMap<QString, QString>& aProperties )
     iProperties[STORAGE_SYNCML_CTCAPS_PROP_11] = getCtCaps( CTCAPSFILENAME11 );
     iProperties[STORAGE_SYNCML_CTCAPS_PROP_12] = getCtCaps( CTCAPSFILENAME12 );
 
-    iBackend = new ContactsBackend(vCardVersion);
+    iBackend = new ContactsBackend(vCardVersion,
+                                   iProperties.value(STORAGE_SYNC_TARGET),
+                                   iProperties.value(STORAGE_ORIGIN_ID));
 
     if( !iBackend->init() ) {
         LOG_CRITICAL( "Failed to init contacts backend" );
