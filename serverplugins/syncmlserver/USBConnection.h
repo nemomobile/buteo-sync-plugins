@@ -72,9 +72,10 @@ signals:
 
     void usbConnected (int fd);
 
-#ifndef GLIB_FD_WATCH
 protected slots:
+    void openUSBDevice ();
 
+#ifndef GLIB_FD_WATCH
     void handleUSBActivated (int fd);
 
     void handleUSBError (int fd);
@@ -82,8 +83,6 @@ protected slots:
 
 private:
     // Functions
-
-    int openUSBDevice ();
 
     void closeUSBDevice ();
 

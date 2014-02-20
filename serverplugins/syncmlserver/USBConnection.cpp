@@ -23,10 +23,12 @@
 
 #include <LogMacros.h>
 #include <QDateTime>
+#include <QTimer>
 
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <termios.h>
+#include <errno.h>
 
 #ifdef GLIB_FD_WATCH
 #include <glib.h>
@@ -71,20 +73,20 @@ USBConnection::~USBConnection ()
 }
 
 int
-USBConnection::connect ()
+USBConnection::connect()
 {
     FUNCTION_CALL_TRACE;
 
     QMutexLocker lock (&mMutex);
 
-    if (isConnected ())
-    {
+    if (isConnected()) {
         LOG_DEBUG ("Already connected. Returning fd");
-    } else
-    {
-        mFd = openUSBDevice ();
-
-        addFdListener ();
+    } else {
+        openUSBDevice();
+        // When first connecting, the device may not be ready yet,
+        // so give it another chance.
+        if (!isConnected())
+            QTimer::singleShot(200, this, SLOT(openUSBDevice()));
     }
 
     return mFd;
@@ -116,7 +118,7 @@ USBConnection::isConnected () const
         return true;
 }
 
-int
+void
 USBConnection::openUSBDevice ()
 {
     FUNCTION_CALL_TRACE;
@@ -125,7 +127,7 @@ USBConnection::openUSBDevice ()
 
     if (isConnected ()) {
         LOG_WARNING ("USB connection already open with fd " << mFd);
-        return mFd;
+        return;
     }
 
     const QString USB_DEVICE ("/dev/ttyGS1");
@@ -134,8 +136,9 @@ USBConnection::openUSBDevice ()
                    O_RDWR | O_NOCTTY);
 
     if (mFd < 0) {
-        LOG_WARNING ("Count not open USB device");
-        return -1;
+        int orig_errno = errno;
+        LOG_WARNING ("Could not open USB device, errno" << orig_errno);
+        return;
     }
 
     long flags = fcntl (mFd, F_GETFL);
@@ -152,7 +155,7 @@ USBConnection::openUSBDevice ()
     {
         LOG_WARNING ("Unable to get file attributes");
         close (mFd);
-        return -1;
+        mFd = -1;
     }
 
     arg |= O_NONBLOCK;
@@ -160,11 +163,13 @@ USBConnection::openUSBDevice ()
     {
         LOG_WARNING ("Could not set file attributes");
         close (mFd);
-        return -1;
+        mFd = -1;
     }
 
-    LOG_DEBUG ("Opened USB device with fd " << mFd);
-    return mFd;
+    if (mFd >= 0) {
+        LOG_DEBUG("Opened USB device with fd " << mFd);
+        addFdListener();
+    }
 }
 
 void
@@ -205,7 +210,6 @@ USBConnection::handleSyncFinished (bool isSyncInError)
         removeFdListener ();
         closeUSBDevice ();
         openUSBDevice ();
-        addFdListener ();
     } else
     {
         // No errors during sync. Just add channel watcher,
@@ -397,7 +401,6 @@ USBConnection::reopenUSB (gpointer data)
     {
         LOG_DEBUG ("USB Not disconnected and not listening");
         connection->openUSBDevice ();
-        connection->addFdListener ();
     } else
     {
         LOG_DEBUG ("Already listening. No need to reopen");
@@ -431,6 +434,5 @@ USBConnection::handleUSBError (int fd)
     removeFdListener ();
     closeUSBDevice ();
     openUSBDevice ();
-    addFdListener ();
 }
 #endif
