@@ -95,7 +95,20 @@ int BTConnection::connect()
         return -1;
     }
 
-    iFd = open( iDevice.toLatin1().constData(), O_RDWR | O_NOCTTY | O_SYNC );
+    // HACK: In Sailfish, sometimes, opening the device
+    // immediately after the bluetooth connect fails and works only
+    // if some delay is introduced.
+    // Since a plugin runs in a separate thread/process (incase of oop)
+    // it is okay to introduce some delay before the open. We will use
+    // a retry count of 3 to open the connection and finally giveup
+    // otherwise
+    
+    int retryCount = 3;
+    do {
+        iFd = open( iDevice.toLatin1().constData(), O_RDWR | O_NOCTTY | O_SYNC );
+        if (iFd > 0) break;
+        QThread::msleep (100); // Sleep for 100msec before trying again
+    } while ((--retryCount > 0) && (iFd == -1));
 
     if( iFd == -1 ) {
         LOG_CRITICAL( "Could not open file descriptor of the connection, aborting" );
