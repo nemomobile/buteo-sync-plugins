@@ -102,7 +102,6 @@ int BTConnection::connect()
     // it is okay to introduce some delay before the open. We will use
     // a retry count of 3 to open the connection and finally giveup
     // otherwise
-    
     int retryCount = 3;
     do {
         iFd = open( iDevice.toLatin1().constData(), O_RDWR | O_NOCTTY | O_SYNC );
@@ -119,7 +118,6 @@ int BTConnection::connect()
     fdRawMode( iFd );
 
     return iFd;
-
 }
 
 bool BTConnection::isConnected() const
@@ -238,7 +236,6 @@ QString BTConnection::connectDevice( const QString& aBTAddress, const QString& a
     LOG_DEBUG("Device connected:" << aBTAddress );
 
     return stringReply.value();
-
 }
 
 void BTConnection::disconnectDevice( const QString& aBTAddress, const QString& aDevice )
@@ -311,7 +308,6 @@ void BTConnection::disconnectDevice( const QString& aBTAddress, const QString& a
     LOG_DEBUG( "BT session closed" );
 
     iDevice.clear();
-
 }
 
 bool BTConnection::fdRawMode( int aFD )
