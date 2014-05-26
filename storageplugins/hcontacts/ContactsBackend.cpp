@@ -65,7 +65,9 @@ bool ContactsBackend::init()
 {
         FUNCTION_CALL_TRACE;
 
-        iMgr = new QContactManager(QLatin1String("org.nemomobile.contacts.sqlite"));
+        QMap<QString, QString> params;
+        params.insert(QStringLiteral("nonprivileged"), QStringLiteral("true"));
+        iMgr = new QContactManager(QLatin1String("org.nemomobile.contacts.sqlite"), params);
 
         if(iMgr != NULL)
             return true;
@@ -91,7 +93,7 @@ QList<QContactLocalId> ContactsBackend::getAllContactIds()
     QList<QContactLocalId> contactIDs;
 
     if (iMgr != NULL) {
-        contactIDs = iMgr->contactIds(getSyncTargetFilter());
+        contactIDs = iMgr->contactIds();
     } else {
         LOG_WARNING("Contacts backend not available");
     }
@@ -163,7 +165,7 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
         int newCount = 0;
         int updatedCount = 0;
         QContactDetailFilter originIdFilter = QContactOriginMetadata::matchId(iOriginId);
-        contactList = ContactsImport::buildImportContacts(iMgr, newContacts, originIdFilter & getSyncTargetFilter(), &newCount, &updatedCount);
+        contactList = ContactsImport::buildImportContacts(iMgr, newContacts, originIdFilter, &newCount, &updatedCount);
         prepareContactSave(&contactList);
         LOG_DEBUG("New contacts:" << newCount << "Updated contacts:" << updatedCount);
     }
@@ -512,7 +514,7 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
         QContactChangeLogFilter filter(aEventType);
         filter.setSince(aTimeStamp);
 
-    aIdList = iMgr->contactIds(filter & getSyncTargetFilter());
+    aIdList = iMgr->contactIds(filter);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     // Fetch the ids from aIdList
@@ -526,7 +528,7 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
     if (aEventType != QContactChangeLogFilter::EventAdded)
     {
         filter.setEventType(QContactChangeLogFilter::EventAdded);
-        QList<QContactLocalId> addedList = iMgr->contactIds(filter & getSyncTargetFilter());
+        QList<QContactLocalId> addedList = iMgr->contactIds(filter);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         QList<QString> addedStrIdList;
         foreach (const QContactId& id, addedList) {
@@ -635,7 +637,7 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>& aContactIds,
     contactFilter.setIds(aContactIds);
 
     if (iMgr != NULL) {
-        aContacts = iMgr->contacts(contactFilter & getSyncTargetFilter());
+        aContacts = iMgr->contacts(contactFilter);
     }
 }
 
@@ -753,25 +755,4 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
     }
 
     return creationTimes;
-}
-
-QContactFilter ContactsBackend::getSyncTargetFilter() const
-{
-    QContactDetailFilter detailFilterDefaultSyncTarget;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    detailFilterDefaultSyncTarget.setDetailType (QContactSyncTarget::Type,
-                                                 QContactSyncTarget::FieldSyncTarget);
-#else
-    detailFilterDefaultSyncTarget.setDetailDefinitionName(QContactSyncTarget::DefinitionName,
-                                         QContactSyncTarget::FieldSyncTarget);
-#endif
-
-    if (iSyncTarget.isEmpty()) {
-        // contact data that is conceptually owned by
-        // by the user (ie, "local" device contacts)
-        detailFilterDefaultSyncTarget.setValue(QLatin1String("local"));
-    } else {
-        detailFilterDefaultSyncTarget.setValue(iSyncTarget);
-    }
-    return detailFilterDefaultSyncTarget;
 }
