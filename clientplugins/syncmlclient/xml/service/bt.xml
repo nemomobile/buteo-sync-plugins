@@ -37,10 +37,12 @@
 		<key name="Target URI" value="./bookmarks" />
     </profile>
     -->
+    <!-- Uncomment to activate sms sync -->
+    <!--
     <profile name="hsms" type="storage" >
         <key name="Local URI" value="./sms" />
         <key name="Target URI" value="./SMS" />
     </profile>
-
+    -->
 </profile>
 

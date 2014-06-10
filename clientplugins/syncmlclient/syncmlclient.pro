@@ -33,6 +33,11 @@ HEADERS += SyncMLClient.h BTConnection.h
 
 SOURCES += SyncMLClient.cpp BTConnection.cpp
 
+OTHER_FILES += xml/* \
+               xml/sync/* \
+               xml/service/* \
+               xml/storage/*
+
 QMAKE_CXXFLAGS = -Wall \
     -g \
     -Wno-cast-align \
