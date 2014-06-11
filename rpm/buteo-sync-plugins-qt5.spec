@@ -1,5 +1,5 @@
 Name: buteo-sync-plugins-qt5
-Version: 0.7.0
+Version: 0.8.14
 Release: 1
 Summary: Synchronization plugins
 Group: System/Libraries
@@ -21,7 +21,7 @@ BuildRequires: pkgconfig(openobex)
 BuildRequires: pkgconfig(accounts-qt5)
 BuildRequires: pkgconfig(libsignon-qt5)
 BuildRequires: pkgconfig(buteosyncml5)
-BuildRequires: pkgconfig(buteosyncfw5) >= 0.6.24
+BuildRequires: pkgconfig(buteosyncfw5) >= 0.6.36
 BuildRequires: pkgconfig(qtcontacts-sqlite-qt5-extensions)
 BuildRequires: pkgconfig(libmkcal-qt5)
 BuildRequires: pkgconfig(libkcalcoren-qt5)
