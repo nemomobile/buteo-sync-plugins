@@ -49,7 +49,7 @@
 #include "ContactDetailHandler.h"
 
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer, const QString &syncTarget, const QString &originId) :
-iMgr(NULL) ,iVCardVer(aVCardVer) //CID 26531
+iReadMgr(NULL), iWriteMgr(NULL), iVCardVer(aVCardVer) //CID 26531
     , iSyncTarget(syncTarget)
     , iOriginId(originId)
 {
@@ -67,20 +67,22 @@ bool ContactsBackend::init()
 
         QMap<QString, QString> params;
         params.insert(QStringLiteral("nonprivileged"), QStringLiteral("true"));
-        iMgr = new QContactManager(QLatin1String("org.nemomobile.contacts.sqlite"), params);
+        iReadMgr = new QContactManager(QLatin1String("org.nemomobile.contacts.sqlite"), params);
 
-        if(iMgr != NULL)
-            return true;
-        else
-            return false;
+        iWriteMgr = new QContactManager(QLatin1String("org.nemomobile.contacts.sqlite"));
+
+        return (iReadMgr != NULL && iWriteMgr != NULL);
 }
 
 bool ContactsBackend::uninit()
 {
         FUNCTION_CALL_TRACE;
 
-        delete iMgr;
-        iMgr = NULL;
+        delete iReadMgr;
+        iReadMgr = NULL;
+
+        delete iWriteMgr;
+        iWriteMgr = NULL;
 
         return true;
 }
@@ -92,8 +94,8 @@ QList<QContactLocalId> ContactsBackend::getAllContactIds()
         FUNCTION_CALL_TRACE;
     QList<QContactLocalId> contactIDs;
 
-    if (iMgr != NULL) {
-        contactIDs = iMgr->contactIds();
+    if (iReadMgr != NULL) {
+        contactIDs = iReadMgr->contactIds();
     } else {
         LOG_WARNING("Contacts backend not available");
     }
@@ -152,7 +154,8 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
 {
     FUNCTION_CALL_TRACE;
 
-    Q_ASSERT( iMgr );
+    Q_ASSERT( iReadMgr );
+    Q_ASSERT( iWriteMgr );
 
     QList<QContact> newContacts = convertVCardListToQContactList(aContactDataList);
     QList<QContact> contactList;
@@ -164,8 +167,11 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
         // overwriting existing contacts to avoid losing data about user-applied contact links.
         int newCount = 0;
         int updatedCount = 0;
+        QContactDetailFilter syncTargetFilter;
+        syncTargetFilter.setDetailType(QContactSyncTarget::Type, QContactSyncTarget::FieldSyncTarget);
+        syncTargetFilter.setValue(iSyncTarget);
         QContactDetailFilter originIdFilter = QContactOriginMetadata::matchId(iOriginId);
-        contactList = ContactsImport::buildImportContacts(iMgr, newContacts, originIdFilter, &newCount, &updatedCount);
+        contactList = ContactsImport::buildImportContacts(iWriteMgr, newContacts, originIdFilter & syncTargetFilter, &newCount, &updatedCount);
         prepareContactSave(&contactList);
         LOG_DEBUG("New contacts:" << newCount << "Updated contacts:" << updatedCount);
     }
@@ -173,11 +179,11 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
     ContactsStatus status;
     QMap<int, QContactManager::Error> errorMap;
 
-    bool retVal = iMgr->saveContacts(&contactList, &errorMap);
+    bool retVal = iWriteMgr->saveContacts(&contactList, &errorMap);
 
     if (!retVal)
     {
-        LOG_WARNING( "Errors reported while saving contacts:" << iMgr->error() );
+        LOG_WARNING( "Errors reported while saving contacts:" << iWriteMgr->error() );
     }
 
     // QContactManager will populate errorMap only for errors, but we use this as a status map,
@@ -216,7 +222,7 @@ QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const 
 
     QContactManager::Error modificationStatus = QContactManager::UnspecifiedError;
 
-    if (iMgr == NULL) {
+    if (iWriteMgr == NULL) {
         LOG_WARNING("Contacts backend not available");
     }
     else {
@@ -233,8 +239,8 @@ QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const 
         newContactData.setId(oldContactData.id());
         oldContactData = newContactData;
 
-        bool modificationOk = iMgr->saveContact(&oldContactData);
-        modificationStatus = iMgr->error();
+        bool modificationOk = iWriteMgr->saveContact(&oldContactData);
+        modificationStatus = iWriteMgr->error();
 
         if(!modificationOk) {
             // either contact exists or something wrong with one of the detailed definitions
@@ -250,7 +256,7 @@ QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
 {
     FUNCTION_CALL_TRACE;
 
-    Q_ASSERT (iMgr);
+    Q_ASSERT (iWriteMgr);
     ContactsStatus status;
 
     QMap<int,QContactManager::Error> errors;
@@ -279,7 +285,7 @@ QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
 #endif
         }
 
-        if(iMgr->saveContacts(&qContactList , &errors)) {
+        if(iWriteMgr->saveContacts(&qContactList , &errors)) {
             LOG_DEBUG("Batch Modification of Contacts Succeeded");
         }
         else {
@@ -323,7 +329,7 @@ QMap<int , ContactsStatus> ContactsBackend::deleteContacts(const QStringList &aC
     QMap<int , QContactManager::Error> errors;
     QMap<int , ContactsStatus> statusMap;
 
-    if (iMgr == NULL) {
+    if (iWriteMgr == NULL) {
         for (int i=0; i < aContactIDList.size(); i++) {
             errors.insert(i, QContactManager::UnspecifiedError);
         }
@@ -340,7 +346,7 @@ QMap<int , ContactsStatus> ContactsBackend::deleteContacts(const QStringList &aC
 #endif
         }
 
-        if(iMgr->removeContacts(qContactIdList , &errors)) {
+        if(iWriteMgr->removeContacts(qContactIdList , &errors)) {
             LOG_DEBUG("Successfully Removed all contacts ");
         }
         else {
@@ -514,7 +520,7 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
         QContactChangeLogFilter filter(aEventType);
         filter.setSince(aTimeStamp);
 
-    aIdList = iMgr->contactIds(filter);
+    aIdList = iReadMgr->contactIds(filter);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     // Fetch the ids from aIdList
@@ -528,7 +534,7 @@ void ContactsBackend::getSpecifiedContactIds(const QContactChangeLogFilter::Even
     if (aEventType != QContactChangeLogFilter::EventAdded)
     {
         filter.setEventType(QContactChangeLogFilter::EventAdded);
-        QList<QContactLocalId> addedList = iMgr->contactIds(filter);
+        QList<QContactLocalId> addedList = iReadMgr->contactIds(filter);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         QList<QString> addedStrIdList;
         foreach (const QContactId& id, addedList) {
@@ -588,7 +594,7 @@ QDateTime ContactsBackend::lastModificationTime(const QContactLocalId &aContactI
 
     QDateTime lastModificationTime = QDateTime::fromTime_t(0);
 
-    if (iMgr == NULL) {
+    if (iReadMgr == NULL) {
         LOG_WARNING("Contacts backend not available");
     }
     else {
@@ -636,8 +642,8 @@ void ContactsBackend::getContacts(const QList<QContactLocalId>& aContactIds,
     QContactLocalIdFilter contactFilter;
     contactFilter.setIds(aContactIds);
 
-    if (iMgr != NULL) {
-        aContacts = iMgr->contacts(contactFilter);
+    if (iReadMgr != NULL) {
+        aContacts = iReadMgr->contacts(contactFilter);
     }
 }
 
@@ -673,7 +679,7 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
 {
     FUNCTION_CALL_TRACE;
 
-    Q_ASSERT( iMgr );
+    Q_ASSERT( iReadMgr );
 
     /* Retrieve QContacts from backend based on id's in aContactsIds. Since we're only interested
      * in timestamps, set up fetch hint accordingly to speed up the operation.
@@ -715,7 +721,7 @@ QList<QDateTime> ContactsBackend::getCreationTimes( const QList<QContactLocalId>
 
     QDateTime currentTime = QDateTime::currentDateTime();
 
-    contacts = iMgr->contacts( contactFilter, QList<QContactSortOrder>(), contactHint );
+    contacts = iReadMgr->contacts( contactFilter, QList<QContactSortOrder>(), contactHint );
 
     if( contacts.count() == aContactIds.count() )
     {

@@ -239,8 +239,8 @@ private: // functions
 
 private: // data
 
-    // if there is more than one Manager we need to have a list of Managers
-    QContactManager                *iMgr;      ///< A pointer to contact manager
+    QContactManager                *iReadMgr;      ///< A pointer to contact manager
+    QContactManager                *iWriteMgr;      ///< A pointer to contact manager
 
     QVersitDocument::VersitType    iVCardVer;  ///< VCard Version type to operate on
 
