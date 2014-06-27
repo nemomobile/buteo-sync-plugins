@@ -309,6 +309,36 @@ void setNickname(QContact &contact, const QString &text)
     contact.saveDetail(&nick);
 }
 
+bool allCharactersMatchScript(const QString &s, QChar::Script script)
+{
+    for (int i=0; i<s.length(); i++) {
+        if (s[i].script() != script) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool applyNameFixes(QContactName *nameDetail)
+{
+    // Chinese names shouldn't have a middle name, so if it is present in a Han-script-only
+    // name, it is probably wrong and it should be prepended to the first name instead.
+    QString middleName = nameDetail->middleName();
+    if (middleName.isEmpty()) {
+        return false;
+    }
+    QString firstName = nameDetail->firstName();
+    QString lastName = nameDetail->lastName();
+    if (!allCharactersMatchScript(middleName, QChar::Script_Han)
+            || (!firstName.isEmpty() && !allCharactersMatchScript(firstName, QChar::Script_Han))
+            || (!lastName.isEmpty() && !allCharactersMatchScript(lastName, QChar::Script_Han))) {
+        return false;
+    }
+    nameDetail->setFirstName(middleName + firstName);
+    nameDetail->setMiddleName(QString());
+    return true;
+}
+
 }
 
 QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
@@ -323,6 +353,14 @@ QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
         *updatedCount = 0;
 
     QList<QContact> importedContacts = newContacts;
+
+    for (QList<QContact>::iterator it = importedContacts.begin(); it != importedContacts.end(); ++it) {
+        QContact &contact(*it);
+        QContactName nameDetail = contact.detail<QContactName>();
+        if (applyNameFixes(&nameDetail)) {
+            contact.saveDetail(&nameDetail);
+        }
+    }
 
     // Find all names and GUIDs for local contacts that might match these contacts
     QContactFetchHint fetchHint(basicFetchHint());
