@@ -40,6 +40,7 @@ BuildRequires: doxygen
 %config %{_sysconfdir}/buteo/profiles/service/*.xml
 %config %{_sysconfdir}/buteo/profiles/sync/bt_template.xml
 %config %{_sysconfdir}/buteo/plugins/syncmlserver/*.xml
+%{_libdir}/buteo-plugins-qt5/oopp/*
 %{_libdir}/buteo-plugins-qt5/*.so
 %{_libdir}/*.so.*
 
@@ -96,11 +97,11 @@ Requires: %{name} = %{version}
 %config %{_sysconfdir}/buteo/profiles/sync/memotoo.com.xml
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}
 
 
 %build
-%qmake5
+%qmake5 "CONFIG+=PLUGIN_EXE"
 make %{?_smp_mflags}
 
 

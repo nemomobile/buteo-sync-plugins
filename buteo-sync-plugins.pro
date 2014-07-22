@@ -46,3 +46,5 @@ tests.files =  \
               bin/runstarget.sh
 
 INSTALLS += tests testdefinition
+
+OTHER_FILES += rpm/*
