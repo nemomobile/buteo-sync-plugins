@@ -19,12 +19,14 @@ HEADERS += SyncMLClient.h BTConnection.h
 SOURCES += SyncMLClient.cpp BTConnection.cpp
 
 PLUGIN_DLL {
+    message("building syncml-client as in-process plugin")
     TEMPLATE = lib
     CONFIG += plugin
     target.path = /usr/lib/buteo-plugins-qt5
 }
 
 PLUGIN_EXE {
+    message("building syncml-client as out-of-process plugin")
     TEMPLATE = app
     target.path = /usr/lib/buteo-plugins-qt5/oopp
 
