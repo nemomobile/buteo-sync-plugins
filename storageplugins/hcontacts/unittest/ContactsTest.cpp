@@ -74,6 +74,7 @@ void ContactsTest::cleanupTestCase()
 void ContactsTest::testSuiteSingle()
 {
     QMap<QString, QString> props;
+    props.insert(QLatin1String("Sync Target"), QLatin1String("local"));
 
     ContactStorage storage("hcontacts");
     QVERIFY(storage.init( props )) ;
@@ -86,6 +87,7 @@ void ContactsTest::testSuiteSingle()
 void ContactsTest::testSuiteBatched()
 {
     QMap<QString, QString> props;
+    props.insert(QLatin1String("Sync Target"), QLatin1String("local"));
 
     ContactStorage storage("hcontacts");
     QVERIFY(storage.init( props )) ;
@@ -157,13 +159,13 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     qDebug()  << "id expected" << id;
     QVERIFY( items.contains( id ) );
 
-    // ** Check that item is now found from new items at t1
+    // ** Check that item is now found from new items since t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
     QVERIFY( items.contains( id ) );
 
-    // ** Check that item is not found from new items at t2
+    // ** Check that item is not found from new items since t2
     qDebug() << "Checking that the item is NOT found from getNewItems(t2)...";
     items.clear();
     QVERIFY( aPlugin.getNewItemIds( items, t2 ) );
@@ -191,9 +193,6 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
         status = aPlugin.modifyItem( *item );
     }
 
-
-
-
     QDateTime time = QDateTime::currentDateTime();
     qDebug() << "Item modified at :" << time;
 
@@ -207,25 +206,25 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     qDebug() << "Marking time t3:" << t3;
     QTest::qSleep( WAIT_TIME );
 
-    // ** Check that item is still found from new items at t1
+    // ** Check that item is NOT found from new items since t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
-    QVERIFY( items.contains( id ) );
+    QVERIFY( !items.contains( id ) );
 
-    // ** Check that item is not found from modified items at t1
+    // ** Check that item is found from modified items since t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
-    QVERIFY( !items.contains( id ) );
+    QVERIFY( items.contains( id ) );
 
-    // ** Check that item is now found from modified items at t2
+    // ** Check that item is now found from modified items since t2
     qDebug() << "Checking that the item is found from getModifiedItems(t2)...";
     items.clear();
     QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
     QVERIFY( items.contains( id ) );
 
-    // ** Check that item is not found from modified items at t3
+    // ** Check that item is not found from modified items since t3
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t3)...";
     items.clear();
     QVERIFY( aPlugin.getModifiedItemIds( items, t3 ) );
@@ -249,37 +248,37 @@ void ContactsTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
 
-    // ** Check that item is no longer found from new items at t1
+    // ** Check that item is no longer found from new items since t1
     qDebug() << "Checking that the item is NOT found from getNewItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
     QVERIFY( !items.contains( id ) );
 
-    // ** Check that item is not found from modified items at t1
+    // ** Check that item is not found from modified items since t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
     QVERIFY( !items.contains( id ) );
 
-    // ** Check that item is not found from deleted items at t1
+    // ** Check that item is not found from deleted items since t1
     qDebug() << "Checking that the item is NOT found from getDeletedItems(t1)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t1 ) );
     QVERIFY( !items.contains( id ) );
 
-    // ** Check that item is no longer found from modified items at t2
+    // ** Check that item is no longer found from modified items since t2
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t2)...";
     items.clear();
     QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
     QVERIFY( !items.contains( id ) );
 
-    // ** Check that item is now found from deleted items at t2
+    // ** Check that item is now found from deleted items since t2
     qDebug() << "Checking that the item is now found from getDeletedItems(t2)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t2 ) );
     QVERIFY( items.contains( id ) );
 
-    // ** Check that item is now found from deleted items at t3
+    // ** Check that item is now found from deleted items since t3
     qDebug() << "Checking that the item is found from getDeletedItems(t3)...";
     items.clear();
     QVERIFY( aPlugin.getDeletedItemIds( items, t3 ) );
