@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2014 Jolla Ltd.
  *
- * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *               Valério Valério <valerio.valerio@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -42,6 +44,7 @@ namespace Buteo
 
 class ContactsTest : public QObject
 {
+
 Q_OBJECT
 
 private slots:
