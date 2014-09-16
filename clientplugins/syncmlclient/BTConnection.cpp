@@ -34,15 +34,14 @@
 #include "BTConnection.h"
 
 #include <QtDBus>
+#include <QDBusConnection>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termios.h>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <buteosyncfw5/SyncDBusConnection.h>
 #include <buteosyncfw5/LogMacros.h>
 #else
-#include <buteosyncfw/SyncDBusConnection.h>
 #include <buteosyncfw/LogMacros.h>
 #endif
 
@@ -152,7 +151,7 @@ QString BTConnection::connectDevice( const QString& aBTAddress, const QString& a
 {
     FUNCTION_CALL_TRACE;
 
-    QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, QDBusConnection::systemBus() );
 
     if( !managerInterface.isValid() ) {
         LOG_CRITICAL( "Could not find BlueZ manager interface" );
@@ -169,7 +168,7 @@ QString BTConnection::connectDevice( const QString& aBTAddress, const QString& a
 
     LOG_DEBUG("Using adapter path: " << defaultAdapterPath );
 
-    QDBusInterface adapterInterface( BLUEZ_DEST, defaultAdapterPath, BLUEZ_ADAPTER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface adapterInterface( BLUEZ_DEST, defaultAdapterPath, BLUEZ_ADAPTER_INTERFACE, QDBusConnection::systemBus() );
 
     if( !adapterInterface.isValid() ) {
         LOG_CRITICAL( "Could not find adapter interface: " << adapterInterface.lastError() );
@@ -214,7 +213,7 @@ QString BTConnection::connectDevice( const QString& aBTAddress, const QString& a
 
     LOG_DEBUG( "Using path" << devicePath << "for device " << aBTAddress );
 
-    QDBusInterface serialInterface( BLUEZ_DEST, devicePath, BLUEZ_SERIAL_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface serialInterface( BLUEZ_DEST, devicePath, BLUEZ_SERIAL_INTERFACE, QDBusConnection::systemBus() );
 
     if( !serialInterface.isValid() ) {
         LOG_CRITICAL( "Could not find serial interface: " << serialInterface.lastError() );
@@ -242,7 +241,7 @@ void BTConnection::disconnectDevice( const QString& aBTAddress, const QString& a
 {
     FUNCTION_CALL_TRACE;
 
-    QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, QDBusConnection::systemBus() );
 
     if( !managerInterface.isValid() ) {
         LOG_CRITICAL( "Could not find BlueZ manager interface" );
@@ -261,7 +260,7 @@ void BTConnection::disconnectDevice( const QString& aBTAddress, const QString& a
 
     LOG_DEBUG("Using adapter path: " << defaultAdapterPath );
 
-    QDBusInterface adapterInterface( BLUEZ_DEST, defaultAdapterPath, BLUEZ_ADAPTER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface adapterInterface( BLUEZ_DEST, defaultAdapterPath, BLUEZ_ADAPTER_INTERFACE, QDBusConnection::systemBus() );
 
     if( !adapterInterface.isValid() ) {
         LOG_CRITICAL( "Could not find adapter interface: " << adapterInterface.lastError() );
@@ -280,7 +279,7 @@ void BTConnection::disconnectDevice( const QString& aBTAddress, const QString& a
 
     LOG_DEBUG( "Using path" << devicePath << "for device " << aBTAddress );
 
-    QDBusInterface serialInterface( BLUEZ_DEST, devicePath, BLUEZ_SERIAL_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface serialInterface( BLUEZ_DEST, devicePath, BLUEZ_SERIAL_INTERFACE, QDBusConnection::systemBus() );
 
     if( !serialInterface.isValid() ) {
         LOG_CRITICAL( "Could not find serial interface: " << serialInterface.lastError() );
