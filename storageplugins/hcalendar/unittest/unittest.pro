@@ -26,8 +26,7 @@ HEADERS += CalendarTest.h \
            SimpleItem.h \
            SyncMLConfig.h
 
-SOURCES += main.cpp \
-           CalendarTest.cpp \
+SOURCES += CalendarTest.cpp \
            CalendarStorage.cpp \
            CalendarBackend.cpp \
            SimpleItem.cpp \

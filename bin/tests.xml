@@ -9,10 +9,11 @@
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
         <step expected_result="0">/opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hcalendar-tests </step>
       </case>
-
+      <!-- Contacts tests are disabled due to use of privileged db for writing and non privileged for reading, see ContactsBackend::init()
       <case name="hcontacts-tests" type="Functional" description="Running Tests for Contacts Storage Plugin" timeout="1000" subfeature="">
         <step expected_result="0">/opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hcontacts-tests </step>
       </case>
+      -->
       <!--
      <case name="hbookmarks-tests" type="Functional" description="Running Tests for Bookmarks Storage Plugin" timeout="1000" subfeature="">
         <step expected_result="0">/opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hbookmarks-tests </step>

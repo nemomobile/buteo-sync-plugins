@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2014 Jolla Ltd.
  *
- * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *               Valério Valério <valerio.valerio@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,28 +33,19 @@
 
 #include <QtTest>
 
-CalendarTest::CalendarTest() : iCalendarStorage( "hcalendar" )
-{
-
-}
-CalendarTest::~CalendarTest()
-{
-
-}
-
 void CalendarTest::initTestCase()
 {
-
+    iCalendarStorage = new CalendarStorage("hcalendar");
     QMap<QString, QString> props;
     props[NOTEBOOKNAME] = "testnotebook";
 
-    QVERIFY( iCalendarStorage.init( props ) );
+    QVERIFY( iCalendarStorage->init( props ) );
 }
 
 void CalendarTest::cleanupTestCase()
 {
-    QVERIFY( iCalendarStorage.uninit() );
-
+    QVERIFY( iCalendarStorage->uninit() );
+    delete iCalendarStorage;
 }
 
 void CalendarTest::testSuite()
@@ -84,12 +77,11 @@ void CalendarTest::testSuite()
                                    "END:VEVENT\r\n" \
                                    "END:VCALENDAR\r\n" );
 
-    runTestSuite( originalData, modifiedData, iCalendarStorage );
+    runTestSuite( originalData, modifiedData);
 
 }
 
-void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                                 Buteo::StoragePlugin& aPlugin )
+void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData)
 {
     QByteArray data;
 
@@ -103,7 +95,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QTest::qSleep( 2000 );
 
     //  ** Test New Item
-    Buteo::StorageItem* item = aPlugin.newItem();
+    Buteo::StorageItem* item = iCalendarStorage->newItem();
 
     QVERIFY( item );
     QCOMPARE( item->getId(), QString( "" ) );
@@ -117,7 +109,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( data == aOriginalData );
 
     qDebug() << "Adding new item...";
-    Buteo::StoragePlugin::OperationStatus status = aPlugin.addItem( *item );
+    Buteo::StoragePlugin::OperationStatus status = iCalendarStorage->addItem( *item );
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( !item->getId().isEmpty() );
@@ -134,7 +126,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     qDebug() << "Checking that the item is now found from getItems()...";
 
     QList<QString> items;
-    QVERIFY( aPlugin.getAllItemIds( items ) );
+    QVERIFY( iCalendarStorage->getAllItemIds( items ) );
 
     bool found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -152,7 +144,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is now found from new items at t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -173,7 +165,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // @todo: There's no mechanism in storage plugin API for error handling,
     //        therefore we can't check if this call failed or not
-    QVERIFY( aPlugin.getNewItemIds( items, t2 ) );
+    QVERIFY( iCalendarStorage->getNewItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -197,7 +189,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
     QVERIFY( data == aModifiedData );
 
     qDebug() << "Modifying item...";
-    status = aPlugin.modifyItem( *item );
+    status = iCalendarStorage->modifyItem( *item );
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( item->getId() == id );
@@ -211,7 +203,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is still found from new items at t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -229,7 +221,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is not found from modified items at t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getModifiedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -247,7 +239,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is now found from modified items at t2
     qDebug() << "Checking that the item is found from getModifiedItems(t2)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
+    QVERIFY( iCalendarStorage->getModifiedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -265,7 +257,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is not found from modified items at t3
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t3)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t3 ) );
+    QVERIFY( iCalendarStorage->getModifiedItemIds( items, t3 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -283,11 +275,11 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Test Delete Item
     qDebug() << "Deleting item...";
-    QVERIFY( aPlugin.deleteItem( id ) == Buteo::StoragePlugin::STATUS_OK );
+    QVERIFY( iCalendarStorage->deleteItem( id ) == Buteo::StoragePlugin::STATUS_OK );
 
     // ** Check that item is no longer found from new items at t1
     qDebug() << "Checking that the item is NOT found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -306,7 +298,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is not found from modified items at t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getModifiedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -325,7 +317,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is not found from deleted items at t1
     qDebug() << "Checking that the item is NOT found from getDeletedItems(t1)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t1 ) );
+    QVERIFY( iCalendarStorage->getDeletedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -343,7 +335,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is no longer found from modified items at t2
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t2)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
+    QVERIFY( iCalendarStorage->getModifiedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -362,7 +354,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is now found from deleted items at t2
     qDebug() << "Checking that the item is now found from getDeletedItems(t2)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t2 ) );
+    QVERIFY( iCalendarStorage->getDeletedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -380,7 +372,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is now found from deleted items at t3
     qDebug() << "Checking that the item is found from getDeletedItems(t3)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t3 ) );
+    QVERIFY( iCalendarStorage->getDeletedItemIds( items, t3 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -398,7 +390,7 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     // ** Check that item is no longer found from all items
     qDebug() << "Checking that the item is NOT found from getItems()...";
-    QVERIFY( aPlugin.getAllItemIds( items ) );
+    QVERIFY( iCalendarStorage->getAllItemIds( items ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -414,3 +406,5 @@ void CalendarTest::runTestSuite( const QByteArray& aOriginalData, const QByteArr
 
     QVERIFY( !found );
 }
+
+QTEST_MAIN(CalendarTest)

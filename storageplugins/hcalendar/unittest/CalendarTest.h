@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2014 Jolla Ltd.
  *
- * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *               Valério Valério <valerio.valerio@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -20,6 +22,7 @@
  * 02110-1301 USA
  *
  */
+
 #ifndef HCALENDARTEST_H
 #define HCALENDARTEST_H
 
@@ -34,25 +37,17 @@ class StorageItem;
 class CalendarTest : public QObject
 {
     Q_OBJECT
-public:
-    CalendarTest();
-    ~CalendarTest();
 
-    private slots:
-        void initTestCase();
-        void cleanupTestCase();
+private slots:
+    void initTestCase();
+    void cleanupTestCase();
 
-        void testSuite();
+    void testSuite();
 
-    private:
+private:
+    void runTestSuite(const QByteArray& aOriginalData, const QByteArray& aModifiedData);
 
-
-        void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                           Buteo::StoragePlugin& aPlugin );
-
-        CalendarStorage iCalendarStorage;
-
-
+    CalendarStorage *iCalendarStorage;
 };
 
 #endif // HCALENDARTEST_H

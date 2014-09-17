@@ -44,8 +44,7 @@ HEADERS += NotesTest.h \
            syncmlcommon/SyncMLCommon.h
 
 
-SOURCES += main.cpp \
-           NotesTest.cpp \
+SOURCES += NotesTest.cpp \
            NotesStorage.cpp \
            NotesBackend.cpp \
            syncmlcommon/SimpleItem.cpp \

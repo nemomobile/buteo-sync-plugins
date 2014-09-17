@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2014 Jolla Ltd.
  *
- * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *               Valério Valério <valerio.valerio@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,28 +33,18 @@
 #include <buteosyncfw/StorageItem.h>
 #endif
 
-NotesTest::NotesTest() : iNotesStorage( "hnotes" )
-{
-
-}
-
-NotesTest::~NotesTest()
-{
-
-}
-
 void NotesTest::initTestCase()
 {
+    iNotesStorage = new NotesStorage("hnotes");
     QMap<QString, QString> props;
-
-    QVERIFY( iNotesStorage.init( props) );
+    QVERIFY( iNotesStorage->init( props) );
 }
 
 void NotesTest::cleanupTestCase()
 {
-    QVERIFY( iNotesStorage.uninit() );
+    QVERIFY( iNotesStorage->uninit() );
+    delete iNotesStorage;
 }
-
 
 void NotesTest::testSuite()
 {
@@ -60,11 +52,10 @@ void NotesTest::testSuite()
 
     const QByteArray modifiedData( "I'm a modified note" );
 
-    runTestSuite( originalData, modifiedData, iNotesStorage );
+    runTestSuite( originalData, modifiedData);
 }
 
-void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                              Buteo::StoragePlugin& aPlugin )
+void NotesTest::runTestSuite(const QByteArray& aOriginalData, const QByteArray& aModifiedData)
 {
     QByteArray data;
 
@@ -78,7 +69,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
     QTest::qSleep( 2000 );
 
     //  ** Test New Item
-    Buteo::StorageItem* item = aPlugin.newItem();
+    Buteo::StorageItem* item = iNotesStorage->newItem();
 
     QVERIFY( item );
     QCOMPARE( item->getId(), QString( "" ) );
@@ -91,7 +82,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
     QVERIFY( data == aOriginalData );
 
     qDebug() << "Adding new item...";
-    Buteo::StoragePlugin::OperationStatus status = aPlugin.addItem( *item );
+    Buteo::StoragePlugin::OperationStatus status = iNotesStorage->addItem( *item );
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( !item->getId().isEmpty() );
@@ -107,7 +98,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
     qDebug() << "Checking that the item is now found from getItems()...";
 
     QList<QString> items;
-    QVERIFY( aPlugin.getAllItemIds( items ) );
+    QVERIFY( iNotesStorage->getAllItemIds( items ) );
 
     bool found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -125,7 +116,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is now found from new items at t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -146,7 +137,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // @todo: There's no mechanism in storage plugin API for error handling,
     //        therefore we can't check if this call failed or not
-    QVERIFY( aPlugin.getNewItemIds( items, t2 ) );
+    QVERIFY( iNotesStorage->getNewItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -170,7 +161,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
     QVERIFY( data == aModifiedData );
 
     qDebug() << "Modifying item...";
-    status = aPlugin.modifyItem( *item );
+    status = iNotesStorage->modifyItem( *item );
 
     QVERIFY( status == Buteo::StoragePlugin::STATUS_OK );
     QVERIFY( item->getId() == id );
@@ -184,7 +175,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is still found from new items at t1
     qDebug() << "Checking that the item is found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -202,7 +193,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is not found from modified items at t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getModifiedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -220,7 +211,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is now found from modified items at t2
     qDebug() << "Checking that the item is found from getModifiedItems(t2)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
+    QVERIFY( iNotesStorage->getModifiedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -238,7 +229,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is not found from modified items at t3
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t3)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t3 ) );
+    QVERIFY( iNotesStorage->getModifiedItemIds( items, t3 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -256,11 +247,11 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Test Delete Item
     qDebug() << "Deleting item...";
-    QVERIFY( aPlugin.deleteItem( id ) == Buteo::StoragePlugin::STATUS_OK );
+    QVERIFY( iNotesStorage->deleteItem( id ) == Buteo::StoragePlugin::STATUS_OK );
 
     // ** Check that item is no longer found from new items at t1
     qDebug() << "Checking that the item is NOT found from getNewItems(t1)...";
-    QVERIFY( aPlugin.getNewItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getNewItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -279,7 +270,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is not found from modified items at t1
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t1)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getModifiedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -298,7 +289,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is not found from deleted items at t1
     qDebug() << "Checking that the item is NOT found from getDeletedItems(t1)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t1 ) );
+    QVERIFY( iNotesStorage->getDeletedItemIds( items, t1 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -316,7 +307,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is no longer found from modified items at t2
     qDebug() << "Checking that the item is NOT found from getModifiedItems(t2)...";
-    QVERIFY( aPlugin.getModifiedItemIds( items, t2 ) );
+    QVERIFY( iNotesStorage->getModifiedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -335,7 +326,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is now found from deleted items at t2
     qDebug() << "Checking that the item is now found from getDeletedItems(t2)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t2 ) );
+    QVERIFY( iNotesStorage->getDeletedItemIds( items, t2 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -353,7 +344,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is now found from deleted items at t3
     qDebug() << "Checking that the item is found from getDeletedItems(t3)...";
-    QVERIFY( aPlugin.getDeletedItemIds( items, t3 ) );
+    QVERIFY( iNotesStorage->getDeletedItemIds( items, t3 ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -371,7 +362,7 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
 
     // ** Check that item is no longer found from all items
     qDebug() << "Checking that the item is NOT found from getItems()...";
-    QVERIFY( aPlugin.getAllItemIds( items ) );
+    QVERIFY( iNotesStorage->getAllItemIds( items ) );
 
     found = false;
     for( int i = 0; i < items.count(); ++i ) {
@@ -386,5 +377,6 @@ void NotesTest::runTestSuite( const QByteArray& aOriginalData, const QByteArray&
     items.clear();
 
     QVERIFY( !found );
-
 }
+
+QTEST_MAIN(NotesTest)

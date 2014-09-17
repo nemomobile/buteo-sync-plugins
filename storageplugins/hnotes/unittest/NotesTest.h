@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2014 Jolla Ltd.
  *
- * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *               Valério Valério <valerio.valerio@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -20,6 +22,7 @@
  * 02110-1301 USA
  *
  */
+
 #ifndef NOTESTEST_H
 #define NOTESTEST_H
 
@@ -29,10 +32,7 @@
 
 class NotesTest : public QObject
 {
-    Q_OBJECT;
-public:
-    NotesTest();
-    virtual ~NotesTest();
+    Q_OBJECT
 
 private slots:
 
@@ -43,10 +43,9 @@ private slots:
 
 private:
 
-    void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData,
-                       Buteo::StoragePlugin& aPlugin );
+    void runTestSuite( const QByteArray& aOriginalData, const QByteArray& aModifiedData);
 
-    NotesStorage iNotesStorage;
+    NotesStorage *iNotesStorage;
 };
 
 #endif  //  NOTESTEST_H

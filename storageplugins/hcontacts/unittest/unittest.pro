@@ -3,35 +3,43 @@ TARGET = hcontacts-tests
 
 QT += core testlib sql
 QT -= gui
-CONFIG += link_pkgconfig testlib
+CONFIG += link_pkgconfig
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     PKGCONFIG = buteosyncfw buteosyncml qtcontacts-sqlite-extensions
     MOBILITY += contacts versit
-    LIBS += -lsyncmlcommon -lQtTest
+    LIBS += -lsyncmlcommon
 }
 
 equals(QT_MAJOR_VERSION, 5): {
     PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5 qtcontacts-sqlite-qt5-extensions
-    LIBS += -lsyncmlcommon5 -lQt5Test
+    LIBS += -lsyncmlcommon5
 }
 
 DEPENDPATH += . \
               ../ \
-              ../../../syncmlcommon
+
+VPATH = .. \
+    ../../../
 
 INCLUDEPATH += . \
     ../ \
     ../../../syncmlcommon
 
-HEADERS += ContactsTest.h
+LIBS += -L../../../syncmlcommon
 
-SOURCES += main.cpp \
-       ContactsTest.cpp
+HEADERS += ContactsTest.h \
+           ContactsStorage.h \
+           ContactsBackend.h \
+           ContactsImport.h \
+           ContactDetailHandler.h
 
-LIBPATH += ../ ../../../syncmlcommon
-LIBS += -lhcontacts-storage
+SOURCES += ContactsTest.cpp \
+           ContactsStorage.cpp \
+           ContactsBackend.cpp \
+           ContactsImport.cpp \
+           ContactDetailHandler.cpp
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
