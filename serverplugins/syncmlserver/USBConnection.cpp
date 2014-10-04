@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <termios.h>
+#include <unistd.h>
 
 #ifdef GLIB_FD_WATCH
 #include <glib.h>

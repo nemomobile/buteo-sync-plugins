@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "BTConnection.h"
 

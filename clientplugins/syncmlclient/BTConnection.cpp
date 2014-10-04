@@ -33,12 +33,14 @@
 
 #include "BTConnection.h"
 
+#include <unistd.h>
 #include <QtDBus>
 #include <QDBusConnection>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <termios.h>
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <buteosyncfw5/LogMacros.h>
 #else
