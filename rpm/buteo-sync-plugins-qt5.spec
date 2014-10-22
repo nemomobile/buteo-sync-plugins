@@ -75,6 +75,7 @@ Group: Documentation
 Summary: Tests for %{name}
 Group: System/Libraries
 Requires: %{name} = %{version}-%{release}
+Requires: blts-tools
 
 %description tests
 %{summary}.
