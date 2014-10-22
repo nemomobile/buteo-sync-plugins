@@ -7,7 +7,7 @@
 
       <case name="hcalendar-tests" type="Functional" description="Running Tests for Calendar Storage Plugin" timeout="1000" subfeature="">
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
-        <step expected_result="0">/opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hcalendar-tests </step>
+        <step expected_result="0">/usr/sbin/run-blts-root /opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hcalendar-tests </step>
       </case>
       <!-- Contacts tests are disabled due to use of privileged db for writing and non privileged for reading, see ContactsBackend::init()
       <case name="hcontacts-tests" type="Functional" description="Running Tests for Contacts Storage Plugin" timeout="1000" subfeature="">
@@ -22,7 +22,7 @@
 
      <case name="hnotes-tests" type="Functional" description="Running Tests for Notes Storage Plugin" timeout="1000" subfeature="">
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
-        <step expected_result="0">/opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hnotes-tests </step>
+        <step expected_result="0">/usr/sbin/run-blts-root /opt/tests/buteo-sync-plugins/./runstarget.sh /opt/tests/buteo-sync-plugins/hnotes-tests </step>
       </case>
 
     </set>
