@@ -25,18 +25,17 @@ VER_MAJ = 1
 VER_MIN = 0
 VER_PAT = 0
 
-QT -= gui
-QT += sql
+QT += gui sql
 
 HEADERS += ContactsStorage.h \
            ContactsBackend.h \
            ContactsImport.h \
-           ContactDetailHandler.h
+           ContactPropertyHandler.h
 
 SOURCES += ContactsStorage.cpp \
            ContactsBackend.cpp \
            ContactsImport.cpp \
-           ContactDetailHandler.cpp
+           ContactPropertyHandler.cpp
 
 
 QMAKE_CXXFLAGS = -Wall \

@@ -2,11 +2,12 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
- * Copyright (C) 2014 Jolla Ltd.
+ * Copyright (C) 2014-2015 Jolla Ltd.
  *
  * Contributors: Sateesh Kavuri <sateesh.kavuri@nokia.com>
  *               Bea Lam <bea.lam@jolla.com>
  *               Valério Valério <valerio.valerio@jolla.com>
+ *               Chris Adams <chris.adams@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -50,7 +51,7 @@
 #include <QContactLocalIdFilter>
 #endif
 
-#include "ContactDetailHandler.h"
+#include "ContactPropertyHandler.h"
 
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer, const QString &syncTarget, const QString &originId) :
 iReadMgr(NULL), iWriteMgr(NULL), iVCardVer(aVCardVer) //CID 26531
@@ -409,85 +410,67 @@ QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringLis
     FUNCTION_CALL_TRACE;
 
     QByteArray byteArray;
-    //QVersitReader needs LF/CRLF/CR between successive vcard's in the list,
-    //CRLF didn't work though.
-    const QString LF = "\n";
-
+    QString crlfSequence;
+    crlfSequence += QChar::CarriageReturn + QChar::LineFeed;
     foreach ( const QString& vcard, aVCardList )
     {
         byteArray.append(vcard.toUtf8());
-        byteArray.append(LF.toUtf8());
+        if (!vcard.endsWith(crlfSequence)) {
+            byteArray.append(crlfSequence);
+        }
     }
 
     QBuffer readBuf(&byteArray);
     readBuf.open(QIODevice::ReadOnly);
-    readBuf.seek(0);
 
     QVersitReader versitReader;
-    versitReader.setDevice (&readBuf);
-
-    if (!versitReader.startReading())
-    {
-        LOG_WARNING ("Error while reading vcard");
-    }
-
-    if (!versitReader.waitForFinished() )
-    {
-        LOG_WARNING ("Error while finishing reading vcard");
-    }
+    versitReader.setDevice(&readBuf);
+    versitReader.startReading();
+    versitReader.waitForFinished();
 
     QList<QVersitDocument> versitDocList = versitReader.results();
     readBuf.close();
 
-    QVersitContactImporter contactImporter;
-    QList<QContact> contactList;
-    bool contactsImported = contactImporter.importDocuments(versitDocList);
-    if (contactsImported)
-    {
-        contactList =  contactImporter.contacts();
-        prepareContactSave(&contactList);
-    }
+    ContactPropertyHandler propertyHandler;
+    QVersitContactImporter importer;
+    importer.setPropertyHandler(&propertyHandler);
+    importer.importDocuments(versitDocList);
 
-    LOG_DEBUG( "Converted" << contactList.count() << "VCards" );
+    QList<QContact> contactList(importer.contacts());
+    prepareContactSave(&contactList);
+    LOG_DEBUG( "Converted" << contactList.count() << "VCards");
 
     return contactList;
 }
 
 QString ContactsBackend::convertQContactToVCard(const QContact &aContact)
 {
-        FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-        QList<QContact> contactsList;
-        contactsList.append (aContact);
+    ContactPropertyHandler propertyHandler;
+    QVersitContactExporter exporter;
+    exporter.setDetailHandler(&propertyHandler);
+    exporter.exportContacts(QList<QContact>() << aContact);
 
-        QVersitContactExporter contactExporter;
+    QList<QVersitDocument> versitDocumentList = exporter.documents();
+    QString vCard;
 
-        ContactDetailHandler handler;
-        contactExporter.setDetailHandler(&handler);
+    QBuffer writeBuf;
+    writeBuf.open(QBuffer::ReadWrite);
 
-        QString vCard;
-        bool contactsExported = contactExporter.exportContacts(contactsList, iVCardVer);
-        if (contactsExported){
-                QList<QVersitDocument> versitDocumentList;
-                versitDocumentList = contactExporter.documents();
+    QVersitWriter writer;
+    writer.setDevice(&writeBuf);
 
-                QBuffer writeBuf;
-                writeBuf.open(QBuffer::ReadWrite);
+    if (!writer.startWriting(versitDocumentList)) {
+        LOG_CRITICAL ("Error While writing -- " << writer.error() );
+    }
 
-                QVersitWriter writer;
-                writer.setDevice(&writeBuf);
+    if (writer.waitForFinished()) {
+        vCard = writeBuf.buffer();
+    }
 
-                if (!writer.startWriting(versitDocumentList)) {
-                        LOG_CRITICAL ("Error While writing -- " << writer.error() );
-                }
-
-                if (writer.waitForFinished()) {
-                        vCard = writeBuf.buffer();
-                }
-
-                writeBuf.close();
-        }
-        return vCard;
+    writeBuf.close();
+    return vCard;
 }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)

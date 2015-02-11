@@ -3,7 +3,7 @@
 //
 
 /*
- * Copyright (C) 2013 Jolla Mobile <matthew.vogt@jollamobile.com>
+ * Copyright (C) 2015 Jolla Mobile <matthew.vogt@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -34,6 +34,7 @@
  */
 
 #include "ContactsImport.h"
+#include "ContactPropertyHandler.h"
 
 #define USING_QTPIM QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 
@@ -48,6 +49,8 @@
 #include <QContactAvatar>
 #include <QContactBirthday>
 #include <QContactEmailAddress>
+#include <QContactFamily>
+#include <QContactGeoLocation>
 #include <QContactGuid>
 #include <QContactHobby>
 #include <QContactName>
@@ -67,7 +70,13 @@
 #include <QContactLocalIdFilter>
 #endif
 
+#include <QVersitContactExporter>
+#include <QVersitContactImporter>
+#include <QVersitReader>
+#include <QVersitWriter>
+
 #include <QHash>
+#include <QString>
 
 namespace {
 
@@ -219,14 +228,14 @@ static void fixupDetail(QContactOrganization &org)
 #endif
 
 template<typename T>
-bool updateExistingDetails(QContact *updateContact, const QContact &importedContact, bool singular = false, bool removeNonMatchingDetails = true)
+bool updateExistingDetails(QContact *updateContact, const QContact &importedContact, bool singular = false)
 {
-    QList<T> existingDetails(updateContact->details<T>());
-    if (!removeNonMatchingDetails && singular && !existingDetails.isEmpty())
-        return false;
+    bool rv = false;
 
-    QSet<T> detailsToKeep;
-    bool hasChanged = false;
+    QList<T> existingDetails(updateContact->details<T>());
+    if (singular && !existingDetails.isEmpty())
+        return rv;
+
     foreach (T detail, importedContact.details<T>()) {
         // Make any corrections to the input
         fixupDetail(detail);
@@ -235,29 +244,17 @@ bool updateExistingDetails(QContact *updateContact, const QContact &importedCont
         bool found = false;
         foreach (const T &existing, existingDetails) {
             if (detailValuesSuperset(existing, detail)) {
-                if (removeNonMatchingDetails) {
-                    detailsToKeep.insert(existing);
-                }
                 found = true;
                 break;
             }
         }
         if (!found) {
             updateContact->saveDetail(&detail);
-            hasChanged = true;
+            rv = true;
         }
     }
 
-    if (removeNonMatchingDetails && detailsToKeep.count()) {
-        // If we have new details, remove any old ones that didn't match
-        foreach (T detail, existingDetails) {
-            if (!detailsToKeep.contains(detail)) {
-                updateContact->removeDetail(&detail);
-                hasChanged = true;
-            }
-        }
-    }
-    return hasChanged;
+    return rv;
 }
 
 bool mergeIntoExistingContact(QContact *updateContact, const QContact &importedContact)
@@ -270,6 +267,8 @@ bool mergeIntoExistingContact(QContact *updateContact, const QContact &importedC
     rv |= updateExistingDetails<QContactAvatar>(updateContact, importedContact);
     rv |= updateExistingDetails<QContactBirthday>(updateContact, importedContact, true);
     rv |= updateExistingDetails<QContactEmailAddress>(updateContact, importedContact);
+    rv |= updateExistingDetails<QContactFamily>(updateContact, importedContact);
+    rv |= updateExistingDetails<QContactGeoLocation>(updateContact, importedContact);
     rv |= updateExistingDetails<QContactGuid>(updateContact, importedContact);
     rv |= updateExistingDetails<QContactHobby>(updateContact, importedContact);
     rv |= updateExistingDetails<QContactNickname>(updateContact, importedContact);
@@ -294,6 +293,47 @@ bool updateExistingContact(QContact *updateContact, const QContact &contact)
     *updateContact = contact;
 
     return mergeIntoExistingContact(updateContact, importedContact);
+}
+
+QString generateDisplayLabelFromNonNameDetails(const QContact &contact)
+{
+    foreach (const QContactNickname& nickname, contact.details<QContactNickname>()) {
+        if (!nickname.nickname().isEmpty()) {
+            return nickname.nickname();
+        }
+    }
+
+    // If this contact has organization details but no name, it probably represents that organization directly
+    QContactOrganization company = contact.detail<QContactOrganization>();
+    if (!company.name().isEmpty()) {
+        return company.name();
+    }
+
+    // If none of the detail fields provides a label, fallback to the backend's label string, in
+    // preference to using any of the addressing details directly
+    const QString displayLabel = contact.detail<QContactDisplayLabel>().label();
+    if (!displayLabel.isEmpty()) {
+        return displayLabel;
+    }
+
+    foreach (const QContactOnlineAccount& account, contact.details<QContactOnlineAccount>()) {
+        if (!account.accountUri().isEmpty()) {
+            return account.accountUri();
+        }
+    }
+
+    foreach (const QContactEmailAddress& email, contact.details<QContactEmailAddress>()) {
+        if (!email.emailAddress().isEmpty()) {
+            return email.emailAddress();
+        }
+    }
+
+    foreach (const QContactPhoneNumber& phone, contact.details<QContactPhoneNumber>()) {
+        if (!phone.number().isEmpty())
+            return phone.number();
+    }
+
+    return QString();
 }
 
 void setNickname(QContact &contact, const QString &text)
@@ -354,11 +394,107 @@ QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
 
     QList<QContact> importedContacts = newContacts;
 
-    for (QList<QContact>::iterator it = importedContacts.begin(); it != importedContacts.end(); ++it) {
+    QHash<QString, int> importGuids;
+    QHash<QString, int> importNames;
+    QHash<QString, int> importLabels;
+
+    QSet<QContactDetail::DetailType> unimportableDetailTypes;
+    unimportableDetailTypes.insert(QContactDetail::TypeGlobalPresence);
+    unimportableDetailTypes.insert(QContactDetail::TypeVersion);
+
+    // Merge any duplicates in the import list
+    QList<QContact>::iterator it = importedContacts.begin();
+    while (it != importedContacts.end()) {
         QContact &contact(*it);
+
+        // Fix up name (field ordering) if required
         QContactName nameDetail = contact.detail<QContactName>();
         if (applyNameFixes(&nameDetail)) {
             contact.saveDetail(&nameDetail);
+        }
+
+        // Remove any details that our backend can't store
+        foreach (QContactDetail detail, contact.details()) {
+            if (detail.type() == QContactSyncTarget::Type) {
+                qDebug() << "  Removing unimportable syncTarget:" << detail;
+                contact.removeDetail(&detail);
+            } else if (unimportableDetailTypes.contains(detail.type())) {
+                qDebug() << "  Removing unimportable detail:" << detail;
+                contact.removeDetail(&detail);
+            }
+        }
+
+        const QString guid = contact.detail<QContactGuid>().guid();
+        const QString name = contactNameString(contact);
+        const bool emptyName = name.isEmpty();
+
+        QString label;
+        if (emptyName) {
+            QContactName nameDetail = contact.detail<QContactName>();
+            contact.removeDetail(&nameDetail);
+
+            label = contact.detail<QContactDisplayLabel>().label();
+            if (label.isEmpty()) {
+                label = generateDisplayLabelFromNonNameDetails(contact);
+            }
+        }
+
+        int previousIndex = -1;
+        QHash<QString, int>::const_iterator git = importGuids.find(guid);
+        if (git != importGuids.end()) {
+            previousIndex = git.value();
+
+            if (!emptyName) {
+                // If we have a GUID match, but names differ, ignore the match
+                const QContact &previous(importedContacts[previousIndex]);
+                const QString previousName = contactNameString(previous);
+                if (!previousName.isEmpty() && (previousName != name)) {
+                    previousIndex = -1;
+
+                    // Remove the conflicting GUID from this contact
+                    QContactGuid guidDetail = contact.detail<QContactGuid>();
+                    contact.removeDetail(&guidDetail);
+                }
+            }
+        }
+        if (previousIndex == -1) {
+            if (!emptyName) {
+                QHash<QString, int>::const_iterator nit = importNames.find(name);
+                if (nit != importNames.end()) {
+                    previousIndex = nit.value();
+                }
+            } else if (!label.isEmpty()) {
+                // Only if name is empty, use displayLabel
+                QHash<QString, int>::const_iterator lit = importLabels.find(label);
+                if (lit != importLabels.end()) {
+                    previousIndex = lit.value();
+                }
+            }
+        }
+
+        if (previousIndex != -1) {
+            // Combine these duplicate contacts
+            QContact &previous(importedContacts[previousIndex]);
+            mergeIntoExistingContact(&previous, contact);
+
+            it = importedContacts.erase(it);
+        } else {
+            const int index = it - importedContacts.begin();
+            if (!guid.isEmpty()) {
+                importGuids.insert(guid, index);
+            }
+            if (!emptyName) {
+                importNames.insert(name, index);
+            } else if (!label.isEmpty()) {
+                importLabels.insert(label, index);
+
+                if (contact.details<QContactNickname>().isEmpty()) {
+                    // Modify this contact to have the label as a nickname
+                    setNickname(contact, label);
+                }
+            }
+
+            ++it;
         }
     }
 
@@ -394,7 +530,7 @@ QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
     // Find any imported contacts that match contacts we already have
     QMap<QContactId, int> existingIds;
 
-    QList<QContact>::iterator it = importedContacts.begin();
+    it = importedContacts.begin();
     while (it != importedContacts.end()) {
         const QString guid = (*it).detail<QContactGuid>().guid();
         const QString name = contactNameString(*it);
@@ -516,3 +652,4 @@ QList<QContact> ContactsImport::buildImportContacts(QContactManager *mgr,
 
     return importedContacts;
 }
+

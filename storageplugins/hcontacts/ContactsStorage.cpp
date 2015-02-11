@@ -2,8 +2,10 @@
  * This file is part of buteo-sync-plugins package
  *
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+ * Copyright (C) 2015 Jolla Ltd.
  *
  * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+ *          Chris Adams <chris.adams@jolla.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -20,6 +22,7 @@
  * 02110-1301 USA
  *
  */
+
 #include <QFile>
 #include <QStringListIterator>
 #include <LogMacros.h>
