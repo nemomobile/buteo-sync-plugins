@@ -1,8 +1,7 @@
 TEMPLATE = app
 TARGET = hcontacts-tests
 
-QT += core testlib sql
-QT -= gui
+QT += core testlib sql gui
 CONFIG += link_pkgconfig
 
 equals(QT_MAJOR_VERSION, 4): {
@@ -33,13 +32,13 @@ HEADERS += ContactsTest.h \
            ContactsStorage.h \
            ContactsBackend.h \
            ContactsImport.h \
-           ContactDetailHandler.h
+           ContactPropertyHandler.h
 
 SOURCES += ContactsTest.cpp \
            ContactsStorage.cpp \
            ContactsBackend.cpp \
            ContactsImport.cpp \
-           ContactDetailHandler.cpp
+           ContactPropertyHandler.cpp
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno
 QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

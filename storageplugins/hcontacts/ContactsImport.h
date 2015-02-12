@@ -3,7 +3,7 @@
 //
 
 /*
- * Copyright (C) 2013 Jolla Mobile <matthew.vogt@jollamobile.com>
+ * Copyright (C) 2015 Jolla Mobile <matthew.vogt@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
