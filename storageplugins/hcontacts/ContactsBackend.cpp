@@ -25,8 +25,13 @@
  */
 
 #include "ContactsBackend.h"
-#include "ContactsImport.h"
+#include "ContactBuilder.h"
+
+#include <seasideimport.h>
+#include <seasidepropertyhandler.h>
+
 #include <LogMacros.h>
+
 #include <QVersitContactExporter>
 #include <QVersitContactImporter>
 #include <QVersitReader>
@@ -35,13 +40,10 @@
 #include <QContactSyncTarget>
 #include <QContactDetailFilter>
 #include <QContactUnionFilter>
-#include <QBuffer>
-#include <QSet>
+#include <QContactInvalidFilter>
 
 #include <qtcontacts-extensions.h>
-#include <qtcontacts-extensions_impl.h>
 #include <QContactOriginMetadata>
-#include <qcontactoriginmetadata_impl.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QContactIdFilter>
@@ -50,7 +52,9 @@
 #include <QContactLocalIdFilter>
 #endif
 
-#include "ContactDetailHandler.h"
+#include <QBuffer>
+#include <QSet>
+
 
 ContactsBackend::ContactsBackend(QVersitDocument::VersitType aVCardVer, const QString &syncTarget, const QString &originId) :
 iReadMgr(NULL), iWriteMgr(NULL), iVCardVer(aVCardVer) //CID 26531
@@ -161,57 +165,44 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
     Q_ASSERT( iReadMgr );
     Q_ASSERT( iWriteMgr );
 
-    QList<QContact> newContacts = convertVCardListToQContactList(aContactDataList);
-    QList<QContact> contactList;
-
-    if (iOriginId.isEmpty()) {
-        contactList = newContacts;
-    } else {
-        // Import the vcard data into existing contacts. We want to do a careful merge instead of
-        // overwriting existing contacts to avoid losing data about user-applied contact links.
-        int newCount = 0;
-        int updatedCount = 0;
-        QContactDetailFilter syncTargetFilter;
-        syncTargetFilter.setDetailType(QContactSyncTarget::Type, QContactSyncTarget::FieldSyncTarget);
-        syncTargetFilter.setValue(iSyncTarget);
-        QContactDetailFilter originIdFilter = QContactOriginMetadata::matchId(iOriginId);
-        contactList = ContactsImport::buildImportContacts(iWriteMgr, newContacts, originIdFilter & syncTargetFilter, &newCount, &updatedCount);
-        prepareContactSave(&contactList);
-        LOG_DEBUG("New contacts:" << newCount << "Updated contacts:" << updatedCount);
+    QList<QVersitDocument> documents = convertVCardListToVersitDocumentList(aContactDataList);
+    if (documents.isEmpty()) {
+        LOG_WARNING("invalid sync data, aborting");
+        return false;
     }
 
-    ContactsStatus status;
+    LOG_DEBUG("converted" << aContactDataList.size() << "concatenated vCards into" << documents.size() << "versit documents");
+
+    int newCount = 0;
+    int updatedCount = 0;
+    int ignoredCount = 0;
+    ContactBuilder builder(iWriteMgr, iSyncTarget, iOriginId, ContactBuilder::FilterRequiredMode);
+    QList<QContact> contactList = SeasideImport::buildImportContacts(
+                                                     documents,
+                                                     &newCount,
+                                                     &updatedCount,
+                                                     &ignoredCount,
+                                                     &builder);
+    LOG_DEBUG("imported" << contactList.size() << "contacts from" << documents.size() << "versit documents");
+    if (contactList.size() != documents.size()) {
+        LOG_WARNING("internal error: could not convert every versit document to a contact:" << contactList.size() << "<" << documents.size());
+        return false;
+    }
+
+    prepareContactSave(&contactList);
+    LOG_DEBUG("New contacts:" << newCount << "Updated contacts:" << updatedCount);
+
     QMap<int, QContactManager::Error> errorMap;
-
     bool retVal = iWriteMgr->saveContacts(&contactList, &errorMap);
-
-    if (!retVal)
-    {
+    if (!retVal) {
         LOG_WARNING( "Errors reported while saving contacts:" << iWriteMgr->error() );
     }
 
-    // QContactManager will populate errorMap only for errors, but we use this as a status map,
-    // so populate NoError if there's no error.
-    // TODO QContactManager populates indices from the qContactList, but we populate keys, is this OK?
-    for (int i = 0; i < contactList.size(); i++)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        QContactLocalId contactId = contactList.at(i).id();
-        status.id = contactId.toString ();
-#else
-        QContactLocalId contactId = contactList.at(i).id().localId();
-        status.id = (int)contactId;
-#endif
-        if (!errorMap.contains(i))
-        {
-            status.errorCode = QContactManager::NoError;
-        }
-        else
-        {
-            LOG_WARNING("Contact with id " << contactId << " and index " << i <<" is in error");
-            QContactManager::Error errorCode = errorMap.value(i);
-            status.errorCode = errorCode;
-        }
+    // Populate the status value for each addition item (document).
+    ContactsStatus status;
+    for (int i = 0; i < documents.size(); ++i) {
+        status.id = contactList.at(i).id().toString();
+        status.errorCode = errorMap.value(i, QContactManager::NoError);
         aStatusMap.insert(i, status);
     }
 
@@ -220,39 +211,56 @@ bool ContactsBackend::addContacts( const QStringList& aContactDataList,
 
 QContactManager::Error ContactsBackend::modifyContact(const QString &aID, const QString &aContact)
 {
-        FUNCTION_CALL_TRACE;
-
-        LOG_DEBUG("Modifying a Contact with ID" << aID);
+    FUNCTION_CALL_TRACE;
+    LOG_DEBUG("Modifying a Contact with ID" << aID);
 
     QContactManager::Error modificationStatus = QContactManager::UnspecifiedError;
 
     if (iWriteMgr == NULL) {
         LOG_WARNING("Contacts backend not available");
-    }
-    else {
+    } else {
         QContact oldContactData;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         getContact(QContactId::fromString (aID), oldContactData);
 #else
         getContact(aID.toUInt(), oldContactData);
 #endif
-        QStringList contactStringList;
-        contactStringList.append(aContact);
-        QContact newContactData = convertVCardListToQContactList(contactStringList).first();
 
+        QList<QVersitDocument> documents = convertVCardListToVersitDocumentList(QStringList() << aContact);
+        if (documents.size() < 1) {
+            LOG_WARNING("Not a valid vCard:" << aContact);
+            return QContactManager::UnspecifiedError;
+        }
+
+        int newCount = 0;
+        int updatedCount = 0;
+        int ignoredCount = 0;
+        ContactBuilder builder(iWriteMgr, iSyncTarget, iOriginId, ContactBuilder::NoFilterRequiredMode);
+        QList<QContact> contacts = SeasideImport::buildImportContacts(
+                                                         documents,
+                                                         &newCount,
+                                                         &updatedCount,
+                                                         &ignoredCount,
+                                                         &builder);
+
+        if (contacts.size() < 1) {
+            LOG_WARNING("Unable to convert vCard to contact:" << aContact);
+            return QContactManager::UnspecifiedError;
+        } else if (contacts.size() > 1) {
+            LOG_WARNING("vCard encodes multiple contacts when one is expected:" << aContact);
+            // just process the first one, ignore the rest.
+        }
+
+        QContact newContactData = contacts.first();
         newContactData.setId(oldContactData.id());
-        oldContactData = newContactData;
-
         bool modificationOk = iWriteMgr->saveContact(&oldContactData);
         modificationStatus = iWriteMgr->error();
-
         if(!modificationOk) {
-            // either contact exists or something wrong with one of the detailed definitions
             LOG_WARNING("Contact Modification Failed");
-        } // no else
+        }
     }
 
-        return modificationStatus;
+    return modificationStatus;
 }
 
 QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
@@ -266,11 +274,24 @@ QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
     QMap<int,QContactManager::Error> errors;
     QMap<int,ContactsStatus> statusMap;
 
-    if (aVCardDataList.size() == aContactIdList.size()) {
+    int newCount = 0;
+    int updatedCount = 0;
+    int ignoredCount = 0;
+    QList<QVersitDocument> documents = convertVCardListToVersitDocumentList(aVCardDataList);
+    LOG_DEBUG("converted" << aVCardDataList.size() << "concatenated vCards into" << documents.size() << "versit documents");
+    ContactBuilder builder(iWriteMgr, iSyncTarget, iOriginId, ContactBuilder::NoFilterRequiredMode);
+    QList<QContact> contacts = SeasideImport::buildImportContacts(
+                                                     documents,
+                                                     &newCount,
+                                                     &updatedCount,
+                                                     &ignoredCount,
+                                                     &builder);
 
-        QList<QContact> qContactList = convertVCardListToQContactList(aVCardDataList);
-
-        for (int i = 0; i < qContactList.size(); i++) {
+    LOG_DEBUG("imported" << contacts.size() << "contacts from" << documents.size() << "versit documents");
+    if (contacts.size() != aContactIdList.size()) {
+        LOG_WARNING("internal error: could not convert every versit document to a contact:" << contacts.size() << "<" << documents.size());
+    } else {
+        for (int i = 0; i < contacts.size(); i++) {
             LOG_DEBUG("Id of the contact to be replaced" << aContactIdList.at(i));
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
             QContactLocalId uniqueContactItemID = QContactId::fromString (aContactIdList.at(i));
@@ -280,40 +301,36 @@ QMap<int,ContactsStatus> ContactsBackend::modifyContacts(
             uniqueContactItemID.setLocalId(managerLocalIdOfItemBeingModified);
 #endif
 
-            qContactList[i].setId(uniqueContactItemID);
+            contacts[i].setId(uniqueContactItemID);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-            LOG_DEBUG("Replacing item's ID " << qContactList.at(i));
+            LOG_DEBUG("Replacing item's ID " << contacts.at(i));
 #else
-            LOG_DEBUG("Replacing item's ID " << qContactList.at(i).localId());
+            LOG_DEBUG("Replacing item's ID " << contacts.at(i).localId());
 #endif
         }
 
-        if(iWriteMgr->saveContacts(&qContactList , &errors)) {
+        if(iWriteMgr->saveContacts(&contacts , &errors)) {
             LOG_DEBUG("Batch Modification of Contacts Succeeded");
-        }
-        else {
+        } else {
             LOG_DEBUG("Batch Modification of Contacts Failed");
         }
 
         // QContactManager will populate errorMap only for errors, but we use this as a status map,
         // so populate NoError if there's no error.
         // TODO QContactManager populates indices from the qContactList, but we populate keys, is this OK?
-        for (int i = 0; i < qContactList.size(); i++) {
+        for (int i = 0; i < contacts.size(); i++) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-            QContactLocalId contactId = qContactList.at(i).id();
+            QContactLocalId contactId = contacts.at(i).id();
             status.id = contactId.toString ();
 #else
-            QContactLocalId contactId = qContactList.at(i).id().localId();
+            QContactLocalId contactId = contacts.at(i).id().localId();
             status.id = (int)contactId;
 #endif
-            if( !errors.contains(i) )
-            {
+            if( !errors.contains(i) ) {
                 LOG_DEBUG("No error for contact with id " << contactId << " and index " << i);
                 status.errorCode = QContactManager::NoError;
-            }
-            else
-            {
+            } else {
                 LOG_DEBUG("contact with id " << contactId << " and index " << i <<" is in error");
                 QContactManager::Error errorCode = errors.value(i);
                 status.errorCode = errorCode;
@@ -404,53 +421,43 @@ void ContactsBackend::prepareContactSave(QList<QContact> *contactList)
     }
 }
 
-QList<QContact> ContactsBackend::convertVCardListToQContactList(const QStringList &aVCardList)
+QList<QVersitDocument> ContactsBackend::convertVCardListToVersitDocumentList(const QStringList &aVCardList)
 {
     FUNCTION_CALL_TRACE;
 
-    QByteArray byteArray;
-    //QVersitReader needs LF/CRLF/CR between successive vcard's in the list,
-    //CRLF didn't work though.
-    const QString LF = "\n";
+    QList<QVersitDocument> retn;
+    Q_FOREACH (const QString &vCard, aVCardList) {
+        // remove any characters after the END:VCARD stanza.
+        // importantly, we do NOT ensure it ends in \r\n or \r\n\r\n
+        // TODO: fix QVersitReader to strip \r\n and \r\n\r\n endings.
+        int endIdx = vCard.lastIndexOf(QStringLiteral("END:VCARD"), -1, Qt::CaseInsensitive);
+        QString modifiedVCard = vCard.mid(0, endIdx + 9); /* 9 = strlen("END:VCARD") */
 
-    foreach ( const QString& vcard, aVCardList )
-    {
-        byteArray.append(vcard.toUtf8());
-        byteArray.append(LF.toUtf8());
+        // convert the vCard to a contact.
+        QVersitReader versitReader(modifiedVCard.toUtf8());
+        versitReader.startReading();
+        versitReader.waitForFinished();
+
+        QList<QVersitDocument> results = versitReader.results();
+        if (results.size() == 0) {
+            LOG_WARNING("Unable to convert vCard to versit document:" << versitReader.error() << ":");
+            QStringList erroneousVCardLines = modifiedVCard.split('\n', QString::KeepEmptyParts);
+            Q_FOREACH(QString line, erroneousVCardLines) {
+                if (line.contains(':') || line.trimmed().isEmpty()) {
+                    line.replace('\r', "<CR>");
+                    line.append("<LF>");
+                    LOG_WARNING(line);
+                }
+            }
+            return QList<QVersitDocument>();
+        } else if (versitReader.results().size() > 1) {
+            LOG_WARNING("Multiple contacts from single vCard:" << modifiedVCard);
+        }
+
+        retn.append(results.first());
     }
 
-    QBuffer readBuf(&byteArray);
-    readBuf.open(QIODevice::ReadOnly);
-    readBuf.seek(0);
-
-    QVersitReader versitReader;
-    versitReader.setDevice (&readBuf);
-
-    if (!versitReader.startReading())
-    {
-        LOG_WARNING ("Error while reading vcard");
-    }
-
-    if (!versitReader.waitForFinished() )
-    {
-        LOG_WARNING ("Error while finishing reading vcard");
-    }
-
-    QList<QVersitDocument> versitDocList = versitReader.results();
-    readBuf.close();
-
-    QVersitContactImporter contactImporter;
-    QList<QContact> contactList;
-    bool contactsImported = contactImporter.importDocuments(versitDocList);
-    if (contactsImported)
-    {
-        contactList =  contactImporter.contacts();
-        prepareContactSave(&contactList);
-    }
-
-    LOG_DEBUG( "Converted" << contactList.count() << "VCards" );
-
-    return contactList;
+    return retn;
 }
 
 QString ContactsBackend::convertQContactToVCard(const QContact &aContact)
@@ -462,7 +469,14 @@ QString ContactsBackend::convertQContactToVCard(const QContact &aContact)
 
         QVersitContactExporter contactExporter;
 
-        ContactDetailHandler handler;
+        QSet<QContactDetail::DetailType> ignoredDetailTypes = QSet<QContactDetail::DetailType>()
+                                                              << QContactDetail::TypeGlobalPresence
+                                                              << QContactDetail::TypePresence
+                                                              << QContactDetail::TypeOnlineAccount
+                                                              << QContactDetail::TypeVersion
+                                                              << QContactDetail::TypeSyncTarget
+                                                              << QContactDetail::TypeRingtone;
+        SeasidePropertyHandler handler(ignoredDetailTypes);
         contactExporter.setDetailHandler(&handler);
 
         QString vCard;

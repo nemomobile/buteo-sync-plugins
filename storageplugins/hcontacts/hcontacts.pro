@@ -9,14 +9,14 @@ CONFIG += link_pkgconfig plugin
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
-    PKGCONFIG = buteosyncfw qtcontacts-sqlite-extensions
+    PKGCONFIG = buteosyncfw qtcontacts-sqlite-extensions contactcache
     LIBS += -lsyncmlcommon
     MOBILITY += contacts versit
     target.path = /usr/lib/buteo-plugins
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit qtcontacts-sqlite-qt5-extensions
+    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit qtcontacts-sqlite-qt5-extensions contactcache-qt5
     LIBS += -lsyncmlcommon5
     target.path = /usr/lib/buteo-plugins-qt5
 }
@@ -25,18 +25,15 @@ VER_MAJ = 1
 VER_MIN = 0
 VER_PAT = 0
 
-QT -= gui
-QT += sql
+QT += sql gui
 
 HEADERS += ContactsStorage.h \
            ContactsBackend.h \
-           ContactsImport.h \
-           ContactDetailHandler.h
+           ContactBuilder.h
 
 SOURCES += ContactsStorage.cpp \
            ContactsBackend.cpp \
-           ContactsImport.cpp \
-           ContactDetailHandler.cpp
+           ContactBuilder.cpp
 
 
 QMAKE_CXXFLAGS = -Wall \
