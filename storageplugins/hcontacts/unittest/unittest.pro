@@ -1,19 +1,18 @@
 TEMPLATE = app
 TARGET = hcontacts-tests
 
-QT += core testlib sql
-QT -= gui
+QT += core testlib sql gui
 CONFIG += link_pkgconfig
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
-    PKGCONFIG = buteosyncfw buteosyncml qtcontacts-sqlite-extensions
+    PKGCONFIG = buteosyncfw buteosyncml qtcontacts-sqlite-extensions contactcache
     MOBILITY += contacts versit
     LIBS += -lsyncmlcommon
 }
 
 equals(QT_MAJOR_VERSION, 5): {
-    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5 qtcontacts-sqlite-qt5-extensions
+    PKGCONFIG = buteosyncfw5 Qt5Contacts Qt5Versit buteosyncml5 qtcontacts-sqlite-qt5-extensions contactcache-qt5
     LIBS += -lsyncmlcommon5
 }
 
@@ -32,13 +31,11 @@ LIBS += -L../../../syncmlcommon
 HEADERS += ContactsTest.h \
            ContactsStorage.h \
            ContactsBackend.h \
-           ContactsImport.h \
            ContactDetailHandler.h
 
 SOURCES += ContactsTest.cpp \
            ContactsStorage.cpp \
            ContactsBackend.cpp \
-           ContactsImport.cpp \
            ContactDetailHandler.cpp
 
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda $(OBJECTS_DIR)/*.gcno

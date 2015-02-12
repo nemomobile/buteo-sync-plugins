@@ -223,7 +223,7 @@ private: // functions
                                         (const QList<QContact> &aContactList);
 #endif
 
-    QList<QContact> convertVCardListToQContactList \
+    QList<QVersitDocument> convertVCardListToVersitDocumentList \
                                 (const QStringList &aVCardList);
     void prepareContactSave(QList<QContact> *contactList);
 
