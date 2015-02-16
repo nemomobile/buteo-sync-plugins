@@ -417,6 +417,10 @@ void ContactsBackend::prepareContactSave(QList<QContact> *contactList)
                 originMetaData.setId(iOriginId);
                 contact->saveDetail(&originMetaData);
             }
+            Q_FOREACH (QContactDetail det, contact->details()) {
+                det.setValue(QContactDetail__FieldModifiable, true);
+                contact->saveDetail(&det);
+            }
         }
     }
 }
