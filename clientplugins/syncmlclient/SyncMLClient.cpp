@@ -522,6 +522,14 @@ bool SyncMLClient::initConfig() {
 	} else if (transportType == OBEX_TRANSPORT) {
 		// Over OBEX, set remote device to it's address as designated in profile
 		remoteDeviceName = iProperties[PROF_REMOTE_ADDRESS];
+		if (remoteDeviceName.isEmpty()) {
+			// There is no code to set PROF_REMOTE_ADDRESS.
+			// It may be set via Buteo::KEY_REMOTE_ID as it just happens to be the same.
+			// Alternatively, it may be hardcoded into the profile from the template.
+			// For Bluetooth OBEX however, it is sometimes never set.
+			// Instead, use the KEY_REMOTE_NAME which will be set for OBEX profiles...
+			remoteDeviceName = iProperties[Buteo::KEY_REMOTE_NAME];
+		}
 	}
 
 	QString versionProp = iProperties[PROF_SYNC_PROTOCOL];
