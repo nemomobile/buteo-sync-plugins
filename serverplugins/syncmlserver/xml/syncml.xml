@@ -8,4 +8,12 @@
         <key name="enabled" value="true" />
         <key name="Local URI" value="./contacts" />
     </profile>
+
+    <profile name="hcalendar" type="storage" >
+        <key name="enabled" value="true" />
+        <key name="Local URI" value="./calendar" />
+        <key name="Target URI" value="./calendar" />
+        <key name="Calendar Format" value="vcalendar" />
+        <key name="Notebook Name" value="Personal" />
+    </profile>
 </profile>

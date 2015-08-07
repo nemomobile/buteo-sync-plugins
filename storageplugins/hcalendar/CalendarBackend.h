@@ -58,8 +58,7 @@ public:
     virtual ~CalendarBackend();
 
     //! \brief Initializes the CalendarBackend
-    // \param strNotebookName Name of the notebook to use
-    bool init( const QString& aNotebookName, const QString& aUid = "" );
+    bool init( const QString& aUid = QString() );
 
     //! \brief Uninitializes the storage
     bool uninit();
