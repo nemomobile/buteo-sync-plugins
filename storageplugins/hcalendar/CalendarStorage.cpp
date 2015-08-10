@@ -69,21 +69,10 @@ bool CalendarStorage::init( const QMap<QString, QString>& aProperties )
 
     iProperties = aProperties;
 
-    // Use remote name (e.g. bt name) as notebook name.
-    if (iProperties.contains(Buteo::KEY_REMOTE_NAME)) {
-        LOG_DEBUG("Using remote name as notebook name");
-        iProperties[NOTEBOOKNAME] = iProperties.value(Buteo::KEY_REMOTE_NAME);
-    }
-    else if( iProperties.value( NOTEBOOKNAME ).isEmpty() ) {
-        LOG_WARNING( NOTEBOOKNAME << " property not found" <<
-                "for calendar storage, using default of" <<
-                DEFAULT_NOTEBOOK_NAME );
-        iProperties[NOTEBOOKNAME] = DEFAULT_NOTEBOOK_NAME;
-    }
-
-    LOG_DEBUG("Initializing calendar, notebook name:" <<  iProperties[NOTEBOOKNAME]); 
-
-    if( !iCalendar.init( iProperties[NOTEBOOKNAME], iProperties[Buteo::KEY_UUID] ) ) {
+    // Note: we don't use the KEY_UUID value, as msyncd just generates
+    // a random one on the fly - it doesn't actually correspond to any
+    // real notebook UID which exists on the device.
+    if( !iCalendar.init( ) ) {
         return false;
     }
 
