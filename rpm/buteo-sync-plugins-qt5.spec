@@ -1,5 +1,5 @@
 Name: buteo-sync-plugins-qt5
-Version: 0.8.22
+Version: 0.8.22.1
 Release: 1
 Summary: Synchronization plugins
 Group: System/Libraries
