@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<profile name="hcalendar" type="storage" >
-	<key name="Type" value="text/x-vcalendar" />
-	<key name="Version" value="1.0" />
-    <field name="Calendar Format" />
-    <field name="Notebook Name" />
-</profile>
